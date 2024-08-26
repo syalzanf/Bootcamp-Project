@@ -1,0 +1,19 @@
+// Here you can add other styles
+/* Tema gelap untuk SweetAlert2 */
+.swal2-popup {
+  background: #13161f; /* Background gelap */
+  color: #ffffff; /* Teks putih */
+}
+.swal2-confirm {
+  background: #3085d6; /* Warna tombol konfirmasi */
+  color: #ffffff; /* Warna teks tombol konfirmasi */
+}
+.swal2-cancel {
+  background: #d33; /* Warna tombol batal */
+  color: #ffffff; /* Warna teks tombol batal */
+}
+// .custom-add-button {
+//   margin-left: 10; // Menghilangkan margin kiri jika ada
+//   float: left; // Memindahkan tombol ke kiri
+//   margin-bottom: 10px; // Memberikan jarak antara tombol dan tabel
+// }

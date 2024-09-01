@@ -1,5 +1,8 @@
 const bcrypt = require('bcrypt');
 const pool = require('./connection');
+const {Transaksi, Member} = require('./models/transaksi');
+const sequelize = require('./configdb');
+
 
 // Fungsi untuk login kasir
 async function cashierLogin(username, password) {
@@ -79,7 +82,7 @@ async function getListCustomers() {
 async function updateCustomer(id, { nama, telepon, alamat }) {
     try {
         const result = await pool.query(
-            'UPDATE members SET nama = $1, telepon = $2, alamat = $3 WHERE id = $4 RETURNING *',
+            'UPDATE members SET nama = $1, telepon = $2, alamat = $3 WHERE member_id = $4 RETURNING *',
             [nama, telepon, alamat, id]
         );
         return result.rows[0];
@@ -91,7 +94,7 @@ async function updateCustomer(id, { nama, telepon, alamat }) {
 async function deleteCustomer(id) {
     try {
       const result = await pool.query(
-        `DELETE FROM members WHERE id = $1 RETURNING *`,
+        `DELETE FROM members WHERE member_id = $1 RETURNING *`,
         [id]
       );
   
@@ -108,78 +111,62 @@ async function deleteCustomer(id) {
     }
 }
 
+async function createTransaction({ transaction_code, member_id, cashier, total, payment, change, items }) {
+    try {
+        const newTransaction = await Transaksi.create({
+            transaction_code,
+            member_id: member_id !== null ? member_id : 0, // Simpan member_id jika ada, jika tidak null
+            cashier,
+            transaction_date: new Date(),
+            total,
+            payment,
+            change,
+            items,  // Items akan disimpan sebagai JSONB
+        });
 
-let cart = [];
-// Fungsi untuk menambahkan item ke keranjang
-function addToCart(item) {
-    // Cek apakah item sudah ada di keranjang
-    const existingItemIndex = cart.findIndex(i => i.product_code === item.product_code);
-    if (existingItemIndex !== -1) {
-        // Update jumlah jika item sudah ada
-        cart[existingItemIndex].quantity += item.quantity;
-    } else {
-        // Tambah item baru ke keranjang
-        cart.push(item);
+        return newTransaction;
+    } catch (error) {
+        throw new Error('Error creating transaction: ' + error.message);
     }
 }
 
-// Fungsi untuk menghapus item dari keranjang
-function removeFromCart(product_code) {
-    cart = cart.filter(item => item.product_code !== product_code);
-}
 
-// Fungsi untuk mengosongkan keranjang
-function clearCart() {
-    cart = [];
-}
-
-// Fungsi untuk mendapatkan item keranjang
-function getCart() {
-    return cart;
-}
-
-
-async function createTransaction(transactionData) {
-    const { paymentAmount, changeAmount, customerId} = transactionData;
-
-    const client = await pool.connect();
+// Mengambil laporan penjualan berdasarkan kasir
+async function getTransactionReportByCashier(cashierName) {
     try {
-        await client.query('BEGIN'); // Memulai transaksi
+        const transactions = await Transaksi.findAll({
+            include: [{
+                model: Member,
+                attributes: ['nama'], // nama dari tabel members
+                required: false // `false` untuk transaksi tanpa member (guest)
+            }],
+            where: {
+                cashier: cashierName
+            }
+        });
 
-        // Ambil data dari keranjang
-        const cartItems = getCart();
+        const transactionsData = transactions.map(transaction => ({
+            transaction_code: transaction.transaction_code,
+            member: transaction.Member ? transaction.Member.nama : 'Guest',
+            cashier: transaction.cashier,
+            transaction_date: transaction.transaction_date,
+            total: transaction.total,
+            payment: transaction.payment,
+            change: transaction.change,
+            items: transaction.items
+        }));
 
-        // Hitung total amount
-        const totalAmount = cartItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-
-        // Insert ke tabel transactions
-        const result = await client.query(
-            `INSERT INTO transactions (transaction_code, total, bayar, kembalian, customer_id)
-             VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-            [await generateTransactionCode(), totalAmount, paymentAmount, changeAmount, customerId]
-        );
-        const transactionId = result.rows[0].id;
-
-        // Insert ke tabel transaction_items
-        for (let item of cartItems) {
-            await client.query(
-                `INSERT INTO transaction_items (transaction_id, product_code, brand, type, harga,)
-                 VALUES ($1, $2, $3, $4, $5)`,
-                [transactionId, item.product_code, item.brand, item.type, item.price]
-            );
+        if (transactions.length === 0) {
+            return { message: 'No transactions found for this cashier' };
         }
 
-        await client.query('COMMIT');
-        clearCart(); // Kosongkan keranjang
-
-        return { message: 'Transaction created successfully', transactionCode: result.rows[0].transaction_code };
+        return transactionsData;
     } catch (error) {
-        await client.query('ROLLBACK'); 
-        throw new Error('Failed to create transaction');
-    } finally {
-        client.release(); // Kembalikan koneksi ke pool
+        throw new Error('Error retrieving sales report: ' + error.message);
     }
 }
+
+
 
 
 module.exports ={
@@ -190,8 +177,6 @@ module.exports ={
     addCustomer,
     updateCustomer,
     deleteCustomer,
-    addToCart,
-    removeFromCart,
-    getCart,
-    createTransaction,  
+    createTransaction,
+    getTransactionReportByCashier
 };

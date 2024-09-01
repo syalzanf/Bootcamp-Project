@@ -1,23 +1,141 @@
 const fs = require('fs');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const pool = require('./connection');
+const User = require('./models/user');
+const sequelize = require('./configdb');
+require('dotenv').config();
+
+// const secretKey = 'secret_key'; 
+const jwtSecret = process.env.ACCESS_TOKEN_SECRET;
 
 
-// async function generateSuperadminPassword() {
-//     const plainPassword = 'qwerty'; // Ganti dengan password yang Anda inginkan
-//     const hashedPassword = await bcrypt.hash(plainPassword, 10);
-//     console.log('Hashed Password:', hashedPassword);
-//   }
-  
-//   generateSuperadminPassword();
 
+async function loginUser(username, password) {
+  try {
+    const user = await User.findOne({ where: { username } });
+    console.log('User:', user); // Log user details
+
+    if (!user) {
+      throw new Error('Invalid username or password');
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password match:', isMatch); // Log password match result
+
+    if (!isMatch) {
+      throw new Error('Invalid username or password');
+    }
+
+    const token = jwt.sign(
+      { username: user.username, role: user.role },
+      jwtSecret,
+      { expiresIn: '1h' }
+    );
+    console.log('Generated Token:', token);
+
+    return {
+      message: 'Login successful',
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role
+      }
+    };
+  } catch (error) {
+    console.error('Login error:', error.message); // Log error
+    throw error;
+  }
+}
+
+
+// Fungsi untuk verifikasi token
+async function verifyToken(token) {
+  try {
+    // Verifikasi token
+    const decoded = jwt.verify(token, jwtSecret);
+    
+    // Ambil username dan role dari token
+    const { username, role } = decoded;
+    
+    // Cari pengguna berdasarkan username
+    const user = await User.findOne({ where: { username } });
+    
+    if (!user) {
+      console.error('User not found:', username);
+      throw new Error('User not found');
+    }
+
+    // Verifikasi role jika diperlukan
+    if (role && user.role !== role) {
+      console.error('Role mismatch:', { tokenRole: role, userRole: user.role }); 
+      throw new Error('Role mismatch');
+    }
+    
+    // Kembalikan informasi profil pengguna
+    return {
+      message: 'Token is valid',
+      user: {
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        // telepon: user.telepon,
+        role: user.role
+      }
+    };
+  } catch (error) {
+    console.error('Error verifying token:', error.message); // Log error
+    throw error;
+  }
+}
+
+
+
+
+
+
+async function addUser(username, name, telepon, role, password) {
+  try {
+
+    if (!username || !name || !telepon || !role || !password) {
+      throw new Error('All fields are required');
+    }
+
+    // Cek apakah username sudah ada di database
+    const existingUser = await User.findOne({ where: { username } });
+
+    if (existingUser) {
+      throw new Error('Username already exists');
+    }
+
+    // Hash password sebelum menyimpannya ke database
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Insert user ke database
+    const newUser = await User.create({
+      username,
+      name,
+      telepon,
+      password: hashedPassword,
+      role
+    });
+
+    return {
+      message: 'User created successfully',
+      user: newUser
+    };
+  } catch (error) {
+    throw error;
+  }
+}
 
 async function superadminLogin(username, password) {
     try {
       // Cek apakah username ada di database
       const result = await pool.query(
-        `SELECT * FROM superadmin WHERE username = $1`,
+        `SELECT * FROM users WHERE username = $1`,
         [username]
       );
   
@@ -45,39 +163,39 @@ async function superadminLogin(username, password) {
     }
   }
   
-async function addUser(username, name, telepon, role) {
-  try {
-    // Cek apakah username sudah ada di database
-    const checkUser = await pool.query(
-      `SELECT * FROM users WHERE username = $1`,
-      [username]
-    );
+// async function addUser(username, name, telepon, role) {
+//   try {
+//     // Cek apakah username sudah ada di database
+//     const checkUser = await pool.query(
+//       `SELECT * FROM users WHERE username = $1`,
+//       [username]
+//     );
 
-    if (checkUser.rows.length > 0) {
-      throw new Error('Username already exists');
-    }
+//     if (checkUser.rows.length > 0) {
+//       throw new Error('Username already exists');
+//     }
 
-    // Generate random default password
-    const defaultpassword = crypto.randomBytes(6).toString('hex'); // menghasilkan string hex 12 karakter
+//     // Generate random default password
+//     const defaultpassword = crypto.randomBytes(6).toString('hex'); // menghasilkan string hex 12 karakter
 
-    // Hash password sebelum menyimpannya ke database
-    const hashedPassword = await bcrypt.hash(defaultpassword, 10);
+//     // Hash password sebelum menyimpannya ke database
+//     const hashedPassword = await bcrypt.hash(defaultpassword, 10);
 
-    // Insert user ke database
-    const result = await pool.query(
-      `INSERT INTO users (username, name, telepon, password, role) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [username, name, telepon, hashedPassword, role]
-    );
+//     // Insert user ke database
+//     const result = await pool.query(
+//       `INSERT INTO users (username, name, telepon, password, role) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+//       [username, name, telepon, hashedPassword, role]
+//     );
 
-    return {
-      message: 'User created successfully',
-      user: result.rows[0],
-      default_password: defaultpassword, // Password default yang dihasilkan
-    };
-  } catch (error) {
-    throw error;
-  }
-}
+//     return {
+//       message: 'User created successfully',
+//       user: result.rows[0],
+//       default_password: defaultpassword, // Password default yang dihasilkan
+//     };
+//   } catch (error) {
+//     throw error;
+//   }
+// }
 
   async function getAllUsers() {
     try {
@@ -193,6 +311,8 @@ async function updatePassword(id, newPassword) {
   }
 
   module.exports = { 
+    loginUser,
+    verifyToken,
     superadminLogin,
     addUser,
     getAllUsers,

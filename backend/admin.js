@@ -3,6 +3,9 @@
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 const pool = require('./connection');
+const sequelize = require('./configdb');
+const {Transaksi, Member} = require('./models/transaksi');
+
 
 
 // Fungsi untuk login admin
@@ -22,11 +25,18 @@ async function adminLogin(username, password) {
         throw new Error('Invalid password');
       }
   
+      // Periksa apakah pengguna adalah admin
+      if (user.role !== 'admin') {
+        throw new Error('Access denied. Only admins can log in.');
+      }
+  
       return { message: 'Login successful', user };
     } catch (error) {
       throw error;
     }
   }
+  
+  
 
 // Fungsi untuk mendapatkan data stok produk
 async function getListStockProducts() {
@@ -85,6 +95,17 @@ async function addStockByCode(product_code, additionalStock) {
 // Fungsi untuk menambahkan produk
 async function addProduct({ product_code, product_name, brand, type, price, stock, image }) {
     try {
+         // Cek apakah produk dengan product_code yang sama sudah ada
+         const existingProduct = await pool.query(
+            'SELECT * FROM products WHERE product_code = $1',
+            [product_code]
+        );
+
+        if (existingProduct.rows.length > 0) {
+            // Jika produk sudah ada, beri pesan
+            return res.status(400).json({ message: 'Product with the same product code already exists' });
+        }
+
         // Query untuk memasukkan data produk ke database
         const result = await pool.query(
             'INSERT INTO products (product_code, product_name, brand, type, price, stock, image) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
@@ -95,6 +116,7 @@ async function addProduct({ product_code, product_name, brand, type, price, stoc
         throw new Error('Error adding product: ' + error.message);
     }
 }
+
 
 // Fungsi untuk mendapatkan semua produk
 async function getListProducts() {
@@ -124,18 +146,42 @@ async function getProductById(id) {
 // Fungsi untuk memperbarui produk
 async function updateProduct(id, { product_name, brand, type, price, stock, image }) {
     try {
-        const result = await pool.query(
-            'UPDATE products SET product_name = $1, brand = $2, type = $3, price = $4, stock = $5, image = $6 WHERE id_product = $7 RETURNING *',
-            [product_name, brand, type, price, stock, image, id]
-        );
+        // Define the query and parameters based on whether the image is provided or not
+        let query;
+        let values;
+
+        if (image === undefined || image === null) {
+            query = `
+                UPDATE products 
+                SET product_name = $1, brand = $2, type = $3, price = $4, stock = $5
+                WHERE id_product = $6
+                RETURNING *;
+            `;
+            values = [product_name, brand, type, price, stock, id];
+        } else {
+            query = `
+                UPDATE products 
+                SET product_name = $1, brand = $2, type = $3, price = $4, stock = $5, image = $6
+                WHERE id_product = $7
+                RETURNING *;
+            `;
+            values = [product_name, brand, type, price, stock, image, id];
+        }
+
+        // Execute the query
+        const result = await pool.query(query, values);
+
+        // Check if the product was found and updated
         if (result.rows.length === 0) {
             throw new Error('Product not found');
         }
+
         return result.rows[0];
     } catch (error) {
         throw new Error('Error updating product: ' + error.message);
     }
 }
+
 
 // Fungsi untuk menghapus produk
 async function deleteProduct(id) {
@@ -169,9 +215,67 @@ async function getListCustomers() {
     }
 }
 
+async function getAllTransactions() {
+    try {
+        const transactions = await Transaksi.findAll({
+            include: [{
+                model: Member,
+                attributes: ['nama'], // Ambil hanya nama dari tabel members
+                required: false // `false` memungkinkan untuk transaksi tanpa member (guest)
+            }]
+        });
 
+        const transactionsData = transactions.map(transaction => ({
+            transaction_code: transaction.transaction_code,
+            member: transaction.Member ? transaction.Member.nama : 'Guest',
+            cashier: transaction.cashier,
+            transaction_date: transaction.transaction_date,
+            total: transaction.total,
+            payment: transaction.payment,
+            change: transaction.change,
+            items: transaction.items // Items disimpan dalam format JSONB
+        }));
+
+        return transactionsData;
+    } catch (error) {
+        throw new Error('Error retrieving transactions: ' + error.message);
+    }
+}
+
+async function getTransactionById(transactionId) {
+    try {
+        const transaction = await Transaksi.findOne({
+            where: { id: transactionId },
+            include: [{
+                model: Member,
+                attributes: ['nama'], // Mengambil hanya nama dari tabel member
+                required: false // `false` memungkinkan untuk transaksi tanpa member (guest)
+            }]
+        });
+
+        if (!transaction) {
+            throw new Error('Transaction not found');
+        }
+
+        const transactionData = {
+            transaction_code: transaction.transaction_code,
+            member: transaction.Member ? transaction.Member.nama : 'Guest',
+            cashier: transaction.cashier,
+            transaction_date: transaction.transaction_date,
+            total: transaction.total,
+            payment: transaction.payment,
+            change: transaction.change,
+            items: transaction.items // Items disimpan dalam format JSONB
+        };
+
+        return transactionData;
+    } catch (error) {
+        throw new Error('Error retrieving transaction: ' + error.message);
+    }
+}
   
 module.exports ={
+    // loginUser,
     adminLogin,
     getListStockProducts,
     getProductByCode,
@@ -181,6 +285,9 @@ module.exports ={
     addProduct,
     updateProduct,
     deleteProduct,
-    getListCustomers
+    getListCustomers,
+    getAllTransactions,
+    getTransactionById
+
 
 };

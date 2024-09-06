@@ -1,5 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../configdb');
+const Product = require('./product');
+
 
 const Transaksi = sequelize.define('Transaksi', {
     id: {
@@ -17,6 +19,10 @@ const Transaksi = sequelize.define('Transaksi', {
     },
     cashier: {
         type: DataTypes.STRING,
+        allowNull: false,
+    },
+    id_cashier: {
+        type: DataTypes.INTEGER,
         allowNull: false,
     },
     transaction_date: {
@@ -39,6 +45,14 @@ const Transaksi = sequelize.define('Transaksi', {
     items: {
         type: DataTypes.JSONB,  
         allowNull: false,
+    },
+    payment_method: {
+        type: DataTypes.ENUM('debit', 'cash'),
+        allowNull: false,
+    },
+    debit: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
     }
 }, {
     tableName: 'transaksi',
@@ -48,9 +62,11 @@ const Transaksi = sequelize.define('Transaksi', {
         beforeCreate: async (transaction) => {
             // Ambil transaksi terakhir berdasarkan ID
             const lastTransaction = await Transaksi.findOne({
-                order: [['id', 'DESC']]
-            });
+                order: [['id', 'DESC']],
+                attributes: ['transaction_code']
 
+            });
+ 
             let nextTransactionCode = 'TRX10001'; // Kode default untuk transaksi pertama
 
             if (lastTransaction) {
@@ -60,7 +76,24 @@ const Transaksi = sequelize.define('Transaksi', {
                 nextTransactionCode = 'TRX' + (lastNumber + 1).toString().padStart(5, '0');
             }
 
-            transaction.transaction_code = nextTransactionCode; // Set kode transaksi baru
+            transaction.transaction_code = nextTransactionCode;
+
+
+            // if (transaction.items && Array.isArray(transaction.items)) {
+            //     for (let item of transaction.items) {
+            //         const product = await Product.findByPk(item.id_product);
+            //         if (product) {
+            //             if (product.stock >= item.qty) {
+            //                 product.stock -= item.qty;
+            //                 await product.save();  // Pastikan save() dipanggil untuk menyimpan perubahan
+            //             } else {
+            //                 throw new Error(`Not enough stock for product ${product.product_name}`);
+            //             }
+            //         } else {
+            //             throw new Error(`Product with ID ${item.id_product} not found`);
+            //         }
+            //     }
+            // }
         }
     }
 });

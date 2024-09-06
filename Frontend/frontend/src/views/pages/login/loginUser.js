@@ -40,7 +40,14 @@ const Login = () => {
 
         // Simpan role dan token ke local storage
         localStorage.setItem('userRole', user.role);
+        localStorage.setItem('userName', user.name);
+        localStorage.setItem('userUsername', user.username); 
+
+        console.log("NAMEEE ", user.name);
+
+
         localStorage.setItem('token', user.token);
+
 
         console.log("TOKENnnn ", localStorage.getItem('token'));
         console.log("TOKENnnn2 ", user.token);
@@ -50,15 +57,44 @@ const Login = () => {
           withCredentials: true
         });
         localStorage.setItem('user', response2.data);
+        localStorage.setItem('id', response2.data.user.id);
+        localStorage.setItem('username', response2.data.user.username);
+        localStorage.setItem('name', response2.data.user.name);
+        localStorage.setItem('telepon', response2.data.user.telepon)
+        localStorage.setItem('photo', response2.data.user.photo)
+
+
+        console.log("TOKENnnn ", localStorage.getItem('id'));
 
         // Arahkan ke halaman dashboard berdasarkan role
         navigate(`/${user.role}-dashboard`);
       }
-    } catch (error) {
+  } catch (error) {
       console.error('Login error:', error.response ? error.response.data : error.message);
-      setError('Username atau password salah.');
+
+      let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+
+      if (error.response && error.response.data && error.response.data.message) {
+        // Jika ada pesan error khusus dari backend
+        if (error.response.data.message === 'Account is not active') {
+          errorMessage = 'Akun tidak aktif.';
+        } else {
+          errorMessage = error.response.data.message;
+        }
+      } else {
+        // Jika tidak ada pesan error khusus dari backend
+        errorMessage = 'Username atau password salah.';
+      }
+
+      setError(errorMessage); // Menampilkan pesan error yang sesuai
     }
   };
+
+  //   } catch (error) {
+  //     console.error('Login error:', error.response ? error.response.data : error.message);
+  //     setError('Username atau password salah.');
+  //   }
+  // };  
 
   return (
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">

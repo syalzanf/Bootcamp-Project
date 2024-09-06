@@ -16,7 +16,7 @@ import {
   CForm,
   CFormLabel,
   CFormInput,
-
+  CFormFeedback,
   CSmartTable,
   CAlert
 } from '@coreui/react-pro';
@@ -31,6 +31,7 @@ const DataBarang = () => {
   const [editVisible, setEditVisible] = useState(false);
   const [addVisible, setAddVisible] = useState(false);
   const [selectedBarang, setSelectedBarang] = useState(null);
+  const [validated, setValidated] = useState(false);
 
   const [formValues, setFormValues] = useState({
     product_name: '',
@@ -42,8 +43,6 @@ const DataBarang = () => {
   });
   const [previewImage, setPreviewImage] = useState(null);
   const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
-
-
 
   useEffect(() => {
     fetchData();
@@ -145,7 +144,24 @@ const DataBarang = () => {
     }
   };
 
-  const handleAddNew = async () => {
+  const handleAddNew = async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+
+    if (form.checkValidity() === false) {
+      event.stopPropagation();
+      setValidated(true);
+      return;
+    }
+
+    // Pastikan ada data pada form
+    if (!formValues.product_name || !formValues.brand || !formValues.type || !formValues.stock || !formValues.price) {
+      setValidated(true);
+      return;
+    }
+
+    setValidated(true);
+
     try {
       const formData = new FormData();
       formData.append('product_name', formValues.product_name);
@@ -162,20 +178,33 @@ const DataBarang = () => {
         headers: { Authorization: `${token}` },
         withCredentials: true
       });
-      
-      
 
       // Jika berhasil, tampilkan alert sukses
       showAlert('Product successfully Added!', 'light');
 
       fetchData();
       setAddVisible(false);
-    } catch (error) {
-      showAlert('Failed to add product!', 'danger');
 
-      setTimeout(() => {
-        setAlert({ ...alert, visible: false });
-      }, 3000);
+      setFormValues({
+        product_name: '',
+        brand: '',
+        type: '',
+        stock: '',
+        price: '',
+        image: null,
+      });
+
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        // Jika produk sudah ada
+        showAlert('Product already exists.', 'danger');
+      } else {
+        // Jika gagal menambahkan produk
+        showAlert('Failed to add product!', 'danger');
+      }
+  
+      // Reset form setelah error
+      setAddVisible(false);
       console.error('Error adding data:', error.response ? error.response.data : error.message);
     }
   };
@@ -191,14 +220,31 @@ const DataBarang = () => {
     }, 3000);
   };
   
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormValues({ ...formValues, image: file });
-      setPreviewImage(URL.createObjectURL(file));
+      const maxSizeInMB = 1;
+      const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+  
+      if (file.size > maxSizeInBytes) {
+        alert(`Ukuran file terlalu besar. Maksimal ${maxSizeInMB} MB.`);
+      } else {
+        setFormValues({ ...formValues, image: file });
+        setPreviewImage(URL.createObjectURL(file));
+      }
     }
   };
-
+  
+  
+  // const handleFileChange = (e) => {
+  //   const file = e.target.files[0];
+  //   if (file) {
+  //     setFormValues({ ...formValues, image: file });
+  //     setPreviewImage(URL.createObjectURL(file));
+  //   }
+  // };
+// 
   const handleDelete = async (barang) => {
     try {
       const result = await Swal.fire({
@@ -336,34 +382,141 @@ const DataBarang = () => {
         </CCard>
       </CCol>
 
-      {/* Detail Modal */}
-      {selectedBarang && (
-        <CModal alignment="center" visible={visible} onClose={() => setVisible(false)}>
-          <CModalHeader>
-            <CModalTitle>Detail Barang</CModalTitle>
-          </CModalHeader>
-          <CModalBody>
-          {/* <p><strong>Gambar:</strong></p> */}
-            {selectedBarang.image && (
-              <img
-                src={`http://localhost:3000/${selectedBarang.image}`}
-                alt={selectedBarang.product_name}
-                style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover' }}
-              />
-            )}
-            <p><strong>Kode Barang:</strong> {selectedBarang.product_code}</p>
-            <p><strong>Nama Barang:</strong> {selectedBarang.product_name}</p>
-            <p><strong>Merk:</strong> {selectedBarang.brand}</p>
-            <p><strong>Tipe:</strong> {selectedBarang.type}</p>
-            <p><strong>Stok:</strong> {selectedBarang.stock}</p>
-            <p><strong>Harga:</strong> {selectedBarang.price}</p>
 
-          </CModalBody>
-          <CModalFooter>
-            <CButton color="secondary" onClick={() => setVisible(false)}>Close</CButton>
-          </CModalFooter>
-        </CModal>
-      )}
+        {/* Detail Modal */}
+        {selectedBarang && (
+          <CModal alignment="center" visible={visible} onClose={() => setVisible(false)}>
+            <CModalHeader>
+              <CModalTitle>Detail Barang</CModalTitle>
+            </CModalHeader>
+            <CModalBody>
+              <CForm>
+                {selectedBarang.image && (
+                  <CRow className="mb-3">
+                    <CCol className="text-center">
+                      <img
+                        src={`http://localhost:3000/${selectedBarang.image}`}
+                        alt={selectedBarang.product_name}
+                        style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover' }}
+                      />
+                    </CCol>
+                  </CRow>
+                )}
+                <CRow className="mb-3">
+                  <CCol sm={3}>
+                    <CFormLabel htmlFor="product_code" className="col-form-label">
+                      Kode Barang
+                    </CFormLabel>
+                  </CCol>
+                  <CCol sm={9}>
+                  <div className="d-flex align-items-center">
+                    <span className="me-2">:</span>
+                    <CFormInput
+                      id="product_code"
+                      value={selectedBarang.product_code}
+                      readOnly
+                      plainText
+                    />
+                  </div>
+                  </CCol>
+                </CRow>
+                <CRow className="mb-3">
+                  <CCol sm={3}>
+                    <CFormLabel htmlFor="product_name" className="col-form-label">
+                      Nama Barang
+                    </CFormLabel>
+                  </CCol>
+                  <CCol sm={9}>
+                  <div className="d-flex align-items-center">
+                    <span className="me-2">:</span>
+                    <CFormInput
+                      id="product_name"
+                      value={selectedBarang.product_name}
+                      readOnly
+                      plainText
+                    />
+                  </div>
+                  </CCol>
+                </CRow>
+                <CRow className="mb-3">
+                  <CCol sm={3}>    
+                    <CFormLabel htmlFor="brand" className="col-form-label">
+                      Merk
+                    </CFormLabel>
+                  </CCol>
+                  <CCol sm={9}>
+                  <div className="d-flex align-items-center">
+                    <span className="me-2">:</span>
+                    <CFormInput
+                      id="brand"
+                      value={selectedBarang.brand}
+                      readOnly
+                      plainText
+                    />
+                  </div>
+                  </CCol>
+                </CRow>
+                <CRow className="mb-3">
+                  <CCol sm={3}>
+                    <CFormLabel htmlFor="type" className="col-form-label">
+                      Tipe
+                    </CFormLabel>
+                  </CCol>
+                  <CCol sm={9}>
+                  <div className="d-flex align-items-center">
+                    <span className="me-2">:</span>
+                    <CFormInput
+                      id="type"
+                      value={selectedBarang.type}
+                      readOnly
+                      plainText
+                    />
+                  </div>
+                  </CCol>
+                </CRow>
+                <CRow className="mb-3">
+                  <CCol sm={3}>
+                    <CFormLabel htmlFor="stock" className="col-form-label">
+                      Stok
+                    </CFormLabel>
+                  </CCol>
+                  <CCol sm={9}>
+                  <div className="d-flex align-items-center">
+                    <span className="me-2">:</span>
+                    <CFormInput
+                      id="stock"
+                      value={selectedBarang.stock}
+                      readOnly
+                      plainText
+                    />
+                  </div>
+                  </CCol>
+                </CRow>
+                <CRow className="mb-3">
+                  <CCol sm={3}>
+                    <CFormLabel htmlFor="price" className="col-form-label">
+                      Harga
+                    </CFormLabel>
+                  </CCol>
+                  <CCol sm={9}>
+                  <div className="d-flex align-items-center">
+                    <span className="me-2">:</span>
+                    <CFormInput
+                      id="price"
+                      value={selectedBarang.price}
+                      readOnly
+                      plainText
+                    />
+                  </div>
+                  </CCol>
+                </CRow>
+              </CForm>
+            </CModalBody>
+            <CModalFooter>
+              <CButton color="secondary" onClick={() => setVisible(false)}>Close</CButton>
+            </CModalFooter>
+          </CModal>
+        )}
 
 
       <CModal alignment="center" visible={editVisible} onClose={() => setEditVisible(false)}>
@@ -395,6 +548,7 @@ const DataBarang = () => {
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
+                
                 <CFormInput
                   id="product_name"
                   placeholder="Nama Barang"
@@ -483,7 +637,7 @@ const DataBarang = () => {
                   id="image"
                   type="file"
                   name="image"
-                  accept="image/*"
+                  accept="image/png, image/jpeg, image/jpg" 
                   onChange={handleFileChange}
                 />
 
@@ -504,7 +658,7 @@ const DataBarang = () => {
           <CModalTitle>Tambah Barang</CModalTitle>
         </CModalHeader>
         <CModalBody>
-          <CForm>
+          <CForm noValidate validated={validated} onSubmit={handleAddNew}>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="product_name" className="col-form-label">
@@ -517,7 +671,9 @@ const DataBarang = () => {
                   placeholder="Nama Barang"
                   value={formValues.product_name}
                   onChange={(e) => setFormValues({ ...formValues, product_name: e.target.value })}
+                  required
                 />
+                <CFormFeedback invalid>Nama Barang is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -532,7 +688,9 @@ const DataBarang = () => {
                   placeholder="Merk"
                   value={formValues.brand}
                   onChange={(e) => setFormValues({ ...formValues, brand: e.target.value })}
+                  required
                 />
+                <CFormFeedback invalid>Merk is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -547,7 +705,9 @@ const DataBarang = () => {
                   placeholder="Tipe"
                   value={formValues.type}
                   onChange={(e) => setFormValues({ ...formValues, type: e.target.value })}
+                  required
                 />
+                <CFormFeedback invalid>Tipe is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -563,7 +723,9 @@ const DataBarang = () => {
                   type="number"
                   value={formValues.stock}
                   onChange={(e) => setFormValues({ ...formValues, stock: e.target.value })}
+                  required
                 />
+                <CFormFeedback invalid>Stok is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -579,7 +741,9 @@ const DataBarang = () => {
                   type="number"
                   value={formValues.price}
                   onChange={(e) => setFormValues({ ...formValues, price: e.target.value })}
+                  required
                 />
+                <CFormFeedback invalid>Harga is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -592,8 +756,11 @@ const DataBarang = () => {
                 <CFormInput
                   id="image"
                   type="file"
+                  accept="image/png, image/jpeg, image/jpg" 
                   onChange={handleFileChange}
+                  required
                 />
+                <CFormFeedback invalid>Gambar is required.</CFormFeedback>
                 {previewImage && (
                   <img
                     src={previewImage}

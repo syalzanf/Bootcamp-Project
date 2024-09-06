@@ -29,18 +29,31 @@ const User = sequelize.define('users', {
   password: {
       type: DataTypes.STRING,
       allowNull: false
-  }
+  },
+  status: {
+    type: DataTypes.STRING,
+    defaultValue: 'active',
+    allowNull: false,
+  },
+  photo: {
+    type: DataTypes.STRING,
+    allowNull: false
+},
 }, {
+  tableName: 'users',
   timestamps: true,
 });
+
+
+
+module.exports = User;
+
 
 // Hook untuk meng-hash password sebelum menyimpannya ke database
 // User.beforeCreate(async (user) => {
 //   const hashedPassword = await bcrypt.hash(user.password, 10);
 //   user.password = hashedPassword;
 // });
-
-module.exports = User;
 
 
 

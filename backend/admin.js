@@ -1,4 +1,4 @@
-// const validator = require('validator');
+const validator = require('validator');
 // const readline = require("readline");
 const fs = require('fs');
 const bcrypt = require('bcrypt');
@@ -43,12 +43,43 @@ async function getListStockProducts() {
     
     try {
         // Query untuk mengambil semua data produk dari database
-        const result = await pool.query('SELECT product_code, product_name, brand, type, stock FROM products  ORDER BY updated_at DESC');
+        const result = await pool.query(`
+        SELECT product_code, product_name, brand, type, stock, minimum_stock,
+        CASE
+            WHEN stock <= minimum_stock THEN true
+            ELSE false
+        END AS is_below_minimum_stock
+        FROM products
+        ORDER BY updated_at DESC
+        `);
         return result.rows;
     } catch (error) {
         throw new Error('Error fetching products: ' + error.message);
     }
 }
+
+// async function getListStockProducts() {
+//     try {
+//         // Query untuk mengambil semua data produk dari database
+//         const productsResult = await pool.query(
+//             'SELECT product_code, product_name, brand, type, stock, price FROM products ORDER BY updated_at DESC'
+//         );
+
+//         // Query untuk mendapatkan total stok dan amount
+//         const totalsResult = await pool.query(
+//             'SELECT SUM(stock) AS total_stock, SUM(price) AS total_price FROM products'
+//         );
+
+//         // Menggabungkan hasil query produk dengan total stok dan amount
+//         return {
+//             products: productsResult.rows,
+//             totals: totalsResult.rows[0]
+//         };
+//     } catch (error) {
+//         throw new Error('Error fetching products and totals: ' + error.message);
+//     }
+// }
+
 
 // Fungsi untuk mendapatkan data produk berdasarkan kode produk pada from
 async function getProductByCode(product_code) {
@@ -91,19 +122,41 @@ async function addStockByCode(product_code, additionalStock) {
     }
 }
 
+// Fungsi untuk memeriksa apakah produk sudah ada
+async function checkProductExists(product_code, product_name) {
+    try {
+        const result = await pool.query(
+            'SELECT * FROM products WHERE product_code = $1 OR product_name = $2',
+            [product_code, product_name]
+        );
+        return result.rows.length > 0;
+    } catch (error) {
+        throw new Error('Error checking product existence: ' + error.message);
+    }
+}
 
 // Fungsi untuk menambahkan produk
 async function addProduct({ product_code, product_name, brand, type, price, stock, image }) {
     try {
-         // Cek apakah produk dengan product_code yang sama sudah ada
-         const existingProduct = await pool.query(
-            'SELECT * FROM products WHERE product_code = $1',
-            [product_code]
-        );
 
-        if (existingProduct.rows.length > 0) {
-            // Jika produk sudah ada, beri pesan
-            return res.status(400).json({ message: 'Product with the same product code already exists' });
+        // if (validator.isEmpty(product_code)) {
+        //     return res.status(400).json({ message: 'Product code is required' });
+        // }
+        if (validator.isEmpty(product_name)) {
+            return res.status(400).json({ message: 'Product name is required' });
+        }
+        if (!validator.isNumeric(price.toString()) || price <= 0) {
+            return res.status(400).json({ message: 'Invalid price' });
+        }
+        if (!validator.isInt(stock.toString(), { min: 0 })) {
+            return res.status(400).json({ message: 'Invalid stock' });
+        }
+
+        // Cek apakah produk sudah ada
+        const productExists = await checkProductExists(product_code, product_name);
+
+        if (productExists) {
+            return res.status(400).json({ message: 'Product already exists' });
         }
 
         // Query untuk memasukkan data produk ke database
@@ -222,7 +275,8 @@ async function getAllTransactions() {
                 model: Member,
                 attributes: ['nama'], // Ambil hanya nama dari tabel members
                 required: false // `false` memungkinkan untuk transaksi tanpa member (guest)
-            }]
+            }],
+            order: [['transaction_date', 'DESC']] 
         });
 
         const transactionsData = transactions.map(transaction => ({
@@ -231,7 +285,9 @@ async function getAllTransactions() {
             cashier: transaction.cashier,
             transaction_date: transaction.transaction_date,
             total: transaction.total,
+            payment_method: transaction.payment_method,
             payment: transaction.payment,
+            debit: transaction.debit,
             change: transaction.change,
             items: transaction.items // Items disimpan dalam format JSONB
         }));
@@ -282,6 +338,7 @@ module.exports ={
     addStockByCode,
     getListProducts,
     getProductById,
+    checkProductExists,
     addProduct,
     updateProduct,
     deleteProduct,

@@ -41,7 +41,6 @@
 
 
 
-
 import React, { Suspense, useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { CContainer, CSpinner } from '@coreui/react-pro';
@@ -139,6 +138,14 @@ const AppContent = () => {
       </Suspense>
     </CContainer>
   );
+};
+
+export default React.memo(AppContent);
+
+
+
+
+
   //   return    (
   //   <CContainer lg className="px-4">
   //     <Suspense fallback={<CSpinner color="primary" />}>
@@ -154,10 +161,6 @@ const AppContent = () => {
   //     </Suspense>
   //   </CContainer>
   // )
-
-};
-
-export default React.memo(AppContent);
 
 
 

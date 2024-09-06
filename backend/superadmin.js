@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('./connection');
 const User = require('./models/user');
 const sequelize = require('./configdb');
+const validator = require('validator');
 require('dotenv').config();
 
 // const secretKey = 'secret_key'; 
@@ -14,20 +15,27 @@ const jwtSecret = process.env.ACCESS_TOKEN_SECRET;
 
 async function loginUser(username, password) {
   try {
+    // Mengambil user dari database
     const user = await User.findOne({ where: { username } });
-    console.log('User:', user); // Log user details
-
+    console.log('User:', user); 
+    
     if (!user) {
       throw new Error('Invalid username or password');
     }
 
+    if (user.status !== 'active') {
+      throw new Error('Account is not active');
+    }
+
+    // Memeriksa apakah password cocok
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log('Password match:', isMatch); // Log password match result
+    console.log('Password match:', isMatch); 
 
     if (!isMatch) {
       throw new Error('Invalid username or password');
     }
 
+    // Menghasilkan token JWT
     const token = jwt.sign(
       { username: user.username, role: user.role },
       jwtSecret,
@@ -35,20 +43,28 @@ async function loginUser(username, password) {
     );
     console.log('Generated Token:', token);
 
+    // Mengembalikan hasil login
     return {
       message: 'Login successful',
       token,
       user: {
         id: user.id,
         username: user.username,
-        role: user.role
+        name: user.name, 
+        role: user.role,
+        telepon: user.telepon,
+        photo: user.photo,
       }
     };
   } catch (error) {
-    console.error('Login error:', error.message); // Log error
-    throw error;
+    console.error('Login error:', error.message); 
+    return {
+      status: 400,
+      message: error.message
+    };
   }
 }
+
 
 
 // Fungsi untuk verifikasi token
@@ -81,8 +97,9 @@ async function verifyToken(token) {
         id: user.id,
         username: user.username,
         name: user.name,
-        // telepon: user.telepon,
-        role: user.role
+        telepon: user.telepon,
+        role: user.role,
+        photo: user.photo,
       }
     };
   } catch (error) {
@@ -92,15 +109,15 @@ async function verifyToken(token) {
 }
 
 
-
-
-
-
-async function addUser(username, name, telepon, role, password) {
+async function addUser(username, name, telepon, role, password, photo) {
   try {
 
-    if (!username || !name || !telepon || !role || !password) {
+    if (!username || !name || !telepon || !role || !password || !photo) {
       throw new Error('All fields are required');
+    }
+
+    if (!validator.isMobilePhone(telepon, 'id-ID')) {
+      throw new Error('Invalid phone number format');
     }
 
     // Cek apakah username sudah ada di database
@@ -119,7 +136,9 @@ async function addUser(username, name, telepon, role, password) {
       name,
       telepon,
       password: hashedPassword,
-      role
+      role,
+      photo,
+      status: 'active'
     });
 
     return {
@@ -197,15 +216,55 @@ async function superadminLogin(username, password) {
 //   }
 // }
 
+
+  // async function getAllUsers() {
+  //   try {
+  //     const result = await pool.query(`SELECT * FROM users`);
+  //     return result.rows;
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // }
+
   async function getAllUsers() {
     try {
-      const result = await pool.query(`SELECT * FROM users`);
-      return result.rows;
+      const users = await User.findAll({
+        order: [['createdAt', 'DESC']],
+      });
+      console.log(users);  
+      return users; 
     } catch (error) {
       throw error;
     }
   }
 
+  
+async function updateUserStatus(userId, newStatus) {
+    try {
+      const validStatuses = ['active', 'inactive'];
+      console.log(`Updating status for user ${userId} to ${newStatus}`);
+
+
+      if (!validStatuses.includes(newStatus)) {
+        throw new Error('Invalid status value. Allowed values are "active" or "inactive".');
+      }
+  
+      const user = await User.findByPk(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+  
+      user.status = newStatus;
+      await user.save();
+  
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
+  
+  
+  
   async function getUserById(id) {
     try {
       const result = await pool.query(`SELECT * FROM users WHERE id = $1`, [id]);
@@ -215,10 +274,10 @@ async function superadminLogin(username, password) {
       return result.rows[0];
     } catch (error) {
       throw error;
-    }
+    } 
   }
 
-  async function updateUser(id, { username, name, telepon, password, role }) {
+  async function updateUser(id, { username, name, telepon, password, role, photo }) {
     try {
       // Cek apakah pengguna dengan ID yang diberikan ada di database
       const checkUser = await pool.query(
@@ -258,6 +317,11 @@ async function superadminLogin(username, password) {
         updateQuery += `role = $${index++}, `;
         values.push(role);
       }
+      if (photo) {
+        // Update kolom foto jika ada foto baru
+        updateQuery += `photo = $${index++}, `;
+        values.push(photo);
+      }
   
       // Hapus trailing comma dan spasi
       updateQuery = updateQuery.slice(0, -2);
@@ -275,6 +339,14 @@ async function superadminLogin(username, password) {
       throw error;
     }
   }
+
+async function updateUserRole(id, role) {
+  const query = 'UPDATE users SET role = $1 WHERE id = $2 RETURNING *';
+  const values = [role, id];
+  const result = await pool.query(query, values);
+  return result.rows[0];
+}
+
 
 async function updatePassword(id, newPassword) {
   try {
@@ -314,10 +386,12 @@ async function updatePassword(id, newPassword) {
     loginUser,
     verifyToken,
     superadminLogin,
+    updateUserStatus,
     addUser,
     getAllUsers,
     getUserById,
     updateUser,
     deleteUser,
-    updatePassword
+    updatePassword,
+    updateUserRole
  };

@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const pool = require('./connection');
 const {Transaksi, Member} = require('./models/transaksi');
 const sequelize = require('./configdb');
+const Product = require ('./models/product')
 
 
 // Fungsi untuk login kasir
@@ -34,7 +35,7 @@ async function cashierLogin(username, password) {
 async function getListProducts() {
     try {
         // Query untuk mengambil semua data produk dari database
-        const result = await pool.query('SELECT product_code, brand, type, price FROM products');
+        const result = await pool.query('SELECT product_code, product_name, brand, type, price FROM products');
         return result.rows;
     } catch (error) {
         throw new Error('Error fetching products: ' + error.message);
@@ -111,18 +112,59 @@ async function deleteCustomer(id) {
     }
 }
 
-async function createTransaction({ transaction_code, member_id, cashier, total, payment, change, items }) {
+async function createTransaction({ transaction_code, member_id, id_cashier,  cashier, total, payment_method, debit, payment, change, items }) {
+
     try {
+
         const newTransaction = await Transaksi.create({
             transaction_code,
             member_id: member_id !== null ? member_id : 0, // Simpan member_id jika ada, jika tidak null
+            id_cashier,
             cashier,
             transaction_date: new Date(),
             total,
+            payment_method,
+            debit,
             payment,
             change,
-            items,  // Items akan disimpan sebagai JSONB
+            items,
         });
+
+        console.log(items);
+        
+          for (const item of items) {
+            const result = await pool.query('SELECT * FROM products WHERE product_code = $1', [item.product_code]);
+            if (result.rows.length === 0) {
+                throw new Error('Product not found');
+            }
+            console.log(result.rows[0]);
+            const stok = result.rows[0].stock - item.qty;
+        
+            await pool.query('update products SET stock = $1  WHERE product_code = $2', 
+            [stok,
+                item.product_code]);
+
+            // if (!product) {
+                // throw new Error(`Product with code ${item.product_code} not found.`);
+            // }
+
+            // if (product.stock < item.qty) {
+                // throw new Error(`Insufficient stock for product ${item.product_code}.`);
+            // }
+
+        }
+
+        // for (const item of items) {
+            // await TransaksiItems.create({
+                // transaction_code: newTransaction.transaction_code,
+                // product_code: item.product_code,
+                // quantity: item.qty,
+                // price: item.price,
+                // brand: item.brand,
+                // type: item.type
+            // } );
+        // }
+
 
         return newTransaction;
     } catch (error) {
@@ -144,6 +186,11 @@ async function getTransactionReportByCashier(cashierName) {
                 cashier: cashierName
             }
         });
+
+        // Memeriksa apakah transaksi ditemukan
+        if (transactions.length === 0) {
+            return { message: 'No transactions found for this cashier' };
+        }
 
         const transactionsData = transactions.map(transaction => ({
             transaction_code: transaction.transaction_code,

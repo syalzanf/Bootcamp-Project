@@ -106,6 +106,7 @@ const Stok = React.lazy(() => import('./views/pages/barang/Stok'))
 const CustomersList = React.lazy(() => import('./views/pages/customers/CustomersList'))
 const Customers = React.lazy(() => import('./views/pages/customers/Customers'))
 const LaporanPenjualan = React.lazy(() => import('./views/pages/laporan/LaporanPenjualan'))
+const LaporanPenjualanCashier = React.lazy(() => import('./views/pages/laporan/LaporanPenjualanCashier'))
 const Transaksi = React.lazy(() => import('./views/pages/transaksi/Transaksi'))
 const DataUser = React.lazy(() => import('./views/pages/users/DataUsers'))
 const LogAktivitas = React.lazy(() => import('./views/pages/users/LogAktivitas'))
@@ -127,6 +128,8 @@ const adminRoutes = [
     path: '/dashboard-admin',
     name: <Translation>{(t) => t('Dashboard')}</Translation>,
     element: DashboardAdmin,
+    exact: true,
+
   },
   {
     path: '/data-barang',
@@ -138,16 +141,22 @@ const adminRoutes = [
     path: '/stok',
     name: <Translation>{(t) => t('Stok')}</Translation>,
     element: Stok,
+    exact: true,
+
   },
   {
-    path: '/customerList',
+    path: '/customer-list',
     name: <Translation>{(t) => t('Customers')}</Translation>,
     element: CustomersList,
+    exact: true,
+
   },
   {
-    path: '/laporanPenjualan',
+    path: '/laporan-penjualan',
     name: <Translation>{(t) => t('Laporan Penjualan')}</Translation>,
     element: LaporanPenjualan,
+    exact: true,
+
   } 
 ];
 
@@ -157,17 +166,30 @@ const cashierRoutes = [
     path: '/dashboard-cashier',
     name: <Translation>{(t) => t('Dashboard')}</Translation>,
     element: DashboardCashier,
+    exact: true,
+
   },
   {
     path: '/transaksi',
     name: <Translation>{(t) => t('Transaksi')}</Translation>,
     element: Transaksi,
+    exact: true,
+
   },
   {
     path: '/customers',
     name: <Translation>{(t) => t('Customers')}</Translation>,
     element: Customers,
+    exact: true,
+
   },
+  {
+    path: '/laporan-penjualan-cashier',
+    name: <Translation>{(t) => t('Laporan Penjualan')}</Translation>,
+    element: LaporanPenjualanCashier,
+    exact: true,
+
+  } 
   
 ];
 
@@ -177,6 +199,8 @@ const superadminRoutes = [
     path: '/dashboard-superadmin',
     name: <Translation>{(t) => t('Dashboard')}</Translation>,
     element: DashboardSuperadmin,
+    exact: true,
+
   },
   {
     path: '/data-user',
@@ -200,16 +224,21 @@ const superadminRoutes = [
     path: '/stok',
     name: <Translation>{(t) => t('Stok')}</Translation>,
     element: Stok,
+    exact: true,
+
   },
   {
     path: '/customers',
     name: <Translation>{(t) => t('Customers')}</Translation>,
     element: Customers,
+    exact: true,
+
   },
   {
-    path: '/laporanPenjualan',
+    path: '/laporan-penjualan',
     name: <Translation>{(t) => t('Laporan Penjualan')}</Translation>,
     element: LaporanPenjualan,
+    exact: true,
   },
 ];
 

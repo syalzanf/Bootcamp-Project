@@ -20,6 +20,7 @@ const Stok = React.lazy(() => import('./views/pages/barang/Stok'))
 const CustomersList = React.lazy(() => import('./views/pages/customers/CustomersList'))
 const Customers = React.lazy(() => import('./views/pages/customers/Customers'))
 const LaporanPenjualan = React.lazy(() => import('./views/pages/laporan/LaporanPenjualan'))
+const LaporanPenjualanCashier = React.lazy(() => import('./views/pages/laporan/LaporanPenjualanCashier'))
 const Transaksi = React.lazy(() => import('./views/pages/transaksi/Transaksi'))
 const DataUser = React.lazy(() => import('./views/pages/users/DataUsers'))
 const LogAktivitas = React.lazy(() => import('./views/pages/users/LogAktivitas'))
@@ -86,10 +87,11 @@ const App = () => {
 
                 <Route exact path="/data-barang" element={<DataBarang />} />
                 <Route exact path="/stok"element={<Stok />} />
-                <Route exact path="/customersList" element={<CustomersList />} />
+                <Route exact path="/customer-list" element={<CustomersList />} />
                 <Route exact path="/customers" element={<Customers />} />
                 <Route exact path="/transaksi" element={<Transaksi />} />
-                <Route exact path="/laporanPenjualan" element={<LaporanPenjualan />} />
+                <Route exact path="/laporan-penjualan" element={<LaporanPenjualan />} />
+                <Route exact path="/laporan-penjualan-cashier" element={<LaporanPenjualanCashier />} />
                 <Route exact path="/data-user" element={<DataUser />} />
                 <Route exact path="/app-log" element={<LogAktivitas />} />
 

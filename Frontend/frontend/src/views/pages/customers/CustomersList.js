@@ -9,38 +9,36 @@ import {
   CSmartTable,
 } from '@coreui/react-pro';
 
-const CustomerList = () => {
+  const CustomerList = () => {
   const [customerData, setCustomerData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log('Customers component rendered');
-
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        
-        const response = await axios.get('http://localhost:3000/api/admin/customers', {
-          headers: { Authorization: `${token}` },
-          withCredentials: true
-        });
-        if (Array.isArray(response.data)) {
-          setCustomerData(response.data);
-        } else {
-          console.error('Data format is not an array:', response.data);
-          setCustomerData([]);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error.response ? error.response.data : error.message);
-        setError(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:3000/api/admin/customers', {
+        headers: { Authorization: `${token}` },
+        withCredentials: true
+      });
+      if (Array.isArray(response.data)) {
+        setCustomerData(response.data);
+
+      } else {
+        console.error('Data format is not an array:', response.data);
+        setCustomerData([]);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error.response ? error.response.data : error.message);
+      setError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return <div className="pt-3 text-center">Loading...</div>;
@@ -67,7 +65,7 @@ const CustomerList = () => {
           <CCardBody>
           <CSmartTable
               clickableRows
-              tableProps={{ 
+              tableProps={{
                 striped: true,
                 hover: true
               }}
@@ -80,6 +78,7 @@ const CustomerList = () => {
               itemsPerPage={5}
               columnSorter
               pagination
+              
             />
           </CCardBody>
         </CCard>

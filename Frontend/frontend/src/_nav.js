@@ -5,7 +5,7 @@ import {
   cilCalculator,
   cilCalendar,
   cilChartPie,
-  cilCursor,  
+  cilCursor,
   cilDrop,
   cilEnvelopeOpen,
   cilGrid,
@@ -20,6 +20,8 @@ import {
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react-pro'
 import { Translation } from 'react-i18next'
+// import { adminRoutes, cashierRoutes, superadminRoutes } from '../routes';
+
 
 const _navAdmin = [
   {
@@ -43,13 +45,13 @@ const _navAdmin = [
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Customers')}</Translation>,
-    to: '/customersList',
+    to: '/customer-list',
     icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Laporan Penjualan')}</Translation>,
-    to: '/laporanPenjualan',
+    to: '/laporan-penjualan',
     icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
   }
 ]
@@ -73,6 +75,12 @@ const _navCashier = [
     to: '/customers',
     icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
   },
+  {
+    component: CNavItem,
+    name: <Translation>{(t) => t('Laporan Penjualan')}</Translation>,
+    to: '/laporan-penjualan-cashier',
+    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+  }
 ]
 
 const _navSuperadmin = [
@@ -109,19 +117,19 @@ const _navSuperadmin = [
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Customers')}</Translation>,
-    to: '/customers-cashier',
+    to: '/customers',
     icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Laporan Penjualan')}</Translation>,
-    to: '/laporanPenjualan',
+    to: '/laporan-penjualan',
     icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
   }
 ]
 
 
-export { _navAdmin, _navCashier, _navSuperadmin }; 
+export { _navAdmin, _navCashier, _navSuperadmin };
 
 
 // const _nav = [

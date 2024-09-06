@@ -15,7 +15,9 @@ import {
   CForm,
   CFormLabel,
   CFormInput,
+  CFormFeedback,
   CMultiSelect,
+  CAlert
 } from '@coreui/react-pro'
 import { CSmartTable } from '@coreui/react-pro'
 
@@ -32,16 +34,19 @@ const Stok = () => {
     price: '',
     stock: 0,
   })
+  const [validated, setValidated] = useState(false)
+  const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
+
 
   // Fetch data from the API
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token')
 
-      const response = await axios.get('http://localhost:3000/api/admin/products/stock',  {
+      const response = await axios.get('http://localhost:3000/api/admin/products/stock', {
         headers: { Authorization: `${token}` },
-        withCredentials: true
-      });
+        withCredentials: true,
+      })
 
       setData(response.data)
     } catch (error) {
@@ -71,13 +76,13 @@ const Stok = () => {
 
     if (selectedCode) {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token')
 
-        const response = await axios.get(`http://localhost:3000/api/admin/products/${selectedCode}`,  {
+        const response = await axios.get(`http://localhost:3000/api/admin/products/${selectedCode}`, {
           headers: { Authorization: `${token}` },
-          withCredentials: true
-        });
-        
+          withCredentials: true,
+        })
+
         const product = response.data
         setFormValues({
           ...formValues,
@@ -85,7 +90,8 @@ const Stok = () => {
           product_name: product.product_name,
           brand: product.brand,
           type: product.type,
-          stock: product.stock,
+          stock: product.stock >= 0 ? product.stock : 0,
+          // stock: product.stock,
           price: product.price,
         })
       } catch (error) {
@@ -95,33 +101,79 @@ const Stok = () => {
   }
 
   // Handle form submission to add stock
-  const handleSubmit = async () => {
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    const form = event.currentTarget
+
+    if (form.checkValidity() === false) {
+      event.stopPropagation()
+      setValidated(true)
+      return
+    }
+
+    // Pastikan ada data pada form
+    if (!formValues.product_code || !formValues.product_name || !formValues.brand || !formValues.type || !formValues.stock || !formValues.price) {
+      setValidated(true)
+      return
+    }
+
     const newStock = Number(formValues.stock)
     if (isNaN(newStock) || newStock <= 0) {
       console.error('Invalid stock value')
       return
     }
 
+    setValidated(true)
+
     try {
-      const token = localStorage.getItem('token');
-      const productCode = formValues.product_code;
+      const token = localStorage.getItem('token')
+      const productCode = formValues.product_code
 
-
-      await axios.post(`http://localhost:3000/api/admin/products/stock/${formValues.product_code}`, {
-      formValues,
-      stock: newStock, 
-      },
-      {
+      await axios.post(`http://localhost:3000/api/admin/products/stock/${productCode}`, {
+        formValues,
+        stock: newStock,
+      }, {
         headers: { Authorization: `${token}` },
         withCredentials: true,
       })
-   
+
+      showAlert('Product successfully Added!', 'light');
 
       setModalVisible(false)
       fetchData()
     } catch (error) {
       console.error('Error adding stock:', error.response ? error.response.data : error.message)
     }
+  }
+
+  const showAlert = (message, color) => {
+    setAlert({
+      visible: true,
+      message,
+      color
+    });
+    setTimeout(() => {
+      setAlert(prev => ({ ...prev, visible: false }));
+    }, 3000);
+  };
+
+  // Reset form values
+  const resetForm = () => {
+    setFormValues({
+      product_code: '',
+      product_name: '',
+      brand: '',
+      type: '',
+      price: '',
+      stock: 0,
+    })
+    setValidated(false)
+  }
+
+  // Handle modal close
+  const handleModalClose = () => {
+    setModalVisible(false)
+    resetForm()
   }
 
   const options = data.map((item) => ({
@@ -135,6 +187,7 @@ const Stok = () => {
     { key: 'brand', label: 'Merk', _style: { width: '20%' } },
     { key: 'type', label: 'Tipe', _style: { width: '20%' } },
     { key: 'stock', label: 'Stok', _style: { width: '10%' } },
+
   ]
 
   if (loading) {
@@ -148,6 +201,12 @@ const Stok = () => {
   return (
     <CRow>
       <CCol xs={12}>
+      <div className="mb-3">
+        {alert.visible && (
+          <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
+            {alert.message}
+          </CAlert>
+        )}
         <div className="d-flex justify-content-between align-items-center mb-3">
           <CButton
             color="primary"
@@ -158,6 +217,7 @@ const Stok = () => {
             Tambah Stok
           </CButton>
         </div>
+      </div>
         <CCard className="mb-4">
           <CCardHeader>
             <strong>Product Stock Table</strong>
@@ -186,12 +246,12 @@ const Stok = () => {
       </CCol>
 
       {/* Modal untuk menambah stok */}
-      <CModal alignment="center" visible={modalVisible} onClose={() => setModalVisible(false)}>
+      <CModal alignment="center" visible={modalVisible} onClose={handleModalClose}>
         <CModalHeader>
           <CModalTitle>Add Stock</CModalTitle>
         </CModalHeader>
         <CModalBody>
-          <CForm>
+          <CForm noValidate validated={validated} onSubmit={handleSubmit}>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="product_code" className="col-form-label">
@@ -205,7 +265,9 @@ const Stok = () => {
                   multiple={false}
                   onChange={handleProductCodeChange}
                   value={options.find((option) => option.value === formValues.product_code)}
+                  required
                 />
+                <CFormFeedback invalid>Kode Barang is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -220,7 +282,9 @@ const Stok = () => {
                   name="brand"
                   value={formValues.brand}
                   readOnly
+                  required
                 />
+                <CFormFeedback invalid>Merk is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -235,7 +299,9 @@ const Stok = () => {
                   name="type"
                   value={formValues.type}
                   readOnly
+                  required
                 />
+                <CFormFeedback invalid>Tipe is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -249,37 +315,42 @@ const Stok = () => {
                   id="stock"
                   name="stock"
                   type="number"
-                  // value={formValues.stock}
                   onChange={handleChange}
                   min="0"
+                  required
                 />
+                <CFormFeedback invalid>Stock is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="price" className="col-form-label">
-                  Harga
+                  Price
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput
                   id="price"
                   name="price"
+                  type="number"
                   value={formValues.price}
-                  readOnly
+                  onChange={handleChange}
+                  min="0"
+                  required
                 />
+                <CFormFeedback invalid>Price is required.</CFormFeedback>
               </CCol>
             </CRow>
+            <CModalFooter>
+              <CButton color="secondary" onClick={handleModalClose}>
+                Close
+              </CButton>
+              <CButton type="submit" color="primary">
+                Add Stock
+              </CButton>
+            </CModalFooter>
           </CForm>
         </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setModalVisible(false)}>
-            Cancel
-          </CButton>
-          <CButton color="primary" onClick={handleSubmit}>
-            Save
-          </CButton>
-        </CModalFooter>
       </CModal>
     </CRow>
   )

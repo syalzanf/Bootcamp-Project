@@ -1,176 +1,453 @@
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import {
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CCardTitle,
+  CForm,
+  CFormLabel,
+  CFormInput,
+  CButton,
+  CRow,
+  CCol,
+  CMultiSelect,
+  CTable,
+  CTableBody,
+  CTableHead,
+  CTableHeaderCell,
+  CTableRow,
+  CTableDataCell,
+  CFormSelect
+} from '@coreui/react-pro';
 
 const TransactionPage = () => {
-    const [products, setProducts] = useState([]);
-    const [selectedProduct, setSelectedProduct] = useState(null);
-    const [cart, setCart] = useState([]);
-    const [total, setTotal] = useState(0);
-    const [payment, setPayment] = useState(0);
-    const [change, setChange] = useState(0);
-    const [memberId, setMemberId] = useState(null);
+  const [userName, setUserName] = useState('');
+  const [cartItems, setCartItems] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [formValues, setFormValues] = useState({
+    product_code: '',
+    product_name: '',
+    brand: '',
+    type: '',
+    price: '',
+    qty: '',
+  });
+  const [member, setMember] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('cash'); // Default cash
+  const [payment, setPayment] = useState('');
+  const [total, setTotal] = useState('');
+  const [change, setChange] = useState('');
+  const [transactionCode, setTransactionCode] = useState('');
+  const [transactionDate, setTransactionDate] = useState('');
+  const [debitCardCode, setDebitCardCode] = useState(''); 
 
-    useEffect(() => {
-        // Fetch products for the select dropdown
-        const fetchProducts = async () => {
-            try {
-                const response = await axios.get('/api/products');
-                setProducts(response.data);
-            } catch (error) {
-                console.error('Error fetching products:', error);
-            }
-        };
-        fetchProducts();
-    }, []);
+  useEffect(() => {
+    axios.get('http://localhost:3000/api/cashier/products')
+      .then(response => {
+        setProducts(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching products:', error);
+      });
 
-    const handleProductSelect = async (query) => {
-        try {
-            const response = await axios.get(`/api/products/${query}`);
-            setSelectedProduct(response.data);
-        } catch (error) {
-            console.error('Error fetching product details:', error);
-        }
+    // Ambil nama user dari localStorage
+    const storedUserName = localStorage.getItem('userName');
+    if (storedUserName) {
+      setUserName(storedUserName);
+    }
+  }, []);
+
+
+  useEffect(() => {
+    if (paymentMethod === 'debit') {
+      setPayment(total); 
+    }
+  }, [paymentMethod, total]);
+
+
+  const handleProductSelect = (selectedCode) => {
+    console.log('Selected Code:', selectedCode);
+
+    const selectedProduct = products.find(product => product.product_code === selectedCode);
+
+    console.log('Selected Product:', selectedProduct);
+
+    if (selectedProduct) {
+      setFormValues({
+        ...formValues,
+        product_code: selectedProduct.product_code,
+        product_name: selectedProduct.product_name,
+        brand: selectedProduct.brand,
+        type: selectedProduct.type,
+        price: selectedProduct.price,
+        qty: '',
+      });
+    } else {
+      setFormValues({
+        ...formValues,
+        product_code: '',
+        product_name: '',
+        brand: '',
+        type: '',
+        price: '',
+        qty: '',
+      });
+    }
+  };
+
+  const handleQtyChange = (e) => {
+    const qty = e.target.value;
+    setFormValues({
+      ...formValues,
+      qty: qty,
+    });
+  };
+
+  const addItemToCart = () => {
+    const newItem = { ...formValues, qty: Number(formValues.qty) };
+    if (newItem.qty <= 0) {
+      alert('Quantity must be greater than 0.');
+      return;
+    }
+    const updatedCart = [...cartItems, newItem];
+    setCartItems(updatedCart);
+    updateTotal(updatedCart);
+
+    // Reset form values
+    setFormValues({
+      product_code: '',
+      product_name: '',
+      brand: '',
+      type: '',
+      price: '',
+      qty: '',
+    });
+  };
+
+  const removeItemFromCart = (index) => {
+    const updatedCart = cartItems.filter((_, i) => i !== index);
+    setCartItems(updatedCart);
+    updateTotal(updatedCart);
+  };
+
+  const updateTotal = (items) => {
+    const totalAmount = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+    setTotal(totalAmount);
+  };
+
+  useEffect(() => {
+    setChange(payment >= total ? payment - total : 0);
+  }, [payment, total]);
+
+  const handlePaymentMethodChange = (e) => {
+    const method = e.target.value;
+    setPaymentMethod(method);
+    if (method === 'cash') {
+      setPayment(''); 
+    }
+  };
+
+  const handlePaymentChange = (e) => {
+    const value = e.target.value;
+    setPayment(value ? Number(value) : '');
+  };
+
+  const handleDebitCardCodeChange = (e) => {
+    setDebitCardCode(e.target.value);
+  };
+
+  const handleSubmitTransaction = async () => {
+    const cashier = localStorage.getItem('userName');
+    const transactionData = {
+      transaction_code: transactionCode,
+      id_cashier: localStorage.getItem("id"),
+      member_id: member ? member : null,
+      cashier,
+      total,
+      payment_method: paymentMethod,
+      debit_card_code: paymentMethod === 'debit' && debitCardCode ? debitCardCode : undefined,
+      payment,
+      change,
+      items: cartItems,
     };
 
-    const addItemToCart = () => {
-        if (selectedProduct) {
-            const item = {
-                product_code: selectedProduct.product_code,
-                name: selectedProduct.name,
-                brand: selectedProduct.brand,
-                type: selectedProduct.type,
-                price: selectedProduct.price,
-                image: selectedProduct.image,
-                quantity: 1,
-            };
+    try {
+      const response = await axios.post('http://localhost:3000/api/cashier/transaksi', transactionData);
+      alert('Transaksi berhasil dibuat!');
 
-            setCart([...cart, item]);
-            setTotal(total + item.price);
-            setSelectedProduct(null);
-        }
-    };
+      // Reset form after successful transaction
+      setCartItems([]);
+      setFormValues({
+        product_code: '',
+        product_name: '',
+        brand: '',
+        type: '',
+        price: '',
+        qty: '',
+      });
+      setMember('');
+      setDebitCardCode('');
+      setPaymentMethod('cash'); 
+      setPayment('');
+      setTotal('');
+      setChange('');
+    } catch (error) {
+      alert('Gagal membuat transaksi: ' + error.message);
+    }
+  };
 
-    const handlePaymentChange = (e) => {
-        const paymentValue = parseFloat(e.target.value);
-        setPayment(paymentValue);
-        setChange(paymentValue - total);
-    };
+  const options = products.map((item) => ({
+    value: item.product_code,
+    label: `${item.product_code} - ${item.product_name}`,
+  }));  
 
-    const handleSubmitTransaction = async () => {
-        const transactionData = {
-            transaction_code: `TRX-${Date.now()}`,
-            member_id: memberId,
-            cashier: 'Cashier Name', // Replace with actual cashier name
-            total,
-            payment,
-            change,
-            items: cart,
-        };
+  return (
+    <div>
+      <CRow>
+      <CCol md={6}>
+      <CCard>
+        <CCardHeader>
+          <CCardTitle>Form Transaksi</CCardTitle>
+        </CCardHeader>
+        <CCardBody>
+          <CForm>
+            {/* <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="transaction_code">Kode Transaksi</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="transaction_code"
+                  value={transactionCode}
+                  readOnly
+                  plainText
+                />
+              </CCol>
+            </CRow> */}
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="transaction_date">Tanggal</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="transaction_date"
+                  value={transactionDate}
+                  readOnly
+                  plainText
+                />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="user_name">Kasir</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="user_name"
+                  value={userName}
+                  readOnly
+                  plainText
+                />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="product_code">Kode Barang</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CMultiSelect
+                  options={options}
+                  optionsStyle="text"
+                  multiple={false}
+                  onChange={(selectedOptions) => handleProductSelect(selectedOptions[0]?.value)} 
+                  value={formValues.product_code}
+                />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="product_name">Nama Barang</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput id="product_name" value={formValues.product_name} readOnly />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="brand">Merk</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput id="brand" value={formValues.brand} readOnly />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="type">Tipe</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput id="type" value={formValues.type} readOnly />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="price">Harga</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput id="price" value={formValues.price} readOnly />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="qty">Qty</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="qty"
+                  type="number"
+                  value={formValues.qty}
+                  onChange={handleQtyChange}
+                />
+              </CCol>
+            </CRow>
+            <CButton color="primary" onClick={addItemToCart}>
+              Add to Cart
+            </CButton>
+            </CForm>
+            </CCardBody>
+          </CCard>
+          </CCol>
 
-        try {
-            const response = await axios.post('/api/cashier/transaksi', transactionData);
-            alert('Transaction successful');
-            // Reset the form after successful transaction
-            setCart([]);
-            setTotal(0);
-            setPayment(0);
-            setChange(0);
-            setMemberId(null);
-            // Optionally print the receipt
-            console.log('Receipt:', response.data);
-        } catch (error) {
-            console.error('Error creating transaction:', error);
-            alert('Transaction failed');
-        }
-    };
 
-    return (
-        <div className="container">
-            <div className="row">
-                {/* Left Side - Add Item Form */}
-                <div className="col-md-6">
-                    <h4>Add Item to Cart</h4>
-                    <div className="form-group">
-                        <label>Filter by Code or Name</label>
-                        <select className="form-control" onChange={(e) => handleProductSelect(e.target.value)}>
-                            <option value="">Select a product...</option>
-                            {products.map((product) => (
-                                <option key={product.product_code} value={product.product_code}>
-                                    {product.product_code} - {product.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+          <CCol md={6}>
+            <CCard>
+            <CCardHeader>
+              <CCardTitle>Cart Items</CCardTitle>
+            </CCardHeader>
+            <CCardBody>
+              <CTable>
+                <CTableHead>
+                  <CTableRow>
+                    <CTableHeaderCell>Product Code</CTableHeaderCell>
+                    <CTableHeaderCell>Name</CTableHeaderCell>
+                    <CTableHeaderCell>Brand</CTableHeaderCell>
+                    <CTableHeaderCell>Type</CTableHeaderCell>
+                    <CTableHeaderCell>Price</CTableHeaderCell>
+                    <CTableHeaderCell>Qty</CTableHeaderCell>
+                    <CTableHeaderCell>Subtotal</CTableHeaderCell>
+                    <CTableHeaderCell>Actions</CTableHeaderCell>
+                  </CTableRow>
+                </CTableHead>
+                <CTableBody>
+                  {cartItems.map((item, index) => (
+                    <CTableRow key={index}>
+                      <CTableDataCell>{item.product_code}</CTableDataCell>
+                      <CTableDataCell>{item.product_name}</CTableDataCell>
+                      <CTableDataCell>{item.brand}</CTableDataCell>
+                      <CTableDataCell>{item.type}</CTableDataCell>
+                      <CTableDataCell>{item.price}</CTableDataCell>
+                      <CTableDataCell>{item.qty}</CTableDataCell>
+                      <CTableDataCell>{item.price * item.qty}</CTableDataCell>
+                      <CTableDataCell>
+                        <CButton color="danger" onClick={() => removeItemFromCart(index)}>
+                          Remove
+                        </CButton>
+                      </CTableDataCell>
+                    </CTableRow>
+                  ))}
+                </CTableBody>
+              </CTable>
 
-                    {selectedProduct && (
-                        <div>
-                            <h5>Product Details</h5>
-                            <p>Brand: {selectedProduct.brand}</p>
-                            <p>Type: {selectedProduct.type}</p>
-                            <p>Price: ${selectedProduct.price}</p>
-                            <img src={selectedProduct.image} alt={selectedProduct.name} style={{ width: '100px' }} />
-                            <button className="btn btn-primary mt-3" onClick={addItemToCart}>Add to Cart</button>
-                        </div>
-                    )}
-                </div>
+            <CForm>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="total">Total</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput id="total" value={total} readOnly />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="total">Member</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                    id="total"
+                    value={member}
+                    onChange={(e) => setMember(e.target.value)}
+                />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="payment">Payment Method</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                    <CFormSelect
+                      id="payment_method"
+                      value={paymentMethod}
+                      onChange={handlePaymentMethodChange}
+                    >
+                      <option value="cash">Cash</option>
+                      <option value="debit">Debit</option>
+                    </CFormSelect>
+              </CCol>
+            </CRow>
 
-                {/* Right Side - Cart and Payment */}
-                <div className="col-md-6">
-                    <h4>Cart</h4>
-                    <table className="table">
-                        <thead>
-                            <tr>
-                                <th>Product Code</th>
-                                <th>Name</th>
-                                <th>Brand</th>
-                                <th>Type</th>
-                                <th>Price</th>
-                                <th>Quantity</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {cart.map((item, index) => (
-                                <tr key={index}>
-                                    <td>{item.product_code}</td>
-                                    <td>{item.name}</td>
-                                    <td>{item.brand}</td>
-                                    <td>{item.type}</td>
-                                    <td>${item.price}</td>
-                                    <td>{item.quantity}</td>
-                                    <td>${item.price * item.quantity}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <h4>Total: ${total}</h4>
-
-                    <div className="form-group">
-                        <label>Member ID (Optional)</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={memberId || ''}
-                            onChange={(e) => setMemberId(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Payment</label>
-                        <input
-                            type="number"
-                            className="form-control"
-                            value={payment}
-                            onChange={handlePaymentChange}
-                        />
-                    </div>
-                    <h4>Change: ${change}</h4>
-
-                    <button className="btn btn-success mt-3" onClick={handleSubmitTransaction}>Submit Transaction</button>
-                </div>
-            </div>
-        </div>
-    );
-};
+            {paymentMethod === 'debit' && (
+                  <CRow className="mb-3">
+                    <CCol sm={3}>
+                      <CFormLabel htmlFor="debit_card_code">Kode Kartu Debit (Opsional)</CFormLabel>
+                    </CCol>
+                    <CCol sm={9}>
+                      <CFormInput
+                        id="debit_card_code"
+                        value={debitCardCode}
+                        onChange={handleDebitCardCodeChange}
+                      />
+                    </CCol>
+                  </CRow>
+                )}
+            
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="payment">Payment</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="payment"
+                  type="text"
+                  value={payment}
+                  onChange={handlePaymentChange}
+                />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="change">Change</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="change"
+                  value={`Rp. ${change}`}
+                  readOnly
+                />
+              </CCol>
+            </CRow>
+            <CButton color="success" onClick={handleSubmitTransaction}>
+              Submit
+            </CButton>
+          </CForm>
+        </CCardBody>
+      </CCard>
+          </CCol>
+      </CRow>
+    </div>
+  );
+}
 
 export default TransactionPage;
+
+

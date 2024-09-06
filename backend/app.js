@@ -1,4 +1,5 @@
   const express = require('express');
+  const validator = require('validator');
   const superadmin = require('./superadmin');
   const admin = require('./admin');
   const cashier = require('./cashier');
@@ -13,12 +14,14 @@
   const path = require('path');
   const cors = require('cors');
   const cookieParser = require('cookie-parser');
-  const session = require('express-session');
-   
+  const session = require('express-session'); 
+
+  
   const sequelize = require('./configdb');
   require('dotenv').config(); 
   const jwt = require('jsonwebtoken');
   const User = require('./models/user');
+  const Transaksi = require('./models/transaksi');
   const jwtSecret = process.env.ACCESS_TOKEN_SECRET;
 
 
@@ -50,63 +53,39 @@
       .catch(err => console.error('Unable to sync database:', err));
 
 
-  // Membuat path absolut ke folder 'uploads'
-  const uploadDir = path.join(__dirname, 'uploads');
-
-  // Membuat folder 'uploads' jika belum ada
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
-  // Setup Multer for file handling
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, 'uploads/'); // Upload folder
+      cb(null, path.join(__dirname, 'public/uploads')); 
     },
     filename: (req, file, cb) => {
-      cb(null, Date.now() + path.extname(file.originalname)); // File name 
-    }
+      cb(null, Date.now() + path.extname(file.originalname));
+    },
   });
 
-
-  // File filter untuk memastikan hanya gambar yang bisa diunggah
-  const fileFilter = (req, file, cb) => {
-    // Mencari ekstensi file yang diperbolehkan
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {  
-      cb(new Error('Only images are allowed'), false);
-    }
-  };
 
   const upload = multer({ 
     storage: storage,
-    fileFilter: fileFilter 
-  });
+    limits: { fileSize: 1024 * 1024 }, //batas file 1MB
+    fileFilter: function (req, file, cb) {
+        const filetypes = /jpeg|jpg|png/; 
+        const mimetype = filetypes.test(file.mimetype);
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
 
-
-  // app.use(cors({
-  //   origin: function (origin, callback) {
-  //     if (!origin) return callback(null, true);
-  //     if (allowedOrigins.indexOf(origin) !== -1) {
-  //       callback(null, true);
-  //     } else {
-  //       callback(new Error('Not allowed by CORS'));
-  //     }
-  //   }
-  // }));
+        if (mimetype && extname) {
+            return cb(null, true);
+        } else {
+            cb(new Error('Only .jpeg, .jpg and .png files are allowed!'));
+        }
+    }
+});
 
   app.use(cors({
     origin: 'http://localhost:3001',
-    credentials: true
+    credentials: true,
+    allowedHeaders: ['Authorization', 'Content-Type'],
   }));
   
-
-
-  app.use('/uploads', express.static(uploadDir));
-    
+  
   app.use(express.json());
   app.use(cookieParser());
 
@@ -122,6 +101,7 @@
 
 
   app.use(express.urlencoded({ extended: true }));
+  app.use(express.static(path.join(__dirname, 'public')));
 
 
   //Rute Admin
@@ -196,6 +176,9 @@
             id: user.id,
             username: user.username,
             role: user.role,
+            name: user.name,
+            telepon: user.telepon,
+            photo:user.photo,
             token: token
           },
         });
@@ -220,7 +203,28 @@
     return res.status(403).json({ message: 'Failed to authenticate token' });
   }
 });
-  
+
+// Rute update profile user
+// app.put('/api/profile', authenticateToken, upload.single('photo'), async (req, res) => {
+app.patch('/api/profile', authenticateToken, upload.single('photo'), async (req, res) => {
+
+  const { username, name, telepon, password, role } = req.body;
+  const userId = req.user.id; 
+  const photo = req.file ? `/uploads/${req.file.filename}` : null;
+
+  try {
+    const updatedUser = await superadmin.updateUser(userId, { username, name, telepon, password, role, photo });
+
+    res.status(200).json({
+      message: updatedUser.message,
+      user: updatedUser.user,
+      photo_url: photo ? `http://localhost:3000${updatedUser.user.photo}` : null,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 
   // Endpoint untuk verifikasi token
   app.post('/api/verify-token', async (req, res) => {
@@ -320,7 +324,27 @@
     const { product_code, product_name, brand, type, price, stock } = req.body;
     const image = req.file ? `uploads/${req.file.filename}`: null;
 
+     // Validasi input
+      if (validator.isEmpty(product_name)) {
+          return res.status(400).json({ message: 'Product name is required' });
+      }
+      if (!validator.isNumeric(price.toString()) || price <= 0) {
+          return res.status(400).json({ message: 'Invalid price' });
+      }
+      if (!validator.isInt(stock.toString(), { min: 0 })) {
+          return res.status(400).json({ message: 'Invalid stock' });
+      }
+
     try {
+
+       // Cek apakah produk sudah ada
+       const productExists = await admin.checkProductExists(product_code, product_name);
+        
+       if (productExists) {
+           return res.status(400).json({ message: 'Product already exists' });
+       }
+
+        // Tambah produk ke database
         const product = await admin.addProduct({ product_code, product_name, brand, type, price, stock, image});
         res.status(201).json({ 
           message: 'Product added successfully',
@@ -328,8 +352,11 @@
           image_url: `http://localhost:3000/${image}` 
         });
     } catch (error) {
+          if (error instanceof multer.MulterError) {
+            return res.status(400).json({ message: error.message });
+        }
         console.error(error);
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: 'Error adding product: ' + error.message });
     }
   });
 
@@ -388,7 +415,7 @@
   });
 
   // Rute untuk membaca semua customer
-  app.get('/api/admin/customers', authenticateToken,async (req, res) => {
+  app.get('/api/admin/customers', authenticateToken, async (req, res) => {
     try {
         const customers = await admin.getListCustomers();
         res.status(200).json(customers);
@@ -515,38 +542,74 @@
     }
   });
 
+  app.get('/api/cashier/next-transaction-code', async (req, res) => {
+      try {
+          const lastTransaction = await Transaksi.findOne({
+              order: [['id', 'DESC']],
+              attributes: ['transaction_code']
 
-  // Rute untuk membuat transaksi
+          });
+
+          let nextTransactionCode = 'TRX10001';
+
+          if (lastTransaction) {
+            const lastTransactionCode = lastTransaction.transaction_code;
+            const lastNumber = parseInt(lastTransactionCode.replace('TRX', ''), 10);
+            nextTransactionCode = 'TRX' + (lastNumber + 1).toString().padStart(5, '0');
+        }
+        
+        res.json({ nextCode: nextTransactionCode });
+      } catch (error) {
+        console.error('Error fetching next transaction code:', error);
+        res.status(500).json({ error: 'Internal server error' });;
+      }
+  });
+
+
   app.post('/api/cashier/transaksi', async (req, res) => {
     try {
-      const { transaction_code, member_id, cashier, total, payment, change, items } = req.body;
-
-      // Memanggil fungsi createTransaction untuk menyimpan transaksi ke database
+      const { 
+        transaction_code, 
+        member_id, 
+        id_cashier, 
+        cashier, 
+        total, 
+        payment_method, 
+        debit_card_code, 
+        payment, 
+        change, 
+        items 
+      } = req.body;
+  
       const newTransaction = await createTransaction({
           transaction_code,
           member_id,
+          id_cashier,
           cashier,
           total,
+          payment_method,
+          debit: payment_method === 'debit' && debit_card_code ? debit_card_code : null,
           payment,
           change,
           items
       });
-
-      // Mengembalikan response dengan data transaksi baru
+  
       res.status(201).json({
           message: 'Transaksi berhasil dibuat',
-          data: newTransaction
+          data: newTransaction,
+          transaction_code: newTransaction.transaction_code
       });
-  } catch (error) {
+    } catch (error) {
       res.status(500).json({ message: 'Terjadi kesalahan', error: error.message });
-  }
+    }
   });
+  
 
   // Mendapatkan laporan penjualan berdasarkan cashier
   app.get('/api/cashier/laporanTransaksi/:cashierName', async (req, res) => {
     try {
-        const { cashier } = req.params;
-        const report = await getTransactionReportByCashier(cashier);
+        const { cashierName } = req.params;
+        const report = await getTransactionReportByCashier(cashierName);
         res.json(report);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -595,11 +658,13 @@
   });
 
   // Rute untuk menambahkan user baru
-  app.post('/api/superadmin/users/add', async (req, res) => { 
+  app.post('/api/superadmin/users/add', upload.single('photo'), async (req, res) => { 
     const { username, name, telepon, role, password} = req.body;
 
+    const photo = req.file ?  `/uploads/${req.file.filename}` : null;
+
     try {
-      const result = await superadmin.addUser(username,name, telepon, role, password);
+      const result = await superadmin.addUser(username,name, telepon, role, password, photo);
       res.status(201).json({
         message: result.message,
         user: result.user
@@ -611,18 +676,71 @@
   });
 
   // Rute untuk mengupdate user
-  app.put('/api/superadmin/users/:id', async (req, res) => {
+  app.put('/api/superadmin/users/:id', upload.single('photo'), async (req, res) => {
     const { id } = req.params;
     const { username, name, telepon, password, role } = req.body;
 
     try {
-      const result = await superadmin.updateUser(id, { username, name, telepon, password, role });
+
+      const user = await superadmin.getUserById(id);
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      let photo = user.photo;
+    if (req.file) {
+      // Path baru untuk foto yang diunggah
+      photo = `/uploads/${req.file.filename}`;
+
+      if (user.photo) {
+        const oldPhotoPath = path.join(__dirname, 'public', user.photo);
+        if (fs.existsSync(oldPhotoPath)) {
+          fs.unlinkSync(oldPhotoPath);
+        }
+      }
+    }
+
+    // Update data user dengan data yang baru
+    const updatedUser = await superadmin.updateUser(id, {
+      username,
+      name,
+      telepon,
+      password, 
+      role,
+      photo
+    });
+
+    res.status(200).json({
+      message: 'User updated successfully',
+      user: updatedUser
+    });
+
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+
+  // Rute untuk mengupdate user role
+  app.put('/api/superadmin/users/:id/role', async (req, res) => {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    try {
+      if (!role) {
+        return res.status(400).json({ message: 'Role is required' });
+      }
+  
+      const result = await superadmin.updateUserRole(id, role);
       res.status(200).json(result);
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: error.message });
     }
   });
+
 
 
   // Rute untuk menghapus user
@@ -638,6 +756,23 @@
     }
   });
 
+
+
+app.put('/api/user/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body; // 'active' atau 'inactive'
+
+  console.log('Request received: ', { id, status });
+  try {
+    const updatedUser = await superadmin.updateUserStatus(id, status);
+    console.log('User updated: ', updatedUser);
+
+    res.json({ message: 'Status updated successfully', user: updatedUser });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+  
 
 
 

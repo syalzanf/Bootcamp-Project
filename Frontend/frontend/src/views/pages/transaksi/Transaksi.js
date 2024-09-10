@@ -10,6 +10,11 @@ import {
   CFormLabel,
   CFormInput,
   CButton,
+  CModal,
+  CModalBody,
+  CModalFooter,
+  CModalHeader,
+  CModalTitle,
   CRow,
   CCol,
   CMultiSelect,
@@ -19,7 +24,9 @@ import {
   CTableHeaderCell,
   CTableRow,
   CTableDataCell,
-  CFormSelect
+  CFormSelect,
+  CAlert
+
 } from '@coreui/react-pro';
 
 const TransactionPage = () => {
@@ -32,16 +39,27 @@ const TransactionPage = () => {
     brand: '',
     type: '',
     price: '',
+    stock: '',
     qty: '',
   });
-  const [member, setMember] = useState('');
+  const [telepon, setTelepon] = useState('');
+  const [members, setMembers] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState('cash'); // Default cash
   const [payment, setPayment] = useState('');
   const [total, setTotal] = useState('');
   const [change, setChange] = useState('');
   const [transactionCode, setTransactionCode] = useState('');
   const [transactionDate, setTransactionDate] = useState('');
-  const [debitCardCode, setDebitCardCode] = useState(''); 
+  const [debitCardCode, setDebitCardCode] = useState('');
+  const [availableStock, setAvailableStock] = useState('');
+  const [selectedProductCode, setSelectedProductCode] = useState('');
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [selectedMemberId, setSelectedMemberId] = useState(null);
+  const [memberSearchInput, setMemberSearchInput] = useState('');
+
+  const [visible, setVisible] = useState(false);
+  const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
+
 
   useEffect(() => {
     axios.get('http://localhost:3000/api/cashier/products')
@@ -52,7 +70,16 @@ const TransactionPage = () => {
         console.error('Error fetching products:', error);
       });
 
-    // Ambil nama user dari localStorage
+      axios.get('http://localhost:3000/api/cashier/customers')
+      .then(response => {
+        setMembers(response.data); // simpan data member di state
+      })
+      .catch(error => {
+        console.error('Error fetching members:', error);
+      });
+
+
+    // ambil nama user dari localStorage
     const storedUserName = localStorage.getItem('userName');
     if (storedUserName) {
       setUserName(storedUserName);
@@ -62,10 +89,20 @@ const TransactionPage = () => {
 
   useEffect(() => {
     if (paymentMethod === 'debit') {
-      setPayment(total); 
+      setPayment(total);
     }
   }, [paymentMethod, total]);
 
+  const showAlert = (message, color) => {
+    setAlert({
+      visible: true,
+      message,
+      color
+    });
+    setTimeout(() => {
+      setAlert(prev => ({ ...prev, visible: false }));
+    }, 3000);
+  };
 
   const handleProductSelect = (selectedCode) => {
     console.log('Selected Code:', selectedCode);
@@ -75,16 +112,12 @@ const TransactionPage = () => {
     console.log('Selected Product:', selectedProduct);
 
     if (selectedProduct) {
-      setFormValues({
-        ...formValues,
-        product_code: selectedProduct.product_code,
-        product_name: selectedProduct.product_name,
-        brand: selectedProduct.brand,
-        type: selectedProduct.type,
-        price: selectedProduct.price,
-        qty: '',
-      });
-    } else {
+      if (selectedProduct.stock === 0) {
+
+        showAlert('Produk tidak tersedia. stok habis.', 'danger');
+
+      // Kosongkan form values jika stok 0
+      setSelectedProductCode('');
       setFormValues({
         ...formValues,
         product_code: '',
@@ -92,18 +125,78 @@ const TransactionPage = () => {
         brand: '',
         type: '',
         price: '',
+        stock: '',
         qty: '',
       });
+
+   } else {
+
+      setFormValues({
+        ...formValues,
+        product_code: selectedProduct.product_code,
+        product_name: selectedProduct.product_name,
+        brand: selectedProduct.brand,
+        type: selectedProduct.type,
+        price: selectedProduct.price,
+        stock: selectedProduct.stock,
+        qty: '',
+      });
+      setAvailableStock(selectedProduct.stock);
+      setSelectedProductCode(selectedProduct.product_code);
+    }
+
+  } else {
+      // kosongkan form values jika produk tidak ditemukan
+      setFormValues({
+        ...formValues,
+        product_code: '',
+        product_name: '',
+        brand: '',
+        type: '',
+        price: '',
+        stock: '',
+        qty: '',
+      });
+      setAvailableStock('');
+      setSelectedProductCode('');
+    }
+  };
+
+  const handleMemberSearch = async (telepon) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/api/cashier/member/${telepon}`);
+      const member = response.data.nama;
+      const memberId = response.data.member_id;
+
+      setSelectedMember(member);
+      setSelectedMemberId(memberId);
+      
+      showAlert('Member ditemukan', 'success');
+      console.log('MEMBER', response.data.member_id )
+
+    } catch (error) {
+      console.error('Error searching member by phone:', error);
+      showAlert('Member tidak ditemukan', 'danger');
     }
   };
 
   const handleQtyChange = (e) => {
-    const qty = e.target.value;
-    setFormValues({
-      ...formValues,
-      qty: qty,
-    });
+    const inputQty = e.target.value;
+
+    if (inputQty > availableStock) {
+      showAlert('Stok tidak muncukupi!', 'danger');
+      setFormValues({
+        ...formValues,
+        qty: '',
+      });
+    } else {
+      setFormValues({
+        ...formValues,
+        qty: inputQty,
+      });
+    }
   };
+
 
   const addItemToCart = () => {
     const newItem = { ...formValues, qty: Number(formValues.qty) };
@@ -145,7 +238,7 @@ const TransactionPage = () => {
     const method = e.target.value;
     setPaymentMethod(method);
     if (method === 'cash') {
-      setPayment(''); 
+      setPayment('');
     }
   };
 
@@ -157,56 +250,103 @@ const TransactionPage = () => {
   const handleDebitCardCodeChange = (e) => {
     setDebitCardCode(e.target.value);
   };
+  
+  
+    const handleSubmitTransaction = async () => {
+      const cashier = localStorage.getItem('userName');
+      const transactionData = {
+        transaction_code: transactionCode,
+        id_cashier: localStorage.getItem("id"),
+        // member_id: member ? member : null,
+        member_id: selectedMemberId ? selectedMemberId : null,
+        cashier,
+        total,
+        payment_method: paymentMethod,
+        debit_card_code: paymentMethod === 'debit' && debitCardCode ? debitCardCode : 0,
+        payment,
+        change,
+        items: cartItems,
+      };
 
-  const handleSubmitTransaction = async () => {
-    const cashier = localStorage.getItem('userName');
-    const transactionData = {
-      transaction_code: transactionCode,
-      id_cashier: localStorage.getItem("id"),
-      member_id: member ? member : null,
-      cashier,
-      total,
-      payment_method: paymentMethod,
-      debit_card_code: paymentMethod === 'debit' && debitCardCode ? debitCardCode : undefined,
-      payment,
-      change,
-      items: cartItems,
+      try {
+        const response = await axios.post('http://localhost:3000/api/cashier/transaksi', transactionData);
+
+        console.log('TRANSAKSI RESPONSE DATA', response.data)
+        console.log('CEK TRANSACTION ID', response.data.id)
+        const transactionId = response.data.id;
+
+
+        const receiptResponse = await axios.get(`http://localhost:3000/api/generate-receipt/${transactionId}`);
+
+        var file = base64ToBlob(receiptResponse.data.base64, "application/pdf")
+        var fileURL = URL.createObjectURL(file);
+        const printWindow = window.open(fileURL);
+        if (printWindow) {
+          printWindow.onload = () => {
+              printWindow.print();
+          };
+        }
+
+        // Clean up the Blob URL after printing
+        // URL.revokeObjectURL(blobUrl);
+
+        setVisible(true);
+
+        setCartItems([]);
+        setFormValues({
+          product_code: '',
+          product_name: '',
+          brand: '',
+          type: '',
+          price: '',
+          qty: '',
+        });
+        setSelectedMember(null);
+        // setMemberSearchInput('');
+        // setMembers('');
+        setDebitCardCode('');
+        setPaymentMethod('cash');
+        setPayment('');
+        setTotal('');
+        setChange('');
+
+        // if (printWindow) {
+        //   printWindow.print();
+        // }
+      } catch (error) {
+        alert('Gagal membuat transaksi: ' + error.message);
+      }
     };
 
-    try {
-      const response = await axios.post('http://localhost:3000/api/cashier/transaksi', transactionData);
-      alert('Transaksi berhasil dibuat!');
+  function base64ToBlob(base64String, contentType) {
+    const byteCharacters = atob(base64String);  
+    const byteNumbers = new Array(byteCharacters.length);
 
-      // Reset form after successful transaction
-      setCartItems([]);
-      setFormValues({
-        product_code: '',
-        product_name: '',
-        brand: '',
-        type: '',
-        price: '',
-        qty: '',
-      });
-      setMember('');
-      setDebitCardCode('');
-      setPaymentMethod('cash'); 
-      setPayment('');
-      setTotal('');
-      setChange('');
-    } catch (error) {
-      alert('Gagal membuat transaksi: ' + error.message);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
-  };
 
-  const options = products.map((item) => ({
-    value: item.product_code,
-    label: `${item.product_code} - ${item.product_name}`,
-  }));  
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: contentType });
+}
+
+
+
+    const options = products.map((item) => ({
+      value: item.product_code,
+      label: `${item.product_code} - ${item.product_name}`,
+    }));
 
   return (
     <div>
       <CRow>
+      {alert.visible && (
+          <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
+            {alert.message}
+          </CAlert>
+        )}
       <CCol md={6}>
+
       <CCard>
         <CCardHeader>
           <CCardTitle>Form Transaksi</CCardTitle>
@@ -261,8 +401,9 @@ const TransactionPage = () => {
                   options={options}
                   optionsStyle="text"
                   multiple={false}
-                  onChange={(selectedOptions) => handleProductSelect(selectedOptions[0]?.value)} 
-                  value={formValues.product_code}
+                  onChange={(selectedOptions) => handleProductSelect(selectedOptions[0]?.value)}
+                  value={selectedProductCode}
+                  // value={formValues.product_code}
                 />
               </CCol>
             </CRow>
@@ -370,18 +511,30 @@ const TransactionPage = () => {
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
-                <CFormLabel htmlFor="total">Member</CFormLabel>
+                <CFormLabel htmlFor="member-telepon">Member</CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput
-                    id="total"
-                    value={member}
-                    onChange={(e) => setMember(e.target.value)}
+                  id="member-telepon"
+                  type="text"
+                  value={memberSearchInput}
+                  onChange={(e) => setMemberSearchInput(e.target.value)}
+                  onBlur={() => handleMemberSearch(memberSearchInput)} 
+                  />
+              {/* <CFormInput
+                  value={selectedMemberId}
+                  onChange={(e) => setSelectedMemberId(e.target.value)}
+                  readOnly
+                /> */}
+              <CFormInput
+                  value={selectedMember}
+                  onChange={(e) => setSelectedMember(e.target.value)}
+                  readOnly
                 />
               </CCol>
             </CRow>
             <CRow className="mb-3">
-              <CCol sm={3}>
+              <CCol sm={3}> 
                 <CFormLabel htmlFor="payment">Payment Method</CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -399,7 +552,7 @@ const TransactionPage = () => {
             {paymentMethod === 'debit' && (
                   <CRow className="mb-3">
                     <CCol sm={3}>
-                      <CFormLabel htmlFor="debit_card_code">Kode Kartu Debit (Opsional)</CFormLabel>
+                      <CFormLabel htmlFor="debit_card_code">Kode Kartu Debit</CFormLabel>
                     </CCol>
                     <CCol sm={9}>
                       <CFormInput
@@ -410,7 +563,7 @@ const TransactionPage = () => {
                     </CCol>
                   </CRow>
                 )}
-            
+
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="payment">Payment</CFormLabel>
@@ -443,11 +596,25 @@ const TransactionPage = () => {
         </CCardBody>
       </CCard>
           </CCol>
+
+          {/* {receipt && ( */}
+          <CModal visible={visible} onClose={() => setVisible(false)} size="lg">
+            <CModalHeader>
+              <CModalTitle>Transaksi Berhasil</CModalTitle>
+            </CModalHeader>
+            <CModalBody>
+              <p>Transaksi Anda telah berhasil dilakukan.</p>
+            </CModalBody>
+            <CModalFooter>
+              <CButton color="secondary" onClick={() => setVisible(false)}>Tutup</CButton>
+            </CModalFooter>
+          </CModal>
+      {/* )} */}
+
       </CRow>
     </div>
   );
 }
 
 export default TransactionPage;
-
 

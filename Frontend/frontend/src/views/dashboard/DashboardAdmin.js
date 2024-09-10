@@ -1,55 +1,270 @@
+// import React from 'react'
+// import classNames from 'classnames'
+// import { useTranslation } from 'react-i18next'
+
+// import {
+//   CAvatar,
+//   CButton,
+//   CButtonGroup,
+//   CCard,
+//   CCardBody,
+//   CCardFooter,
+//   CCardHeader,
+//   CCol,
+//   CProgress,
+//   CRow,
+//   CTable,
+//   CTableBody,
+//   CTableDataCell,
+//   CTableHead,
+//   CTableHeaderCell,
+//   CTableRow,
+// } from '@coreui/react-pro'
+// import CIcon from '@coreui/icons-react'
+// import {
+//   cibCcAmex,
+//   cibCcApplePay,
+//   cibCcMastercard,
+//   cibCcPaypal,
+//   cibCcStripe,
+//   cibCcVisa,
+//   cibGoogle,
+//   cibFacebook,
+//   cibLinkedin,
+//   cifBr,
+//   cifEs,
+//   cifFr,
+//   cifIn,
+//   cifPl,
+//   cifUs,
+//   cibTwitter,
+//   cilCloudDownload,
+//   cilPeople,
+//   cilUser,
+//   cilUserFemale,
+// } from '@coreui/icons'
+
+// import avatar1 from 'src/assets/images/avatars/1.jpg'
+// import avatar2 from 'src/assets/images/avatars/2.jpg'
+// import avatar3 from 'src/assets/images/avatars/3.jpg'
+// import avatar4 from 'src/assets/images/avatars/4.jpg'
+// import avatar5 from 'src/assets/images/avatars/5.jpg'
+// import avatar6 from 'src/assets/images/avatars/6.jpg'
+
+// import WidgetsBrand from '../widgets/WidgetsBrand'
+// import WidgetsDropdown from '../widgets/WidgetsDropdown'
+// import MainChart from './MainChart'
+
+// const Dashboard = () => {
+//   const { t } = useTranslation()
+
+//   const progressExample = [
+//     {
+//       title: t('visits'),
+//       value: t('usersCounter', { counter: '29.703' }),
+//       percent: 40,
+//       color: 'success',
+//     },
+//     {
+//       title: t('unique'),
+//       value: t('usersCounter', { counter: '24.093' }),
+//       percent: 20,
+//       color: 'info',
+//     },
+//     {
+//       title: t('pageviews'),
+//       value: t('viewsCounter', { counter: '78.706' }),
+//       percent: 60,
+//       color: 'warning',
+//     },
+//     {
+//       title: t('newUsers'),
+//       value: t('usersCounter', { counter: '22.123' }),
+//       percent: 80,
+//       color: 'danger',
+//     },
+//     { title: t('bounceRate'), value: '', percent: 40.15, color: 'primary' },
+//   ]
+
+//   const progressGroupExample1 = [
+//     { title: t('monday'), value1: 34, value2: 78 },
+//     { title: t('tuesday'), value1: 56, value2: 94 },
+//     { title: t('wednesday'), value1: 12, value2: 67 },
+//     { title: t('thursday'), value1: 43, value2: 91 },
+//     { title: t('friday'), value1: 22, value2: 73 },
+//     { title: t('saturday'), value1: 53, value2: 82 },
+//     { title: t('sunday'), value1: 9, value2: 69 },
+//   ]
+
+//   const progressGroupExample2 = [
+//     { title: t('male'), icon: cilUser, value: 53 },
+//     { title: t('female'), icon: cilUserFemale, value: 43 },
+//   ]
+
+//   const progressGroupExample3 = [
+//     { title: t('organicSearch'), icon: cibGoogle, percent: 56, value: '191,235' },
+//     { title: 'Facebook', icon: cibFacebook, percent: 15, value: '51,223' },
+//     { title: 'Twitter', icon: cibTwitter, percent: 11, value: '37,564' },
+//     { title: 'LinkedIn', icon: cibLinkedin, percent: 8, value: '27,319' },
+//   ]
+
+//   const tableExampleUsagePeriod = (dateStart, dateEnd) => {
+//     const formatParams = { date: { year: 'numeric', month: 'short', day: 'numeric' } }
+//     return `${t('date', {
+//       date: dateStart,
+//       formatParams,
+//     })} - ${t('date', {
+//       date: dateEnd,
+//       formatParams,
+//     })}`
+//   }
+
+//   const tableExample = [
+//     {
+//       avatar: { src: avatar1, status: 'success' },
+//       user: {
+//         name: 'Yiorgos Avraamu',
+//         new: true,
+//         registered: t('date', {
+//           date: new Date(2023, 0, 10),
+//           formatParams: { date: { year: 'numeric', month: 'short', day: 'numeric' } },
+//         }),
+//       },
+//       country: { name: 'USA', flag: cifUs },
+//       usage: {
+//         value: 50,
+//         period: tableExampleUsagePeriod(new Date(2023, 5, 11), new Date(2023, 6, 10)),
+//         color: 'success',
+//       },
+//       payment: { name: 'Mastercard', icon: cibCcMastercard },
+//       activity: t('relativeTime', { val: -10, range: 'seconds' }),
+//     },
+//     {
+//       avatar: { src: avatar2, status: 'danger' },
+//       user: {
+//         name: 'Avram Tarasios',
+//         new: false,
+//         registered: t('date', {
+//           date: new Date(2023, 0, 10),
+//           formatParams: { date: { year: 'numeric', month: 'short', day: 'numeric' } },
+//         }),
+//       },
+//       country: { name: 'Brazil', flag: cifBr },
+//       usage: {
+//         value: 22,
+//         period: tableExampleUsagePeriod(new Date(2023, 5, 11), new Date(2023, 6, 10)),
+//         color: 'info',
+//       },
+//       payment: { name: 'Visa', icon: cibCcVisa },
+//       activity: t('relativeTime', { val: -5, range: 'minutes' }),
+//     },
+//     {
+//       avatar: { src: avatar3, status: 'warning' },
+//       user: {
+//         name: 'Quintin Ed',
+//         new: true,
+//         registered: t('date', {
+//           date: new Date(2023, 0, 10),
+//           formatParams: { date: { year: 'numeric', month: 'short', day: 'numeric' } },
+//         }),
+//       },
+//       country: { name: 'India', flag: cifIn },
+//       usage: {
+//         value: 74,
+//         period: tableExampleUsagePeriod(new Date(2023, 5, 11), new Date(2023, 6, 10)),
+//         color: 'warning',
+//       },
+//       payment: { name: 'Stripe', icon: cibCcStripe },
+//       activity: t('relativeTime', { val: -1, range: 'hours' }),
+//     },
+//     {
+//       avatar: { src: avatar4, status: 'secondary' },
+//       user: {
+//         name: 'Enéas Kwadwo',
+//         new: true,
+//         registered: t('date', {
+//           date: new Date(2023, 0, 10),
+//           formatParams: { date: { year: 'numeric', month: 'short', day: 'numeric' } },
+//         }),
+//       },
+//       country: { name: 'France', flag: cifFr },
+//       usage: {
+//         value: 98,
+//         period: tableExampleUsagePeriod(new Date(2023, 5, 11), new Date(2023, 6, 10)),
+//         color: 'danger',
+//       },
+//       payment: { name: 'PayPal', icon: cibCcPaypal },
+//       activity: t('relativeTime', { val: -1, range: 'weeks' }),
+//     },
+//     {
+//       avatar: { src: avatar5, status: 'success' },
+//       user: {
+//         name: 'Agapetus Tadeáš',
+//         new: true,
+//         registered: t('date', {
+//           date: new Date(2023, 0, 10),
+//           formatParams: { date: { year: 'numeric', month: 'short', day: 'numeric' } },
+//         }),
+//       },
+//       country: { name: 'Spain', flag: cifEs },
+//       usage: {
+//         value: 22,
+//         period: tableExampleUsagePeriod(new Date(2023, 5, 11), new Date(2023, 6, 10)),
+//         color: 'primary',
+//       },
+//       payment: { name: 'Google Wallet', icon: cibCcApplePay },
+//       activity: t('relativeTime', { val: -3, range: 'months' }),
+//     },
+//     {
+//       avatar: { src: avatar6, status: 'danger' },
+//       user: {
+//         name: 'Friderik Dávid',
+//         new: true,
+//         registered: t('date', {
+//           date: new Date(2023, 0, 10),
+//           formatParams: { date: { year: 'numeric', month: 'short', day: 'numeric' } },
+//         }),
+//       },
+//       country: { name: 'Poland', flag: cifPl },
+//       usage: {
+//         value: 43,
+//         period: tableExampleUsagePeriod(new Date(2023, 5, 11), new Date(2023, 6, 10)),
+//         color: 'success',
+//       },
+//       payment: { name: 'Amex', icon: cibCcAmex },
+//       activity: t('relativeTime', { val: -1, range: 'years' }),
+//     },
+//   ]
+
+//   return (
+//     <>
+//       welcome admin
+//       <WidgetsDropdown className="mb-4" />
+
+//     </>
+//   )
+// }
+
+// export default Dashboard
+
+
 import React from 'react'
 import classNames from 'classnames'
 import { useTranslation } from 'react-i18next'
 
 import {
-  CAvatar,
-  CButton,
-  CButtonGroup,
   CCard,
   CCardBody,
   CCardFooter,
   CCardHeader,
   CCol,
-  CProgress,
   CRow,
-  CTable,
-  CTableBody,
-  CTableDataCell,
-  CTableHead,
-  CTableHeaderCell,
-  CTableRow,
+  CProgress,
 } from '@coreui/react-pro'
 import CIcon from '@coreui/icons-react'
 import {
-  cibCcAmex,
-  cibCcApplePay,
-  cibCcMastercard,
-  cibCcPaypal,
-  cibCcStripe,
-  cibCcVisa,
-  cibGoogle,
-  cibFacebook,
-  cibLinkedin,
-  cifBr,
-  cifEs,
-  cifFr,
-  cifIn,
-  cifPl,
-  cifUs,
-  cibTwitter,
   cilCloudDownload,
-  cilPeople,
-  cilUser,
-  cilUserFemale,
 } from '@coreui/icons'
-
-import avatar1 from 'src/assets/images/avatars/1.jpg'
-import avatar2 from 'src/assets/images/avatars/2.jpg'
-import avatar3 from 'src/assets/images/avatars/3.jpg'
-import avatar4 from 'src/assets/images/avatars/4.jpg'
-import avatar5 from 'src/assets/images/avatars/5.jpg'
-import avatar6 from 'src/assets/images/avatars/6.jpg'
 
 import WidgetsBrand from '../widgets/WidgetsBrand'
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
@@ -60,189 +275,102 @@ const Dashboard = () => {
 
   const progressExample = [
     {
-      title: t('visits'),
-      value: t('usersCounter', { counter: '29.703' }),
-      percent: 40,
+      title: t('Jumlah Barang'),
+      value: t('itemsCounter', { counter: '120' }),
+      percent: 100,
       color: 'success',
     },
     {
-      title: t('unique'),
-      value: t('usersCounter', { counter: '24.093' }),
-      percent: 20,
+      title: t('Jumlah Stok yang Mencapai Minimum'),
+      value: t('itemsCounter', { counter: '10' }),
+      percent: 8,
+      color: 'danger',
+    },
+    {
+      title: t('Jumlah Barang Masuk Bulan Terbaru'),
+      value: t('itemsCounter', { counter: '50' }),
+      percent: 42,
       color: 'info',
     },
     {
-      title: t('pageviews'),
-      value: t('viewsCounter', { counter: '78.706' }),
-      percent: 60,
+      title: t('Jumlah Penjualan Bulan Terbaru'),
+      value: t('itemsCounter', { counter: '30' }),
+      percent: 25,
       color: 'warning',
-    },
-    {
-      title: t('newUsers'),
-      value: t('usersCounter', { counter: '22.123' }),
-      percent: 80,
-      color: 'danger',
-    },
-    { title: t('bounceRate'), value: '', percent: 40.15, color: 'primary' },
-  ]
-
-  const progressGroupExample1 = [
-    { title: t('monday'), value1: 34, value2: 78 },
-    { title: t('tuesday'), value1: 56, value2: 94 },
-    { title: t('wednesday'), value1: 12, value2: 67 },
-    { title: t('thursday'), value1: 43, value2: 91 },
-    { title: t('friday'), value1: 22, value2: 73 },
-    { title: t('saturday'), value1: 53, value2: 82 },
-    { title: t('sunday'), value1: 9, value2: 69 },
-  ]
-
-  const progressGroupExample2 = [
-    { title: t('male'), icon: cilUser, value: 53 },
-    { title: t('female'), icon: cilUserFemale, value: 43 },
-  ]
-
-  const progressGroupExample3 = [
-    { title: t('organicSearch'), icon: cibGoogle, percent: 56, value: '191,235' },
-    { title: 'Facebook', icon: cibFacebook, percent: 15, value: '51,223' },
-    { title: 'Twitter', icon: cibTwitter, percent: 11, value: '37,564' },
-    { title: 'LinkedIn', icon: cibLinkedin, percent: 8, value: '27,319' },
-  ]
-
-  const tableExampleUsagePeriod = (dateStart, dateEnd) => {
-    const formatParams = { date: { year: 'numeric', month: 'short', day: 'numeric' } }
-    return `${t('date', {
-      date: dateStart,
-      formatParams,
-    })} - ${t('date', {
-      date: dateEnd,
-      formatParams,
-    })}`
-  }
-
-  const tableExample = [
-    {
-      avatar: { src: avatar1, status: 'success' },
-      user: {
-        name: 'Yiorgos Avraamu',
-        new: true,
-        registered: t('date', {
-          date: new Date(2023, 0, 10),
-          formatParams: { date: { year: 'numeric', month: 'short', day: 'numeric' } },
-        }),
-      },
-      country: { name: 'USA', flag: cifUs },
-      usage: {
-        value: 50,
-        period: tableExampleUsagePeriod(new Date(2023, 5, 11), new Date(2023, 6, 10)),
-        color: 'success',
-      },
-      payment: { name: 'Mastercard', icon: cibCcMastercard },
-      activity: t('relativeTime', { val: -10, range: 'seconds' }),
-    },
-    {
-      avatar: { src: avatar2, status: 'danger' },
-      user: {
-        name: 'Avram Tarasios',
-        new: false,
-        registered: t('date', {
-          date: new Date(2023, 0, 10),
-          formatParams: { date: { year: 'numeric', month: 'short', day: 'numeric' } },
-        }),
-      },
-      country: { name: 'Brazil', flag: cifBr },
-      usage: {
-        value: 22,
-        period: tableExampleUsagePeriod(new Date(2023, 5, 11), new Date(2023, 6, 10)),
-        color: 'info',
-      },
-      payment: { name: 'Visa', icon: cibCcVisa },
-      activity: t('relativeTime', { val: -5, range: 'minutes' }),
-    },
-    {
-      avatar: { src: avatar3, status: 'warning' },
-      user: {
-        name: 'Quintin Ed',
-        new: true,
-        registered: t('date', {
-          date: new Date(2023, 0, 10),
-          formatParams: { date: { year: 'numeric', month: 'short', day: 'numeric' } },
-        }),
-      },
-      country: { name: 'India', flag: cifIn },
-      usage: {
-        value: 74,
-        period: tableExampleUsagePeriod(new Date(2023, 5, 11), new Date(2023, 6, 10)),
-        color: 'warning',
-      },
-      payment: { name: 'Stripe', icon: cibCcStripe },
-      activity: t('relativeTime', { val: -1, range: 'hours' }),
-    },
-    {
-      avatar: { src: avatar4, status: 'secondary' },
-      user: {
-        name: 'Enéas Kwadwo',
-        new: true,
-        registered: t('date', {
-          date: new Date(2023, 0, 10),
-          formatParams: { date: { year: 'numeric', month: 'short', day: 'numeric' } },
-        }),
-      },
-      country: { name: 'France', flag: cifFr },
-      usage: {
-        value: 98,
-        period: tableExampleUsagePeriod(new Date(2023, 5, 11), new Date(2023, 6, 10)),
-        color: 'danger',
-      },
-      payment: { name: 'PayPal', icon: cibCcPaypal },
-      activity: t('relativeTime', { val: -1, range: 'weeks' }),
-    },
-    {
-      avatar: { src: avatar5, status: 'success' },
-      user: {
-        name: 'Agapetus Tadeáš',
-        new: true,
-        registered: t('date', {
-          date: new Date(2023, 0, 10),
-          formatParams: { date: { year: 'numeric', month: 'short', day: 'numeric' } },
-        }),
-      },
-      country: { name: 'Spain', flag: cifEs },
-      usage: {
-        value: 22,
-        period: tableExampleUsagePeriod(new Date(2023, 5, 11), new Date(2023, 6, 10)),
-        color: 'primary',
-      },
-      payment: { name: 'Google Wallet', icon: cibCcApplePay },
-      activity: t('relativeTime', { val: -3, range: 'months' }),
-    },
-    {
-      avatar: { src: avatar6, status: 'danger' },
-      user: {
-        name: 'Friderik Dávid',
-        new: true,
-        registered: t('date', {
-          date: new Date(2023, 0, 10),
-          formatParams: { date: { year: 'numeric', month: 'short', day: 'numeric' } },
-        }),
-      },
-      country: { name: 'Poland', flag: cifPl },
-      usage: {
-        value: 43,
-        period: tableExampleUsagePeriod(new Date(2023, 5, 11), new Date(2023, 6, 10)),
-        color: 'success',
-      },
-      payment: { name: 'Amex', icon: cibCcAmex },
-      activity: t('relativeTime', { val: -1, range: 'years' }),
     },
   ]
 
   return (
     <>
-      ini dashboard admin
-      {/* <WidgetsDropdown className="mb-4" /> */}
-  
+      <WidgetsDropdown className="mb-4" />
+      <CCard className="mb-4">
+        <CCardBody>
+          <CRow>
+            <CCol sm={5}>
+              <h4 id="traffic" className="card-title mb-0">
+                {t('traffic')}
+              </h4>
+              <div className="small text-body-secondary">
+                {t('date', {
+                  date: new Date(2023, 0, 1),
+                  formatParams: {
+                    date: {
+                      month: 'long',
+                    },
+                  },
+                })}{' '}
+                -{' '}
+                {t('date', {
+                  date: new Date(2023, 6, 1),
+                  formatParams: {
+                    date: {
+                      year: 'numeric',
+                      month: 'long',
+                    },
+                  },
+                })}
+              </div>
+            </CCol>
+            <CCol sm={7} className="d-none d-md-block">
+              <CIcon icon={cilCloudDownload} className="float-end" />
+            </CCol>
+          </CRow>
+          <MainChart />
+        </CCardBody>
+        <CCardFooter>
+          <CRow
+            xs={{ cols: 1, gutter: 4 }}
+            sm={{ cols: 2 }}
+            lg={{ cols: 4 }}
+            xl={{ cols: 4 }}
+            className="mb-2 text-center"
+          >
+            {progressExample.map((item, index, items) => (
+              <CCol
+                className={classNames({
+                  'd-none d-xl-block': index + 1 === items.length,
+                })}
+                key={index}
+              >
+                <div className="text-body-secondary">{item.title}</div>
+                <div className="fw-semibold text-truncate">
+                  {item.value} ({item.percent}%)
+                </div>
+                <CProgress
+                  thin
+                  className="mt-2"
+                  color={`${item.color}-gradient`}
+                  value={item.percent}
+                />
+              </CCol>
+            ))}
+          </CRow>
+        </CCardFooter>
+      </CCard>
+        {/* <WidgetsBrand className="mb-4" withCharts /> */}
     </>
   )
 }
 
 export default Dashboard
+

@@ -107,6 +107,7 @@ const CustomersList = React.lazy(() => import('./views/pages/customers/Customers
 const Customers = React.lazy(() => import('./views/pages/customers/Customers'))
 const LaporanPenjualan = React.lazy(() => import('./views/pages/laporan/LaporanPenjualan'))
 const LaporanPenjualanCashier = React.lazy(() => import('./views/pages/laporan/LaporanPenjualanCashier'))
+const DetailPenjualanCashier = React.lazy(() => import('./views/pages/laporan/DetailPenjualan'))
 const Transaksi = React.lazy(() => import('./views/pages/transaksi/Transaksi'))
 const DataUser = React.lazy(() => import('./views/pages/users/DataUsers'))
 const LogAktivitas = React.lazy(() => import('./views/pages/users/LogAktivitas'))
@@ -189,7 +190,13 @@ const cashierRoutes = [
     element: LaporanPenjualanCashier,
     exact: true,
 
-  } 
+  }, 
+  {
+    path: '/detail-penjualan-cashier',
+    name: <Translation>{(t) => t('Detail Penjualan')}</Translation>,
+    element: DetailPenjualanCashier,
+    exact: true,
+  }, 
   
 ];
 

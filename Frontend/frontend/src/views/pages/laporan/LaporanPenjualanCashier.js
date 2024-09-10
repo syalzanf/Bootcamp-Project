@@ -21,18 +21,42 @@
 // export default Cashier;
 
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   CCard,
   CCardBody,
   CCardHeader,
   CSmartTable,
-} from '@coreui/react-pro';
+  CButton,
+  CRow,
+  CCol,
+  CModal,
+  CModalBody,
+  CModalFooter,
+  CModalHeader,
+  CModalTitle,
+  CTable,
+  CTableHead,
+  CTableRow,
+  CTableHeaderCell,
+  CTableBody,
+  CTableDataCell,
 
+} from '@coreui/react-pro';
+import DatePicker from 'react-datepicker';
 const TransactionReport = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
+
+    const [modalVisible, setModalVisible] = useState(false)
+    const [selectedDetails, setSelectedDetails] = useState([])
+    const [startDate, setStartDate] = useState(null);
+    const [endDate, setEndDate] = useState(null);  
+
+
 
     useEffect(() => {
         const fetchTransactions = async () => {
@@ -54,10 +78,22 @@ const TransactionReport = () => {
             } finally {
                 setLoading(false);
             }
-        }; 
+        };
 
         fetchTransactions();
     }, []);
+
+
+    // const handleDetail = (item) => {
+    //   navigate(`/detail-penjualan-cashier?transaction_code=${item.transaction_code}`);
+    // }
+
+    const handleDetail = (details) => {
+      setSelectedDetails(details) 
+      setModalVisible(true)
+    }
+
+    
 
     if (loading) {
         return <div>Loading...</div>;
@@ -67,36 +103,103 @@ const TransactionReport = () => {
         return <div>{error}</div>;
     }
 
+    const filteredData = transactions.filter(item => {
+      const itemDate = new Date(item.date);
+      return (
+        (!startDate || itemDate >= startDate) &&
+        (!endDate || itemDate <= endDate)
+      );
+    });
+
     const columns = [
-        { key: 'transaction_date', label: 'Date' },
+        { key: 'transaction_date', label: 'Date',  _render: (item) => new Date(item.date).toDateString() },
         { key: 'transaction_code', label: 'Transaction Code' },
-        { key: 'member', label: 'Customer' },
         { key: 'cashier', label: 'Cashier' },
+        { key: 'member', label: 'Customer' },
+        // { key: 'product_code', label: 'Kode Barang' },
+        // { key: 'product_name', label: 'Nama Barang' },
+        // { key: 'qty', label: 'Qty' },
         { key: 'total', label: 'Total' },
         { key: 'payment', label: 'Payment' },
         { key: 'change', label: 'Change' },
-        { key: 'items', label: 'Items' },
+        {
+          key: 'actions',
+          label: '',
+          _props: { className: 'text-center' },
+          filter: false,
+          sorter: false,
+        },
     ];
 
-    const formattedTransactions = transactions.map(transaction => ({
+    const formattedTransactions = transactions.map(transaction => {
+      const details = transaction.items.map(item => ({
         transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
         transaction_code: transaction.transaction_code,
         member: transaction.member,
         cashier: transaction.cashier,
-        total: transaction.total,
-        payment: transaction.payment,
-        change: transaction.change,
-        items: transaction.items.map(item => `${item.product_code} - ${item.product_name} - ${item.brand} - ${item.type} - ${item.qty} - ${item.price}`).join(', '),
-    }));
+        product_code: item.product_code,
+        product_name: item.product_name,
+        brand: item.brand,
+        type: item.type,
+        qty: item.qty,
+        price: item.price
+      }));
+
+
+      return transaction.items.map(item => ({
+          transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
+          transaction_code: transaction.transaction_code,
+          member: transaction.member,
+          cashier: transaction.cashier,
+          total: transaction.total,
+          payment: transaction.payment,
+          change: transaction.change,
+          // product_code: item.product_code,
+          // product_name: item.product_name,
+          brand: item.brand,
+          type: item.type,
+          qty: item.qty,
+          price: item.price,
+          detail: details,
+      }));
+  }).flat();
 
     return (
+      <CRow>
+      <CCol>
         <CCard>
             <CCardHeader>
-                <h1>Laporan Penjualan</h1>
+                <p>Laporan Penjualan</p>
             </CCardHeader>
             <CCardBody>
+              {/* <div>
+                <label>Select Date Range:</label>
+                <DatePicker
+                  selected={startDate}
+                  onChange={(date) => setStartDate(date)}
+                  selectsStart
+                  startDate={startDate}
+                  endDate={endDate}
+                  placeholderText="Start Date"
+                />
+                <DatePicker
+                  selected={endDate}
+                  onChange={(date) => setEndDate(date)}
+                  selectsEnd
+                  startDate={startDate}
+                  endDate={endDate}
+                  minDate={startDate}
+                  placeholderText="End Date"
+                />
+              </div> */}
                 <CSmartTable
                     clickableRows
+                    tableProps={{
+                      striped: true,
+                      hover: true,
+                    }}
+                    activePage={1}
+                    footer
                     items={formattedTransactions}
                     columns={columns}
                     columnFilter
@@ -106,10 +209,71 @@ const TransactionReport = () => {
                     itemsPerPage={5}
                     columnSorter
                     pagination
-                    tableProps={{ striped: true, hover: true }}
+                    scopedColumns={{
+                      actions: (item) => (
+                        <td className="text-center">
+                          <CButton
+                            color="info"
+                            size="sm"
+                            shape="rounded-pill"
+                            onClick={() => handleDetail(item.detail)}
+                          >
+                            Detail
+                          </CButton>
+                        </td>
+                      ),
+                    }}
                 />
             </CCardBody>
         </CCard>
+        
+        <CModal alignment="center" size="lg" visible={modalVisible} onClose={() => setModalVisible(false)}>
+        <CModalHeader>
+          <CModalTitle>Detail Transaksi</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <CTable>
+            <CTableHead>
+              <CTableRow>
+                <CTableHeaderCell>Date</CTableHeaderCell>
+                <CTableHeaderCell>Transaction Code</CTableHeaderCell>
+                <CTableHeaderCell>Customer</CTableHeaderCell>
+                <CTableHeaderCell>Cashier</CTableHeaderCell>
+                <CTableHeaderCell>Kode Produk</CTableHeaderCell>
+                <CTableHeaderCell>Nama Produk</CTableHeaderCell>
+                <CTableHeaderCell>Brand</CTableHeaderCell>
+                <CTableHeaderCell>Tipe</CTableHeaderCell>
+                <CTableHeaderCell>Qty</CTableHeaderCell>
+                <CTableHeaderCell>Harga</CTableHeaderCell>
+              </CTableRow>
+            </CTableHead>
+            <CTableBody>
+              {Array.isArray (selectedDetails) && selectedDetails.map((detail, index) => (
+                <CTableRow key={index}>
+                  <CTableDataCell>{detail.transaction_date}</CTableDataCell>
+                  <CTableDataCell>{detail.transaction_code}</CTableDataCell>
+                  <CTableDataCell>{detail.member}</CTableDataCell>
+                  <CTableDataCell>{detail.cashier}</CTableDataCell>
+                  <CTableDataCell>{detail.product_code}</CTableDataCell>
+                  <CTableDataCell>{detail.product_name}</CTableDataCell>
+                  <CTableDataCell>{detail.brand}</CTableDataCell>
+                  <CTableDataCell>{detail.type}</CTableDataCell>
+                  <CTableDataCell>{detail.qty}</CTableDataCell>
+                  <CTableDataCell>{detail.price}</CTableDataCell>
+                </CTableRow>
+              ))}
+            </CTableBody>
+          </CTable>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setModalVisible(false)}>
+            Close
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
+      </CCol>   
+      </CRow>
     );
 };
 

@@ -153,7 +153,7 @@
 //                 <CFormInput
 //                   id="username"
 //                   type="text"
-//                   value={username} 
+//                   value={username}
 //                   readOnly
 //                   plainText
 //                 />
@@ -256,7 +256,7 @@ import {
   CAvatar,
   CBadge,
   CDropdown,
-  CDropdownDivider, 
+  CDropdownDivider,
   CDropdownHeader,
   CDropdownItem,
   CDropdownMenu,
@@ -287,7 +287,7 @@ import {
 } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 
-import avatar8 from './../../assets/images/avatars/asalsa.jpg'
+import avatar8 from './../../assets/images/avatars/test.jpg'
 
 const AppHeaderDropdown = () => {
   const [profile, setProfile] = useState({
@@ -306,8 +306,8 @@ const AppHeaderDropdown = () => {
     telepon: profile.telepon,
     photo: profile.photo,
   });
-  
-  
+
+
 
   useEffect(() => {
     const role = localStorage.getItem('userRole');
@@ -343,23 +343,23 @@ const AppHeaderDropdown = () => {
       telepon: profile.telepon,
       photo: profile.photo,
     });
-  
+
     setPreviewImage(profile.photo ? `http://localhost:3000/${profile.photo}` : null);
 
     setShowVisible(false);
     setEditVisible(true);
   };
-  
+
 
   const handleSaveEdit = async () => {
     const formData = new FormData();
     formData.append('name', editProfile.name);
     formData.append('telepon', editProfile.telepon);
-    
+
     if (editProfile.photo) {
-      formData.append('photo', editProfile.photo); 
+      formData.append('photo', editProfile.photo);
     }
-  
+
     const token = localStorage.getItem('token');
 
     try {
@@ -371,14 +371,14 @@ const AppHeaderDropdown = () => {
           withCredentials: true,
         },
       });
-  
+
       setProfile({
         ...profile,
         name: response.data.profile.name,
         telepon: response.data.profile.telepon,
         photo: response.data.profile.photo
       });
-      
+
       setShowVisible(false);
     } catch (error) {
       console.error('Failed to update profile:', error);
@@ -392,7 +392,7 @@ const AppHeaderDropdown = () => {
       photo: file,
     }));
   };
-  
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     window.location.href = '/login';
@@ -436,15 +436,15 @@ const AppHeaderDropdown = () => {
           <CForm>
           <CRow className="mb-3">
               <CCol sm={3}>
-                <CFormLabel htmlFor="photo" className="col-form-label"> 
+                <CFormLabel htmlFor="photo" className="col-form-label">
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
-                <CAvatar 
+                <CAvatar
                   style={{ width: '250px', height: '250px' }}
-                  src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'} 
+                  src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'}
                   alt="user-profile"
-                  // size="xl" 
+                  // size="xl"
                 />
               </CCol>
             </CRow>
@@ -505,7 +505,7 @@ const AppHeaderDropdown = () => {
                   id="telepon"
                   placeholder="Telepon"
                   value={profile.telepon}
-                  readOnly 
+                  readOnly
                   plainText
                   />
               </CCol>
@@ -539,17 +539,17 @@ const AppHeaderDropdown = () => {
                   <CAvatar
                     src={previewImage}
                     alt="Preview"
-                    size="xl"  
+                    size="xl"
                     style={{ width: '250%', height: '250px' }}
                   />
                 )}
 
-                {/* <CAvatar 
+                {/* <CAvatar
                   style={{ width: '250px', height: '250px' }}
-                  src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'} 
+                  src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'}
                   // src={editProfile.photo ? URL.createObjectURL(editProfile.photo) : `http://localhost:3000/${profile.photo}`}
                   alt="user-profile"
-                  // size="xl" 
+                  // size="xl"
                 /> */}
                 <CFormInput
                   type="file"

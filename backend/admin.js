@@ -139,9 +139,6 @@ async function checkProductExists(product_code, product_name) {
 async function addProduct({ product_code, product_name, brand, type, price, stock, image }) {
     try {
 
-        // if (validator.isEmpty(product_code)) {
-        //     return res.status(400).json({ message: 'Product code is required' });
-        // }
         if (validator.isEmpty(product_name)) {
             return res.status(400).json({ message: 'Product name is required' });
         }

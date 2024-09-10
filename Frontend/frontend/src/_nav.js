@@ -96,12 +96,12 @@ const _navSuperadmin = [
     to: '/data-user',
     icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
   },
-  {
-    component: CNavItem,
-    name: <Translation>{(t) => t('Log Aktivitas')}</Translation>,
-    to: '/app-log',
-    icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
-  },
+  // {
+  //   component: CNavItem,
+  //   name: <Translation>{(t) => t('Log Aktivitas')}</Translation>,
+  //   to: '/app-log',
+  //   icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
+  // },
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Data Barang')}</Translation>,
@@ -122,7 +122,7 @@ const _navSuperadmin = [
   },
   {
     component: CNavItem,
-    name: <Translation>{(t) => t('Laporan Penjualan')}</Translation>,
+    name: <Translation>{(t) => t('Data Penjualan')}</Translation>,
     to: '/laporan-penjualan',
     icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
   }

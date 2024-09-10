@@ -3,6 +3,8 @@ const pool = require('./connection');
 const {Transaksi, Member} = require('./models/transaksi');
 const sequelize = require('./configdb');
 const Product = require ('./models/product')
+// const Member = require ('./models/member')
+
 
 
 // Fungsi untuk login kasir
@@ -35,7 +37,7 @@ async function cashierLogin(username, password) {
 async function getListProducts() {
     try {
         // Query untuk mengambil semua data produk dari database
-        const result = await pool.query('SELECT product_code, product_name, brand, type, price FROM products');
+        const result = await pool.query('SELECT product_code, product_name, brand, type, price, stock FROM products');
         return result.rows;
     } catch (error) {
         throw new Error('Error fetching products: ' + error.message);
@@ -112,6 +114,71 @@ async function deleteCustomer(id) {
     }
 }
 
+// async function createTransaction({ transaction_code, member_id, id_cashier, cashier, total, payment_method, debit, payment, change, items }) {
+//     try {
+//         console.log('Menerima data transaksi:', { transaction_code, member_id, id_cashier, cashier, total, payment_method, debit, payment, change, items });
+
+//         // // Variabel member_id
+//         // let member_id = null;
+
+//         // if (kode_member) {
+//         //     const member = await Member.findOne({ where: { kode_member } });
+//         //     if (member) {
+//         //         member_id = member.id;
+//         //     } else {
+//         //         throw new Error('Member not found');
+//         //     }
+//         // }
+
+//         // Simpan transaksi dengan items sebagai JSON
+//         const newTransaction = await Transaksi.create({
+//             transaction_code,
+//             member_id: member_id !== null ? member_id : 0,
+//             id_cashier,
+//             cashier,
+//             transaction_date: new Date(),
+//             total,
+//             payment_method,
+//             debit,
+//             payment,
+//             change,
+//             items // Simpan items sebagai JSON
+//         });
+
+//         console.log('Transaksi berhasil dibuat:', newTransaction);
+
+//         // Simpan item transaksi dan perbarui stok produk
+//         for (const item of items) {
+//             const product = await Product.findOne({ where: { product_code: item.product_code } });
+//             if (!product) {
+//                 throw new Error(`Product with code ${item.product_code} not found.`);
+//             }
+
+//             if (product.stock < item.qty) {
+//                 throw new Error(`Insufficient stock for product ${item.product_code}.`);
+//             }
+
+//             const newStock = product.stock - item.qty;
+//             await Product.update({ stock: newStock }, { where: { product_code: item.product_code } });
+
+//             // Simpan item transaksi jika perlu, atau lakukan tindakan lain yang diperlukan
+//             // await TransaksiItems.create({
+//             //     transaction_code: newTransaction.transaction_code,
+//             //     product_code: item.product_code,
+//             //     quantity: item.qty,
+//             //     price: item.price,
+//             //     brand: item.brand,
+//             //     type: item.type
+//             // });
+//         }
+
+//         return newTransaction;
+//     } catch (error) {
+//         console.error('Error creating transaction:', error);
+//         throw new Error('Error creating transaction: ' + error.message);
+//     }
+// }
+
 async function createTransaction({ transaction_code, member_id, id_cashier,  cashier, total, payment_method, debit, payment, change, items }) {
 
     try {
@@ -140,37 +207,64 @@ async function createTransaction({ transaction_code, member_id, id_cashier,  cas
             console.log(result.rows[0]);
             const stok = result.rows[0].stock - item.qty;
         
+            if (stok < 0) {
+                throw new Error(`Insufficient stock for product ${product.product_code}. Available stock: ${product.stock}, requested: ${item.qty}`);
+            }
+
             await pool.query('update products SET stock = $1  WHERE product_code = $2', 
             [stok,
                 item.product_code]);
 
-            // if (!product) {
-                // throw new Error(`Product with code ${item.product_code} not found.`);
-            // }
-
-            // if (product.stock < item.qty) {
-                // throw new Error(`Insufficient stock for product ${item.product_code}.`);
-            // }
-
         }
-
-        // for (const item of items) {
-            // await TransaksiItems.create({
-                // transaction_code: newTransaction.transaction_code,
-                // product_code: item.product_code,
-                // quantity: item.qty,
-                // price: item.price,
-                // brand: item.brand,
-                // type: item.type
-            // } );
-        // }
-
 
         return newTransaction;
     } catch (error) {
         throw new Error('Error creating transaction: ' + error.message);
     }
 }
+
+async function getTransactionById(transaction_id) {
+    try {
+        const transaction = await Transaksi.findOne({
+            where: { id: transaction_id }
+        });
+        if (!transaction) {
+            throw new Error('Transaction not found');
+        }
+        return transaction;
+    } catch (error) {
+        throw new Error('Error fetching transaction: ' + error.message);
+    }
+}
+
+const getMemberByTelepon = async (telepon) => {
+    try {
+      const query = 'SELECT * FROM members WHERE telepon = $1';
+      const result = await pool.query(query, [telepon]);
+      
+      if (result.rows.length === 0) {
+        throw new Error('Member not found');
+      }
+  
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error getting member by telepon:', err);
+      throw err;
+    }
+  };
+  
+
+async function getAllMember() {
+    try {
+      const member = await Member.findAll({
+        // order: [['createdAt', 'DESC']],
+      });
+      console.log(member);  
+      return member; 
+    } catch (error) {
+      throw error;
+    }
+  }
 
 
 // Mengambil laporan penjualan berdasarkan kasir
@@ -225,5 +319,8 @@ module.exports ={
     updateCustomer,
     deleteCustomer,
     createTransaction,
-    getTransactionReportByCashier
+    getTransactionReportByCashier,
+    getAllMember,
+    getTransactionById,
+    getMemberByTelepon,
 };

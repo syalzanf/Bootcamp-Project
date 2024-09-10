@@ -3,7 +3,7 @@
   const superadmin = require('./superadmin');
   const admin = require('./admin');
   const cashier = require('./cashier');
-  const { createTransaction, getTransactionReportByCashier } = require('./cashier');
+  const { createTransaction, getTransactionReportByCashier, getMemberByTelepon } = require('./cashier');
   const { getAllTransactions, getTransactionById } = require('./admin');
   // const AppLog = require('./models/appLog');
   // const loggerMiddleware = require('./middleware/logger');
@@ -15,6 +15,9 @@
   const cors = require('cors');
   const cookieParser = require('cookie-parser');
   const session = require('express-session'); 
+  
+  const PDFDocument = require('pdfkit');
+  const blobStream = require('blob-stream');
 
   
   const sequelize = require('./configdb');
@@ -565,12 +568,28 @@ app.patch('/api/profile', authenticateToken, upload.single('photo'), async (req,
       }
   });
 
+  app.get('/api/cashier/member/:telepon', async (req, res) => {
+    const telepon = req.params.telepon;
+
+    try {
+        const member = await getMemberByTelepon(telepon);
+        res.json(member);
+    } catch (error) {
+        if (error.message === 'Member not found') {
+            res.status(404).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: 'Internal Server Error' });
+        }
+    }
+});
 
   app.post('/api/cashier/transaksi', async (req, res) => {
     try {
       const { 
-        transaction_code, 
+        id,
+        transaction_code,
         member_id, 
+        // telepon, 
         id_cashier, 
         cashier, 
         total, 
@@ -581,29 +600,252 @@ app.patch('/api/profile', authenticateToken, upload.single('photo'), async (req,
         items 
       } = req.body;
   
+      // const member = await getMemberByTelepon(telepon);
+
+      // if (!member) {
+      //   return res.status(404).json({ message: 'Member tidak ditemukan' });
+      // }
+
+      // const member_id = member.member_id;
+  
       const newTransaction = await createTransaction({
-          transaction_code,
-          member_id,
-          id_cashier,
-          cashier,
-          total,
-          payment_method,
-          debit: payment_method === 'debit' && debit_card_code ? debit_card_code : null,
-          payment,
-          change,
-          items
+        id,
+        transaction_code,
+        member_id,
+        id_cashier,
+        cashier,
+        total,
+        payment_method,
+        debit: payment_method === 'debit' && debit_card_code ? debit_card_code : null,
+        payment,
+        change,
+        items
       });
   
       res.status(201).json({
-          message: 'Transaksi berhasil dibuat',
-          data: newTransaction,
-          transaction_code: newTransaction.transaction_code
+        message: 'Transaksi berhasil dibuat',
+        id: newTransaction.id, 
+        data: newTransaction,
+        transaction_code: newTransaction.transaction_code,
+         
       });
     } catch (error) {
       res.status(500).json({ message: 'Terjadi kesalahan', error: error.message });
     }
   });
+
+
+  // app.post('/api/cashier/transaksi', async (req, res) => {
+  //   try {
+  //     const { 
+  //       id,
+  //       transaction_code, 
+  //       member_id, 
+  //       id_cashier, 
+  //       cashier, 
+  //       total, 
+  //       payment_method, 
+  //       debit_card_code, 
+  //       payment, 
+  //       change, 
+  //       items 
+  //     } = req.body;
   
+  //     // const member = await getMemberByTelepon(telepon);
+      
+  //     // const member_id = member.member_id;
+      
+  //     const newTransaction = await createTransaction({
+  //         id,
+  //         transaction_code,
+  //         member_id,
+  //         id_cashier,
+  //         cashier,
+  //         total,
+  //         payment_method,
+  //         debit: payment_method === 'debit' && debit_card_code ? debit_card_code : null,
+  //         payment,
+  //         change,
+  //         items
+  //     });
+
+  //     const receipt = {
+  //       id: newTransaction.id,
+  //       transaction_code: newTransaction.transaction_code,
+  //       member_id: newTransaction.member_id,
+  //       cashier: newTransaction.cashier,
+  //       total: newTransaction.total,
+  //       payment_method: newTransaction.payment_method,
+  //       debit_card_code: newTransaction.debit_card_code,
+  //       payment: newTransaction.payment,
+  //       change: newTransaction.change,
+  //       items: newTransaction.items
+  //     };
+
+  //     res.status(201).json({
+  //         message: 'Transaksi berhasil dibuat',
+  //         id: newTransaction.id, 
+  //         data: newTransaction,
+  //         transaction_code: newTransaction.transaction_code,
+  //         receipt 
+  //     });
+  //   } catch (error) {
+  //     res.status(500).json({ message: 'Terjadi kesalahan', error: error.message });
+  //   }
+  // });
+
+  
+
+
+
+
+  // Rute untuk menghasilkan PDF receipt berdasarkan id transaksi
+  app.get('/api/generate-receipt/:id', async (req, res) => {
+  try {
+    const transactionId = req.params.id;
+    const transaction = await cashier.getTransactionById(transactionId);
+
+    if (!transaction) {
+      return res.status(404).json({ message: 'Transaction not found' });
+    }
+
+    const doc = new PDFDocument();
+      // const stream = doc.pipe(blobStream());
+
+
+    // res.setHeader('Content-Type', 'application/pdf');
+    // res.setHeader('Content-Disposition', `attachment; filename=receipt-${transaction.transaction_code}.pdf`);
+
+    // Output PDF langsung ke response
+    const chunks = [];
+    doc.on('data', chunk => chunks.push(chunk));
+    doc.on('end', () => {
+        // Combine all chunks into a single buffer
+        const pdfBuffer = Buffer.concat(chunks);
+        
+        // Convert buffer to Base64
+        const base64PDF = pdfBuffer.toString('base64');
+        
+        // Output the Base64 string
+        console.log(base64PDF);
+        
+        res.json({ base64: base64PDF });
+
+      });
+    
+    // doc.pipe(res);
+
+    // Konten PDF
+    doc.fontSize(20).text('Receipt', { align: 'center' });
+    doc.moveDown();
+    const formattedDate = new Date(transaction.transaction_date).toDateString();
+    doc.fontSize(14).text(`Transaction Date: ${formattedDate}`);
+    doc.fontSize(14).text(`Transaction Code: ${transaction.transaction_code}`);
+    // doc.text(`Member ID: ${transaction.member_id}`);
+    doc.text(`Cashier: ${transaction.cashier}`);
+    doc.text(`Total: Rp.${transaction.total}`);
+    doc.text(`Payment Method: ${transaction.payment_method}`);
+    if (transaction.debit_card_code) {
+      doc.text(`Debit Card Code: ${transaction.debit_card_code}`);
+    }
+    doc.text(`Payment: Rp.${transaction.payment}`); 
+    doc.text(`Change: Rp.${transaction.change}`);
+    doc.moveDown();
+
+    // Items ke PDF
+    doc.fontSize(12).text('Items:');
+    transaction.items.forEach(item => {
+      doc.text(`${item.product_name} - ${item.brand} - ${item.type} - ${item.price} - ${item.qty}`);
+    });
+
+    doc.end();
+
+    // stream.on('finish', function () {
+    //   const blob = stream.toBlob('application/pdf');
+    //   const url = stream.toBlobURL('application/pdf');
+    //   res.status(200).send(url);
+    // });
+
+  } catch (error) {
+    console.error('Error generating receipt:', error);
+    res.status(500).json({ message: 'An error occurred while generating the receipt.' });
+  }
+});
+
+  
+  // app.post('/api/cashier/transaksi', async (req, res) => {
+  //   try {
+  //     const { 
+  //       transaction_code, 
+  //       kode_member, 
+  //       id_cashier, 
+  //       cashier, 
+  //       total, 
+  //       payment_method, 
+  //       debit_card_code, 
+  //       payment, 
+  //       change, 
+  //       items 
+  //     } = req.body;
+  
+  //     console.log('Received data:', {
+  //       transaction_code,
+  //       kode_member,
+  //       id_cashier,
+  //       cashier,
+  //       total,
+  //       payment_method,
+  //       debit_card_code,
+  //       payment,
+  //       change,
+  //       items
+  //     });
+  
+  //     // Validasi input
+  //     if (!transaction_code || !id_cashier || !cashier || !total || !payment_method || !payment || !change || !items || items.length === 0) {
+  //       return res.status(400).json({ message: 'Input tidak lengkap atau tidak valid.' });
+  //     }
+  
+  //     // Pastikan kode_member valid jika ada
+  //     let debit = payment_method === 'debit' && debit_card_code ? debit_card_code : null;
+  
+  //     const newTransaction = await createTransaction({
+  //       transaction_code,
+  //       kode_member,
+  //       id_cashier,
+  //       cashier,
+  //       total,
+  //       payment_method,
+  //       debit,
+  //       payment,
+  //       change,
+  //       items
+  //     });
+  
+  //     res.status(201).json({
+  //       message: 'Transaksi berhasil dibuat',
+  //       data: newTransaction,
+  //       transaction_code: newTransaction.transaction_code
+  //     });
+  //   } catch (error) {
+  //     console.error('Error occurred while creating transaction:', error);
+  //     res.status(500).json({ message: 'Terjadi kesalahan saat membuat transaksi.', error: error.message });
+  //   }
+  // });
+  
+  // Rute untuk membaca semua member
+  
+  
+  app.get('/api/cashier/members', async (req, res) => {
+    try {
+        const users = await cashier.getAllMember();
+        res.status(200).json(users);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+  });
+
 
   // Mendapatkan laporan penjualan berdasarkan cashier
   app.get('/api/cashier/laporanTransaksi/:cashierName', async (req, res) => {

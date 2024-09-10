@@ -33,6 +33,7 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
 
+  const [previewImage, setPreviewImage] = useState(null);
   const [formValues, setFormValues] = useState({
     name: '',
     username: '',
@@ -40,6 +41,7 @@ const Users = () => {
     telepon: '',
     role: '',
     status: '',
+    photo : null,
   });
 
   useEffect(() => {
@@ -47,7 +49,7 @@ const Users = () => {
       try {
         const response = await axios.get('http://localhost:3000/api/superadmin/users');
         if (Array.isArray(response.data)) {
-          setUserData(response.data);
+          setUserData(response.data);  
         } else {
           console.error('Data format is not an array:', response.data);
           setUserData([]);
@@ -71,23 +73,34 @@ const Users = () => {
       telepon: '',
       role: '',
       status: '',
+      photo: null,
     });
+    setPreviewImage(null);
     setAddVisible(true);
   };
 
+
   const handleSaveAdd = async () => {
     try {
-      const newUser = {
-        name: formValues.name,
-        username: formValues.username,
-        password: formValues.password,
-        telepon: formValues.telepon,
-        role: formValues.role,
-        status: formValues.status,
-      };
-
-      const response = await axios.post('http://localhost:3000/api/superadmin/users/add', newUser);
-
+      const formData = new FormData();
+      
+      formData.append('name', formValues.name);
+      formData.append('username', formValues.username);
+      formData.append('password', formValues.password);
+      formData.append('telepon', formValues.telepon);
+      formData.append('role', formValues.role);
+      formData.append('status', formValues.status);
+  
+      if (formValues.photo) {
+        formData.append('photo', formValues.photo);
+      }
+  
+      const response = await axios.post('http://localhost:3000/api/superadmin/users/add', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+  
       Swal.fire(
         'Added!',
         'User details have been added.',
@@ -97,14 +110,34 @@ const Users = () => {
           color: '#fff',
         }
       );
-
+  
       setAddVisible(false);
-      setUserData((prevUsers) => [...prevUsers, response.data]);
-
+      fetchData();
+      // setUserData((prevUsers) => [...prevUsers, response.data]);
+  
     } catch (error) {
       console.error('Error adding user:', error);
     }
   };
+  
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const maxSizeInMB = 1;
+      const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+  
+      if (file.size > maxSizeInBytes) {
+        showAlert(`Ukuran file terlalu besar. Maksimal ${maxSizeInMB} MB.`, 'danger');
+        setFormValues({ ...formValues, photo: null });
+        setPreviewImage(null);
+        setAddVisible(false)
+      } else {
+        setFormValues({ ...formValues, photo: file });
+        setPreviewImage(URL.createObjectURL(file));
+      }
+    }
+  };
+
 
   const handleEdit = (user) => {
     setSelectedUser(user);
@@ -113,9 +146,12 @@ const Users = () => {
       username: user.username,
       password: user.password,
       telepon: user.telepon,
-      role: user.role,
+      role: user.role,  
       status: user.status,
+      photo: null,
     });
+
+    setPreviewImage(user.photo ? `http://localhost:3000/uploads/${user.photo}` : null);
     setEditVisible(true);
   };
 
@@ -126,26 +162,28 @@ const Users = () => {
     }
 
     try {
-      const updatedUser = {
-        name: formValues.name,
-        username: formValues.username,
-        password: formValues.password,
-        telepon: formValues.telepon,
-        role: formValues.role,
-        status: formValues.status,
-      };
-
-      const response = await axios.put(`http://localhost:3000/api/superadmin/users/${selectedUser.id}`, updatedUser);
-
-      setUserData((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === selectedUser.id ? response.data : user
-        )
-      );
-
+      const formData = new FormData();
+    
+      formData.append('name', formValues.name);
+      formData.append('username', formValues.username);
+      formData.append('password', formValues.password);
+      formData.append('telepon', formValues.telepon);
+      formData.append('role', formValues.role);
+      formData.append('status', formValues.status);
+  
+      // Jika ada foto baru yang diunggah, tambahkan ke FormData
+      if (formValues.photo) {
+        formData.append('photo', formValues.photo);
+      }
+      const response = await axios.put(`http://localhost:3000/api/superadmin/users/${selectedUser.id}`, formData,{
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       setEditVisible(false);
 
-      Swal.fire(
+      Swal
+      .fire(
         'Updated!',
         'User details have been updated.',
         'success',
@@ -155,8 +193,8 @@ const Users = () => {
         }
       );
 
+      fetchData();
 
-    
     } catch (error) {
       console.error('Error updating user data:', error.response ? error.response.data : error.message);
       Swal.fire(
@@ -272,6 +310,11 @@ const Users = () => {
 
   return (
     <CRow>
+        {alert.visible && (
+          <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
+            {alert.message}
+          </CAlert>
+        )}
       <CCol>
         <div className="mb-3">
           {alert.visible && (
@@ -319,6 +362,8 @@ const Users = () => {
                 ),
                 actions: (item) => (
                   <td className="text-center">
+                    {item.role !== 'superadmin' && (
+                    <>
                     <CButton
                       color="info"
                       size="sm"
@@ -332,6 +377,7 @@ const Users = () => {
                       size="sm"
                       shape="rounded-pill"
                       onClick={() => handleEdit(item)}
+                      disabled={item.role === 'superadmin'}
                     >
                       Edit
                     </CButton>{' '}
@@ -343,6 +389,8 @@ const Users = () => {
                     >
                       Hapus
                     </CButton>
+                    </>
+                    )}
                   </td>
                 ),
               }}
@@ -412,6 +460,29 @@ const Users = () => {
                   value={formValues.role}
                   onChange={(e) => setFormValues({ ...formValues, role: e.target.value })}
                 />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="photo" className="col-form-label">
+                  Gambar
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="photo"
+                  type="file"
+                  accept="image/png, image/jpeg, image/jpg" 
+                  onChange={handleFileChange}
+                  required
+                />
+                {previewImage && (
+                  <img
+                    src={previewImage}
+                    alt="Preview"
+                    style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover', marginTop: '10px' }}
+                  />
+                )}
               </CCol>
             </CRow>
           </CForm>
@@ -500,6 +571,30 @@ const Users = () => {
                   value={formValues.role}
                   onChange={(e) => setFormValues({ ...formValues, role: e.target.value })}
                 />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="photo" className="col-form-label">
+                  Gambar
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="photo"
+                  type="file"
+                  accept="image/png, image/jpeg, image/jpg" 
+                  onChange={handleFileChange}
+                  required
+                />
+                {/* <CFormFeedback invalid>Gambar is required.</CFormFeedback> */}
+                {previewImage && (
+                  <img
+                    src={previewImage}
+                    alt="Preview"
+                    style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover', marginTop: '10px' }}
+                  />
+                )}
               </CCol>
             </CRow>
           </CForm>

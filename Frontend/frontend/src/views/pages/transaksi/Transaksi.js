@@ -59,6 +59,15 @@ const TransactionPage = () => {
 
   const [visible, setVisible] = useState(false);
   const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
+  const [customerData, setCustomerData] = useState([]);
+  const [addVisible, setAddVisible] = useState(false);
+  const [formMemberValues, setFormMemberValues] = useState({
+    kode_member: '',
+    nama: '',
+    telepon: '',
+    alamat: '',
+  });
+  const [isNameVisible, setIsNameVisible] = useState(false);
 
 
   useEffect(() => {
@@ -92,6 +101,12 @@ const TransactionPage = () => {
       setPayment(total);
     }
   }, [paymentMethod, total]);
+
+  useEffect(() => {
+    const currentDate = new Date().toISOString().slice(0, 10);
+    const formattedDate = currentDate.replace(/-/g, '/');
+    setTransactionDate(formattedDate);
+  }, []);
 
   const showAlert = (message, color) => {
     setAlert({
@@ -165,20 +180,29 @@ const TransactionPage = () => {
   const handleMemberSearch = async (telepon) => {
     try {
       const response = await axios.get(`http://localhost:3000/api/cashier/member/${telepon}`);
+
+      if (response.data && response.data.nama) {
       const member = response.data.nama;
       const memberId = response.data.member_id;
 
       setSelectedMember(member);
       setSelectedMemberId(memberId);
-      
-      showAlert('Member ditemukan', 'success');
+
+      setIsNameVisible(true); 
+      showAlert('Member terdaftar', 'success');
       console.log('MEMBER', response.data.member_id )
+
+    } else {
+      setIsNameVisible(false);
+      showAlert('Member tidak terdaftar', 'danger');
+      }
 
     } catch (error) {
       console.error('Error searching member by phone:', error);
-      showAlert('Member tidak ditemukan', 'danger');
+      showAlert('Member tidak terdaftar', 'danger');
     }
   };
+
 
   const handleQtyChange = (e) => {
     const inputQty = e.target.value;
@@ -250,8 +274,8 @@ const TransactionPage = () => {
   const handleDebitCardCodeChange = (e) => {
     setDebitCardCode(e.target.value);
   };
-  
-  
+
+
     const handleSubmitTransaction = async () => {
       const cashier = localStorage.getItem('userName');
       const transactionData = {
@@ -290,7 +314,8 @@ const TransactionPage = () => {
         // Clean up the Blob URL after printing
         // URL.revokeObjectURL(blobUrl);
 
-        setVisible(true);
+        showAlert('Member berhasil ditambahkan', 'success');
+        // setVisible(true);
 
         setCartItems([]);
         setFormValues({
@@ -319,7 +344,7 @@ const TransactionPage = () => {
     };
 
   function base64ToBlob(base64String, contentType) {
-    const byteCharacters = atob(base64String);  
+    const byteCharacters = atob(base64String);
     const byteNumbers = new Array(byteCharacters.length);
 
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -330,23 +355,67 @@ const TransactionPage = () => {
     return new Blob([byteArray], { type: contentType });
 }
 
-
-
     const options = products.map((item) => ({
       value: item.product_code,
       label: `${item.product_code} - ${item.product_name}`,
     }));
 
+    const handleAdd = () => {
+      setFormMemberValues({
+        nama: '',
+        telepon: '',
+        alamat:'',
+      });
+      setAddVisible(true);
+    }
+
+    const handleSaveAdd = async () => {
+      try {
+        const newCustomer = {
+          nama: formMemberValues.nama,
+          telepon: formMemberValues.telepon,
+          alamat: formMemberValues.alamat,
+        };
+
+        const response = await axios.post('http://localhost:3000/api/cashier/customers/add', newCustomer);
+
+        showAlert('Member berhasil ditambahkan', 'success');
+
+        setAddVisible(false);
+
+        // setCustomerData((prevCustomers) => [...prevCustomers, response.data]);
+
+      } catch (error) {
+        const errorMessage = error.response?.data?.message || 'An error occurred';
+        showAlert(errorMessage, 'success');
+        setAddVisible(false);
+
+        console.error('Terjadi kesalahan:', error);
+      }
+    };
+
   return (
     <div>
       <CRow>
+      <div className="mb-3">
       {alert.visible && (
           <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
             {alert.message}
           </CAlert>
         )}
+       <div className="d-flex justify-content-between align-items-center">
+            <CButton
+              color="primary"
+              size="sm"
+              shape="rounded-pill"
+              className="float-end"
+              onClick={handleAdd}
+            >
+              Tambah Member
+            </CButton>
+          </div>
+        </div>
       <CCol md={6}>
-
       <CCard>
         <CCardHeader>
           <CCardTitle>Form Transaksi</CCardTitle>
@@ -452,7 +521,7 @@ const TransactionPage = () => {
                 />
               </CCol>
             </CRow>
-            <CButton color="primary" onClick={addItemToCart}>
+            <CButton color="info" onClick={addItemToCart}>
               Add to Cart
             </CButton>
             </CForm>
@@ -519,22 +588,19 @@ const TransactionPage = () => {
                   type="text"
                   value={memberSearchInput}
                   onChange={(e) => setMemberSearchInput(e.target.value)}
-                  onBlur={() => handleMemberSearch(memberSearchInput)} 
+                  onBlur={() => handleMemberSearch(memberSearchInput)}
                   />
-              {/* <CFormInput
-                  value={selectedMemberId}
-                  onChange={(e) => setSelectedMemberId(e.target.value)}
-                  readOnly
-                /> */}
-              <CFormInput
+                {isNameVisible && (
+                <CFormInput
                   value={selectedMember}
                   onChange={(e) => setSelectedMember(e.target.value)}
                   readOnly
                 />
+                )}
               </CCol>
             </CRow>
             <CRow className="mb-3">
-              <CCol sm={3}> 
+              <CCol sm={3}>
                 <CFormLabel htmlFor="payment">Payment Method</CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -595,21 +661,82 @@ const TransactionPage = () => {
           </CForm>
         </CCardBody>
       </CCard>
-          </CCol>
+      </CCol>
 
-          {/* {receipt && ( */}
-          <CModal visible={visible} onClose={() => setVisible(false)} size="lg">
-            <CModalHeader>
-              <CModalTitle>Transaksi Berhasil</CModalTitle>
-            </CModalHeader>
-            <CModalBody>
-              <p>Transaksi Anda telah berhasil dilakukan.</p>
-            </CModalBody>
-            <CModalFooter>
-              <CButton color="secondary" onClick={() => setVisible(false)}>Tutup</CButton>
-            </CModalFooter>
-          </CModal>
-      {/* )} */}
+      <CModal alignment="center" visible={addVisible} onClose={() => setAddVisible(false)}>
+        <CModalHeader>
+          <CModalTitle>Tambah Customer</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <CForm>
+            {/* <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="kode_member" className="col-form-label">
+                  Kode Customers
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="kode_member"
+                  type="text"
+                  value={selectedCustomer?.kode_member || ''}
+                  readOnly
+                  plainText
+                />
+              </CCol>
+            </CRow> */}
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="nama" className="col-form-label">
+                  Nama Customer
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="nama"
+                  placeholder="Nama Customer"
+                  value={formMemberValues.nama}
+                  onChange={(e) => setFormMemberValues({ ...formMemberValues, nama: e.target.value })}
+                />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="telepon" className="col-form-label">
+                  Telepon
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="telepon"
+                  placeholder="Telepon"
+                  value={formMemberValues.telepon}
+                  onChange={(e) => setFormMemberValues({ ...formMemberValues, telepon: e.target.value })}
+                />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="alamat" className="col-form-label">
+                  Alamat
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="alamat"
+                  placeholder="Alamat"
+                  value={formMemberValues.alamat}
+                  onChange={(e) => setFormMemberValues({ ...formMemberValues, alamat: e.target.value })}
+                />
+              </CCol>
+            </CRow>
+          </CForm>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setAddVisible(false)}>Close</CButton>
+          <CButton color="primary" onClick={handleSaveAdd}>Save changes</CButton>
+        </CModalFooter>
+      </CModal>
 
       </CRow>
     </div>

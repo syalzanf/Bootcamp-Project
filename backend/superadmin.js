@@ -24,7 +24,7 @@ async function loginUser(username, password) {
     }
 
     if (user.status !== 'active') {
-      throw new Error('Account is not active');
+      throw new Error('Account is not active')  ;
     }
 
     // Memeriksa apakah password cocok
@@ -64,7 +64,6 @@ async function loginUser(username, password) {
     };
   }
 }
-
 
 
 // Fungsi untuk verifikasi token

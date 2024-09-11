@@ -91,7 +91,7 @@ const TransactionReport = () => {
 
   return (
       <CCard>
-          <CCardHeader className="custom-header">
+          <CCardHeader className="">
               <p>Laporan Penjualan</p>
           </CCardHeader>
 

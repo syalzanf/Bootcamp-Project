@@ -43,6 +43,8 @@ const DataBarang = () => {
   });
   const [previewImage, setPreviewImage] = useState(null);
   const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
+  const [showFeedback, setShowFeedback] = useState(false)
+
 
   useEffect(() => {
     fetchData();
@@ -110,6 +112,11 @@ const DataBarang = () => {
       return;
     }
 
+    if (!formValues.product_name || !formValues.brand || !formValues.type || !formValues.stock || !formValues.price || !formValues.image ) {
+      setValidated(true);
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append('product_name', formValues.product_name);
@@ -155,7 +162,7 @@ const DataBarang = () => {
     }
 
     // Pastikan ada data pada form
-    if (!formValues.product_name || !formValues.brand || !formValues.type || !formValues.stock || !formValues.price) {
+    if (!formValues.product_name || !formValues.brand || !formValues.type || !formValues.stock || !formValues.price || !formValues.image ) {
       setValidated(true);
       return;
     }
@@ -524,7 +531,8 @@ const DataBarang = () => {
           <CModalTitle>Edit Barang</CModalTitle>
         </CModalHeader>
         <CModalBody>
-          <CForm>
+
+          <CForm noValidate validated={validated} onSubmit={handleSaveEdit}>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="product_code" className="col-form-label">
@@ -541,124 +549,6 @@ const DataBarang = () => {
                 />
               </CCol>
             </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="product_name" className="col-form-label">
-                  Nama Barang
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                
-                <CFormInput
-                  id="product_name"
-                  placeholder="Nama Barang"
-                  value={formValues.product_name}
-                  onChange={(e) => setFormValues({ ...formValues, product_name: e.target.value })}
-                />
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="brand" className="col-form-label">
-                  Merk
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="brand"
-                  placeholder="Merk"
-                  value={formValues.brand}
-                  onChange={(e) => setFormValues({ ...formValues, brand: e.target.value })}
-                />
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="type" className="col-form-label">
-                  Tipe
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="type"
-                  placeholder="Tipe"
-                  value={formValues.type}
-                  onChange={(e) => setFormValues({ ...formValues, type: e.target.value })}
-                />
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="stock" className="col-form-label">
-                  Stok
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="stock"
-                  placeholder="Stok"
-                  type="number"
-                  value={formValues.stock}
-                  onChange={(e) => setFormValues({ ...formValues, stock: e.target.value })}
-                />
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="price" className="col-form-label">
-                  Harga
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="price"
-                  placeholder="Harga"
-                  type="number"
-                  value={formValues.price}
-                  onChange={(e) => setFormValues({ ...formValues, price: e.target.value })}
-                />
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="image" className="col-form-label">
-                  Gambar
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-              {previewImage && (
-                  <img
-                    src={previewImage}
-                    alt="Preview"
-                    style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover' }}
-                  />
-                )}
-                <CFormInput
-                  id="image"
-                  type="file"
-                  name="image"
-                  accept="image/png, image/jpeg, image/jpg" 
-                  onChange={handleFileChange}
-                />
-
-              </CCol>
-            </CRow>
-          </CForm>
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setEditVisible(false)}>Close</CButton>
-          <CButton color="primary" onClick={handleSaveEdit}>Save changes</CButton>
-        </CModalFooter>
-      </CModal>
-
-
-
-      <CModal alignment="center" visible={addVisible} onClose={() => setAddVisible(false)}>
-        <CModalHeader>
-          <CModalTitle>Tambah Barang</CModalTitle>
-        </CModalHeader>
-        <CModalBody>
-          <CForm noValidate validated={validated} onSubmit={handleAddNew}>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="product_name" className="col-form-label">
@@ -739,6 +629,132 @@ const DataBarang = () => {
                   id="price"
                   placeholder="Harga"
                   type="number"
+                  value={formValues.price}
+                  onChange={(e) => setFormValues({ ...formValues, price: e.target.value })}
+                  required
+                />
+                <CFormFeedback invalid>Harga is required.</CFormFeedback>
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="image" className="col-form-label">
+                  Gambar
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+              {previewImage && (
+                  <img
+                    src={previewImage}
+                    alt="Preview"
+                    style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover' }}
+                  />
+                )}
+                <CFormInput
+                  id="image"
+                  type="file"
+                  name="image"
+                  accept="image/png, image/jpeg, image/jpg" 
+                  onChange={handleFileChange}
+                  required
+                />
+              <CFormFeedback invalid>Gambar is required.</CFormFeedback>
+              </CCol>
+            </CRow>
+          </CForm>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setEditVisible(false)}>Close</CButton>
+          <CButton color="primary" onClick={handleSaveEdit}>Save changes</CButton>
+        </CModalFooter>
+      </CModal>
+
+      <CModal alignment="center" visible={addVisible} onClose={() => setAddVisible(false)}>
+        <CModalHeader>
+          <CModalTitle>Tambah Barang</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <CForm noValidate validated={validated} onSubmit={handleAddNew}>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="product_name" className="col-form-label">
+                  Nama Barang
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="product_name"
+                  placeholder="Nama Barang"
+                  value={formValues.product_name}
+                  onChange={(e) => setFormValues({ ...formValues, product_name: e.target.value })}
+                  required
+                />
+                <CFormFeedback invalid>Nama Barang is required.</CFormFeedback>
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                  Merk
+                <CFormLabel htmlFor="brand" className="col-form-label">
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="brand"
+                  placeholder="Merk"
+                  value={formValues.brand}
+                  onChange={(e) => setFormValues({ ...formValues, brand: e.target.value })}
+                  required
+                />
+                <CFormFeedback invalid>Merk is required.</CFormFeedback>
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="type" className="col-form-label">
+                  Tipe
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="type"
+                  placeholder="Tipe"
+                  value={formValues.type}
+                  onChange={(e) => setFormValues({ ...formValues, type: e.target.value })}
+                  required
+                />
+                <CFormFeedback invalid>Tipe is required.</CFormFeedback>
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="stock" className="col-form-label">
+                  Stok
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="stock"
+                  placeholder="Stok"
+                  type="number"
+                  value={formValues.stock}
+                  onChange={(e) => setFormValues({ ...formValues, stock: e.target.value })}
+                  required
+                />
+                <CFormFeedback invalid>Stok is required.</CFormFeedback>
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="price" className="col-form-label">
+                  Harga
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="price"
+                  placeholder="Harga"
+                  type="text"
                   value={formValues.price}
                   onChange={(e) => setFormValues({ ...formValues, price: e.target.value })}
                   required

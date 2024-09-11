@@ -48,8 +48,6 @@
     });
   };
     
-  
-
   // Sinkronisasi model dengan database
   sequelize.sync()
       .then(() => console.log('Database & tables created!'))
@@ -64,7 +62,6 @@
       cb(null, Date.now() + path.extname(file.originalname));
     },
   });
-
 
   const upload = multer({ 
     storage: storage,
@@ -133,34 +130,23 @@
     }
   })
 
-  // app.post('/api/login', async (req, res) => {
-  //   const { username, password } = req.body;
 
-  //   try {
+  // Endpoint untuk verifikasi token
+  app.post('/api/verify-token', async (req, res) => {
+    try {
+      const { token } = req.body;
   
-  //     if (!username || !password) {
-  //       return res.status(400).json({ message: 'Username and password are required' });
-  //     }
+      if (!token) {
+        return res.status(400).json({ message: 'Token is required' });
+      }
   
-  //     const result = await superadmin.loginUser(username, password);  
-
-  //     // Simpan token ke cookies
-  //     res.cookie('token', result.token, {
-  //        httpOnly: true,
-  //        secure: process.env.NODE_ENV === 'production', 
-  //       maxAge: 3600000 // Cookie valid selama 1 jam
-  //      });
-
-  //      res.json({
-  //       message: result.message,
-  //       user: result.user,
-  //     });
-  //   } catch (error) {
-  //     res.status(401).json({ message: error.message });
-  //   }
-  // });
-
-
+      const result = await superadmin.verifyToken(token);
+  
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(401).json({ message: error.message });
+    }
+  });
 
   app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
@@ -227,25 +213,6 @@ app.patch('/api/profile', authenticateToken, upload.single('photo'), async (req,
     res.status(500).json({ message: error.message });
   }
 });
-
-
-  // Endpoint untuk verifikasi token
-  app.post('/api/verify-token', async (req, res) => {
-    try {
-      const { token } = req.body;
-  
-      if (!token) {
-        return res.status(400).json({ message: 'Token is required' });
-      }
-  
-      const result = await superadmin.verifyToken(token);
-  
-      res.status(200).json(result);
-    } catch (error) {
-      res.status(401).json({ message: error.message });
-    }
-  });
-
 
   // // Rute yang memerlukan autentikasi
   // app.get('/protected-route', authenticateToken, (req, res) => {
@@ -428,23 +395,19 @@ app.patch('/api/profile', authenticateToken, upload.single('photo'), async (req,
     }
   });
 
-  // Rute untuk menampilkan transaksi berdasarkan id
-  app.get('/api/admin/reportTransaction/:id', authenticateToken, async (req, res) => {
-      const transactionId = req.params.id;
-  
-      console.log('Received Transaction ID:', transactionId); // Debugging
+
+  // Rute untuk menampilkan detail transaksi berdasarkan id
+  app.get('/api/detailTransaction/:id', async (req, res) => {
+      const {id} = req.params;
   
       try {
-          const transactionData = await getTransactionById(transactionId);
-          if (!transactionData) {
-              return res.status(404).json({ error: 'Transaction not found' });
-          }
+          const transactionData = await cashier.getTransactionById(id);
           res.status(200).json(transactionData);
-      } catch (error) {
-          console.error('Error fetching transaction:', error); // Debugging
-          res.status(500).json({ error: 'Internal server error' });
-      }
-  });
+        } catch (error) {
+            console.error(error);
+            res.status(404).json({ message: error.message });
+        }
+      });
 
   app.get('/api/admin/reportTransactions', authenticateToken, async (req, res) => {
     try {

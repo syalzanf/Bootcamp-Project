@@ -3,6 +3,8 @@ const pool = require('./connection');
 const {Transaksi, Member} = require('./models/transaksi');
 const sequelize = require('./configdb');
 const Product = require ('./models/product')
+const validator = require('validator');
+
 // const Member = require ('./models/member')
 
 
@@ -61,20 +63,38 @@ async function getProductById(id) {
 async function addCustomer({ nama, telepon, alamat }) {
     
     try {
+        if (!nama || !telepon || !alamat) {
+            throw new Error('All fields are required');
+        }
+      
+        if (!validator.isMobilePhone(telepon, 'id-ID')) {
+            throw new Error('Invalid phone number format!');
+        }
+        
+        const existingMemberResult = await pool.query(
+            'SELECT * FROM members WHERE telepon = $1',
+            [telepon]
+        );
+
+        if (existingMemberResult.rows.length > 0) {
+            throw new Error('Member already exists!');
+        }
+
         const result = await pool.query(
             'INSERT INTO members (nama, telepon, alamat) VALUES ($1, $2, $3) RETURNING *',
             [nama, telepon, alamat]
         );
+      
         return result.rows[0];
     } catch (error) {
-        throw new Error('Error adding customers: ' + error.message);
+        throw new Error(error.message);
     }
 }
 
 // Fungsi untuk mendapatkan semua data customer
 async function getListCustomers() {
     try {
-        const result = await pool.query('SELECT * FROM members');
+        const result = await pool.query('SELECT * FROM members ORDER BY member_id DESC');
         return result.rows;
     } catch (error) {
         throw new Error('Error fetching products: ' + error.message);
@@ -84,13 +104,30 @@ async function getListCustomers() {
 // Fungsi untuk mengupdate customer
 async function updateCustomer(id, { nama, telepon, alamat }) {
     try {
+
+        if (!nama || !telepon || !alamat) {
+            throw new Error('All fields are required');
+        }
+      
+        if (!validator.isMobilePhone(telepon, 'id-ID')) {
+            throw new Error('Invalid phone number format!');
+        }
+        
+        const existingMemberResult = await pool.query(
+            'SELECT * FROM members WHERE telepon = $1',
+            [telepon]
+        );
+
+        if (existingMemberResult.rows.length > 0) {
+            throw new Error('Member already exists!');
+        }
         const result = await pool.query(
             'UPDATE members SET nama = $1, telepon = $2, alamat = $3 WHERE member_id = $4 RETURNING *',
             [nama, telepon, alamat, id]
         );
         return result.rows[0];
     } catch (error) {
-        throw new Error('Error adding customers: ' + error.message);
+        throw new Error(error.message);
     }
 }
 
@@ -237,6 +274,21 @@ async function getTransactionById(transaction_id) {
     }
 }
 
+// async function getTransactionByCode(transactionCode) {
+//     try {
+//         const transaction = await Transaksi.findOne({
+//             where: { transaction_code: transactionCode }
+//         });
+//         if (!transaction) {
+//             throw new Error('Transaction not found');
+//         }
+//         return transaction;
+//     } catch (error) {
+//         throw new Error('Error fetching transaction: ' + error.message);
+//     }
+// }
+
+
 const getMemberByTelepon = async (telepon) => {
     try {
       const query = 'SELECT * FROM members WHERE telepon = $1';
@@ -271,6 +323,7 @@ async function getAllMember() {
 async function getTransactionReportByCashier(cashierName) {
     try {
         const transactions = await Transaksi.findAll({
+            
             include: [{
                 model: Member,
                 attributes: ['nama'], // nama dari tabel members
@@ -290,16 +343,32 @@ async function getTransactionReportByCashier(cashierName) {
             transaction_code: transaction.transaction_code,
             member: transaction.Member ? transaction.Member.nama : 'Guest',
             cashier: transaction.cashier,
-            transaction_date: transaction.transaction_date,
+            transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
             total: transaction.total,
             payment: transaction.payment,
             change: transaction.change,
             items: transaction.items
         }));
 
-        if (transactions.length === 0) {
-            return { message: 'No transactions found for this cashier' };
-        }
+        // const transactionsData = transactions.map(transaction => {
+        //     // Hitung total per item
+        //     const totalItems = transaction.items.reduce((sum, item) => {
+        //         const itemTotal = item.price * item.quantity; 
+        //         return sum + itemTotal;
+        //     }, 0);
+
+        //     return {
+        //         transaction_code: transaction.transaction_code,
+        //         member: transaction.Member ? transaction.Member.nama : 'Guest',
+        //         cashier: transaction.cashier,
+        //         transaction_date: transaction.transaction_date,
+        //         total: transaction.total,
+        //         payment: transaction.payment,
+        //         change: transaction.change,
+        //         items: transaction.items,
+        //         totalItems: totalItems
+        //     };
+        // });
 
         return transactionsData;
     } catch (error) {
@@ -307,7 +376,44 @@ async function getTransactionReportByCashier(cashierName) {
     }
 }
 
+async function getTransactionByCode(transactionCode) {
+    try {
+        // Mengambil detail transaksi berdasarkan transaction_code
+        const transaction = await Transaksi.findOne({
+            where: {
+                transaction_code: transactionCode
+            },
+        });
 
+        // Memeriksa apakah transaksi ditemukan
+        if (!transaction) {
+            return { message: 'Transaction not found' };
+        }
+
+        // Menggabungkan detail transaksi dan items
+        const transactionData = {
+            transaction_code: transaction.transaction_code,
+            member: transaction.Member ? transaction.Member.nama : 'Guest',
+            cashier: transaction.cashier,
+            transaction_date: transaction.transaction_date,
+            total: transaction.total,
+            payment: transaction.payment,
+            change: transaction.change,
+            items: transaction.items.map(item => ({
+                product_code: item.product_code,
+                product_name: item.product_name,
+                brand: item.brand,
+                type: item.type,
+                quantity: item.quantity,
+                price: item.price
+            }))
+        };
+
+        return transactionData;
+    } catch (error) {
+        throw new Error('Error retrieving transaction report: ' + error.message);
+    }
+}
 
 
 module.exports ={
@@ -322,5 +428,6 @@ module.exports ={
     getTransactionReportByCashier,
     getAllMember,
     getTransactionById,
+    getTransactionByCode,
     getMemberByTelepon,
 };

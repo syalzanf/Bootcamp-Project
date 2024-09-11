@@ -85,7 +85,7 @@ const CustomerList = () => {
 
       Swal.fire(
         'Added!',
-        'Customer details have been added.',
+        'Customer success added.',
         'success',
         {
           background: '#343a40',
@@ -100,6 +100,14 @@ const CustomerList = () => {
       setCustomerData((prevCustomers) => [...prevCustomers, response.data]);
 
     } catch (error) {
+      const errorMessage = error.response?.data?.message || 'An error occurred';
+      Swal.fire({
+        title: 'Error!',
+        text: errorMessage,
+        icon: 'error',
+        background: '#343a40',
+        color: '#fff',
+    });
       console.error('Terjadi kesalahan:', error);
     }
   };
@@ -153,16 +161,15 @@ const CustomerList = () => {
         }
       );
     } catch (error) {
+      const errorMessage = error.response?.data?.message || 'An error occurred';
       console.error('Error updating customer data:', error.response ? error.response.data : error.message);
-      Swal.fire(
-        'Error!',
-        'There was an error updating the customer.',
-        'error',
-        {
-          background: '#343a40',
-          color: '#fff',
-        }
-      );
+      Swal.fire({
+        title: 'Error!',
+        text: errorMessage,
+        icon: 'error',
+        background: '#343a40',
+        color: '#fff',
+    });
     }
   };
 

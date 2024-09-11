@@ -1,28 +1,7 @@
-// import React from 'react';
-// import { CCard, CCardBody, CCardHeader, CCol, CRow } from '@coreui/react';
-
-// const Cashier = () => {
-//   return (
-//     <CRow>
-//       <CCol>
-//         <CCard>
-//           <CCardHeader>
-//           testtttttttttttttt
-//           </CCardHeader>
-//           <CCardBody>
-//             {/* Tambahkan konten dashboard cashier di sini */}
-//           </CCardBody>
-//         </CCard>
-//       </CCol>
-//     </CRow>
-//   );
-// };
-
-// export default Cashier;
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import moment from 'moment';
 import {
   CCard,
   CCardBody,
@@ -49,7 +28,6 @@ const TransactionReport = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const navigate = useNavigate();
 
     const [modalVisible, setModalVisible] = useState(false)
     const [selectedDetails, setSelectedDetails] = useState([])
@@ -73,6 +51,9 @@ const TransactionReport = () => {
                     withCredentials: true,
                 });
                 setTransactions(response.data);
+         
+                // console.log('CEKKK', response.data);
+
             } catch (err) {
                 setError('Error fetching transactions');
             } finally {
@@ -82,18 +63,14 @@ const TransactionReport = () => {
 
         fetchTransactions();
     }, []);
-
-
-    // const handleDetail = (item) => {
-    //   navigate(`/detail-penjualan-cashier?transaction_code=${item.transaction_code}`);
-    // }
-
-    const handleDetail = (details) => {
-      setSelectedDetails(details) 
-      setModalVisible(true)
-    }
-
-    
+   
+    const handleDetail = (transactionCode) => {
+      const transaction = transactions.find(t => t.transaction_code === transactionCode);
+      if (transaction) {
+          setSelectedDetails(transaction.items); 
+          setModalVisible(true);
+      }
+  };
 
     if (loading) {
         return <div>Loading...</div>;
@@ -112,64 +89,65 @@ const TransactionReport = () => {
     });
 
     const columns = [
-        { key: 'transaction_date', label: 'Date',  _render: (item) => new Date(item.date).toDateString() },
+          { 
+            key: 'transaction_date', 
+            label: 'Date',
+            _render: (item) => new Date(item.transaction_date).toLocaleDateString()
+          },
         { key: 'transaction_code', label: 'Transaction Code' },
         { key: 'cashier', label: 'Cashier' },
         { key: 'member', label: 'Customer' },
-        { key: 'product_code', label: 'Kode Barang' },
-        { key: 'product_name', label: 'Nama Barang' },
-        { key: 'qty', label: 'Qty' },
         { key: 'total', label: 'Total' },
-        // { key: 'payment', label: 'Payment' },
-        // { key: 'change', label: 'Change' },
-        // {
-        //   key: 'actions',
-        //   label: '',
-        //   _props: { className: 'text-center' },
-        //   filter: false,
-        //   sorter: false,
-        // },
+        { key: 'payment', label: 'Payment' },
+        { key: 'change', label: 'Change' },
+        {
+          key: 'actions',
+          label: '',
+          _props: { className: 'text-center' },
+          filter: false,
+          sorter: false,
+        },
     ];
 
-    const formattedTransactions = transactions.map(transaction => {
-      const details = transaction.items.map(item => ({
-        transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
-        transaction_code: transaction.transaction_code,
-        member: transaction.member,
-        cashier: transaction.cashier,
-        product_code: item.product_code,
-        product_name: item.product_name,
-        brand: item.brand,
-        type: item.type,
-        qty: item.qty,
-        price: item.price
-      }));
+  //   const formattedTransactions = transactions.map(transaction => {
+  //     const details = transaction.items.map(item => ({
+  //       transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
+  //       transaction_code: transaction.transaction_code,
+  //       member: transaction.member,
+  //       cashier: transaction.cashier,
+  //       product_code: item.product_code,
+  //       product_name: item.product_name,
+  //       brand: item.brand,
+  //       type: item.type,
+  //       qty: item.qty,
+  //       price: item.price
+  //     }));
 
-      return transaction.items.map(item => ({
-          transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
-          transaction_code: transaction.transaction_code,
-          member: transaction.member,
-          cashier: transaction.cashier,
-          // total: transaction.total,
-          total : item.price * item.qty,
-          payment: transaction.payment,
-          change: transaction.change,
-          product_code: item.product_code,
-          product_name: item.product_name,
-          brand: item.brand,
-          type: item.type,
-          qty: item.qty,
-          price: item.price,
-          detail: details,
-      }));
-  }).flat();
+  //     return transaction.items.map(item => ({
+  //         transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
+  //         transaction_code: transaction.transaction_code,
+  //         member: transaction.member,
+  //         cashier: transaction.cashier,
+  //         total: transaction.total,
+  //         // total : item.price * item.qty,
+  //         payment: transaction.payment,
+  //         change: transaction.change,
+  //         product_code: item.product_code,
+  //         product_name: item.product_name,
+  //         brand: item.brand,
+  //         type: item.type,
+  //         qty: item.qty,
+  //         price: item.price,
+  //         detail: details,
+  //     }));
+  // }).flat();
 
     return (
       <CRow>
       <CCol>
         <CCard>
             <CCardHeader>
-                <p>Laporan Penjualan</p>
+                <p>Data Penjualan</p>
             </CCardHeader>
             <CCardBody>
               {/* <div>
@@ -200,7 +178,7 @@ const TransactionReport = () => {
                     }}
                     activePage={1}
                     footer
-                    items={formattedTransactions}
+                    items={transactions}
                     columns={columns}
                     columnFilter
                     tableFilter
@@ -216,7 +194,7 @@ const TransactionReport = () => {
                             color="info"
                             size="sm"
                             shape="rounded-pill"
-                            onClick={() => handleDetail(item.detail)}
+                            onClick={() => handleDetail(item.transaction_code)}
                           >
                             Detail
                           </CButton>
@@ -235,10 +213,10 @@ const TransactionReport = () => {
           <CTable>
             <CTableHead>
               <CTableRow>
-                <CTableHeaderCell>Date</CTableHeaderCell>
+                {/* <CTableHeaderCell>Date</CTableHeaderCell>
                 <CTableHeaderCell>Transaction Code</CTableHeaderCell>
                 <CTableHeaderCell>Customer</CTableHeaderCell>
-                <CTableHeaderCell>Cashier</CTableHeaderCell>
+                <CTableHeaderCell>Cashier</CTableHeaderCell> */}
                 <CTableHeaderCell>Kode Produk</CTableHeaderCell>
                 <CTableHeaderCell>Nama Produk</CTableHeaderCell>
                 <CTableHeaderCell>Brand</CTableHeaderCell>
@@ -250,10 +228,11 @@ const TransactionReport = () => {
             <CTableBody>
               {Array.isArray (selectedDetails) && selectedDetails.map((detail, index) => (
                 <CTableRow key={index}>
-                  <CTableDataCell>{detail.transaction_date}</CTableDataCell>
+                  {/* <CTableDataCell>{new Date(detail.transaction_date).toLocaleDateString()}</CTableDataCell> */}
+                  {/* <CTableDataCell>{detail.transaction_date}</CTableDataCell>
                   <CTableDataCell>{detail.transaction_code}</CTableDataCell>
                   <CTableDataCell>{detail.member}</CTableDataCell>
-                  <CTableDataCell>{detail.cashier}</CTableDataCell>
+                  <CTableDataCell>{detail.cashier}</CTableDataCell> */}
                   <CTableDataCell>{detail.product_code}</CTableDataCell>
                   <CTableDataCell>{detail.product_name}</CTableDataCell>
                   <CTableDataCell>{detail.brand}</CTableDataCell>

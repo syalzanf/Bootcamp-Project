@@ -77,6 +77,12 @@ const _navCashier = [
   },
   {
     component: CNavItem,
+    name: <Translation>{(t) => t('Data Penjualan')}</Translation>,
+    to: '/data-penjualan-cashier',
+    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
     name: <Translation>{(t) => t('Laporan Penjualan')}</Translation>,
     to: '/laporan-penjualan-cashier',
     icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,

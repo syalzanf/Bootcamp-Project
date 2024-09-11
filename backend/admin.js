@@ -301,7 +301,7 @@ async function getTransactionById(transactionId) {
             where: { id: transactionId },
             include: [{
                 model: Member,
-                attributes: ['nama'], // Mengambil hanya nama dari tabel member
+                attributes: ['nama'], // mengambil hanya nama dari tabel member
                 required: false // `false` memungkinkan untuk transaksi tanpa member (guest)
             }]
         });

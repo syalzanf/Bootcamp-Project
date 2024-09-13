@@ -7,7 +7,7 @@ import {
   CCardHeader,
   CCol,
   CRow,
-  CSmartTable, 
+  CSmartTable,
   CButton,
   CAlert,
   CModal,
@@ -19,6 +19,8 @@ import {
   CFormLabel,
   CFormInput,
   CBadge,
+  CFormFeedback,
+  CFormSelect,
 } from '@coreui/react-pro';
 
 import '../../../scss/_custom.scss';
@@ -32,6 +34,7 @@ const Users = () => {
   const [editVisible, setEditVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
+  const [validated, setValidated] = useState(false);
 
   const [previewImage, setPreviewImage] = useState(null);
   const [formValues, setFormValues] = useState({
@@ -44,26 +47,26 @@ const Users = () => {
     photo : null,
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get('http://localhost:3000/api/superadmin/users');
-        if (Array.isArray(response.data)) {
-          setUserData(response.data);  
-        } else {
-          console.error('Data format is not an array:', response.data);
-          setUserData([]);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error.response ? error.response.data : error.message);
-        setError(error);
-      } finally {
-        setLoading(false);
+  const fetchData = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/api/superadmin/users');
+      if (Array.isArray(response.data)) {
+        setUserData(response.data);
+      } else {
+        console.error('Data format is not an array:', response.data);
+        setUserData([]);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching data:', error.response ? error.response.data : error.message);
+      setError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchData();
-  }, []);
+  useEffect(() => {
+  fetchData();  // Panggil fetchData saat komponen mount
+}, []);
 
   const handleAdd = () => {
     setFormValues({
@@ -80,27 +83,42 @@ const Users = () => {
   };
 
 
-  const handleSaveAdd = async () => {
+  const handleSaveAdd = async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+
+    if (form.checkValidity() === false) {
+      event.stopPropagation();
+      setValidated(true);
+      return;
+    }
+
+
+    // if (!formValues.name || !formValues.username || !formValues.password || !formValues.telepon || !formValues.role || !formValues.photo ) {
+    //   setValidated(true);
+    //   return;
+    // }
+
     try {
       const formData = new FormData();
-      
+
       formData.append('name', formValues.name);
       formData.append('username', formValues.username);
       formData.append('password', formValues.password);
       formData.append('telepon', formValues.telepon);
       formData.append('role', formValues.role);
       formData.append('status', formValues.status);
-  
+
       if (formValues.photo) {
         formData.append('photo', formValues.photo);
       }
-  
+
       const response = await axios.post('http://localhost:3000/api/superadmin/users/add', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-  
+
       Swal.fire(
         'Added!',
         'User details have been added.',
@@ -110,22 +128,30 @@ const Users = () => {
           color: '#fff',
         }
       );
-  
+
       setAddVisible(false);
       fetchData();
       // setUserData((prevUsers) => [...prevUsers, response.data]);
-  
+
     } catch (error) {
-      console.error('Error adding user:', error);
+      console.error('Error memperbarui data pengguna:', error.response ? error.response.data : error.message);
+      const errorMessage = error.response?.data?.message || 'An error occurred';
+      Swal.fire({
+        title: 'Failed!',
+        text: errorMessage,
+        icon: 'error',
+        background: '#343a40',
+        color: '#fff',
+    });
     }
   };
-  
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const maxSizeInMB = 1;
       const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
-  
+
       if (file.size > maxSizeInBytes) {
         showAlert(`Ukuran file terlalu besar. Maksimal ${maxSizeInMB} MB.`, 'danger');
         setFormValues({ ...formValues, photo: null });
@@ -144,14 +170,14 @@ const Users = () => {
     setFormValues({
       name: user.name,
       username: user.username,
-      password: user.password,
+      password: '', // hanya diisi jika user ingin mengubahnya
       telepon: user.telepon,
-      role: user.role,  
+      role: user.role,
       status: user.status,
       photo: null,
     });
 
-    setPreviewImage(user.photo ? `http://localhost:3000/uploads/${user.photo}` : null);
+    setPreviewImage(user.photo ? `http://localhost:3000${user.photo}` : null);
     setEditVisible(true);
   };
 
@@ -163,14 +189,19 @@ const Users = () => {
 
     try {
       const formData = new FormData();
-    
+
       formData.append('name', formValues.name);
       formData.append('username', formValues.username);
-      formData.append('password', formValues.password);
+
+      // jika password diisi, maka tambahkan ke formData, jika tidak, biarkan password lama tetap ada
+      if (formValues.password) {
+        formData.append('password', formValues.password);
+      }
+
       formData.append('telepon', formValues.telepon);
       formData.append('role', formValues.role);
       formData.append('status', formValues.status);
-  
+
       // Jika ada foto baru yang diunggah, tambahkan ke FormData
       if (formValues.photo) {
         formData.append('photo', formValues.photo);
@@ -180,6 +211,9 @@ const Users = () => {
           'Content-Type': 'multipart/form-data',
         },
       });
+
+      console.log(response.data);
+
       setEditVisible(false);
 
       Swal
@@ -198,7 +232,7 @@ const Users = () => {
     } catch (error) {
       console.error('Error updating user data:', error.response ? error.response.data : error.message);
       Swal.fire(
-        'Error!',
+        'Failed!',
         'There was an error updating the user.',
         'error',
         {
@@ -281,7 +315,7 @@ const Users = () => {
       console.log('Status updated:', response.data);
 
        // Update state userData
-      const updatedUsers = userData.map(user => 
+      const updatedUsers = userData.map(user =>
         user.id === item.id ? { ...user, status: newStatus } : user
       );
       setUserData(updatedUsers);
@@ -341,7 +375,7 @@ const Users = () => {
           <CCardBody>
             <CSmartTable
               clickableRows
-              tableProps={{ 
+              tableProps={{
                 striped: true,
                 hover: true
               }}
@@ -422,6 +456,22 @@ const Users = () => {
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
+                <CFormLabel htmlFor="password" className="col-form-label">
+                  New Password
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  // type="password"
+                  id="password"
+                  value={formValues.password}
+                  onChange={(e) => setFormValues({ ...formValues, password: e.target.value })}
+                  // placeholder="Leave blank to keep current password"
+                />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
                 <CFormLabel htmlFor="name" className="col-form-label">
                   Name
                 </CFormLabel>
@@ -472,7 +522,7 @@ const Users = () => {
                 <CFormInput
                   id="photo"
                   type="file"
-                  accept="image/png, image/jpeg, image/jpg" 
+                  accept="image/png, image/jpeg, image/jpg"
                   onChange={handleFileChange}
                   required
                 />
@@ -502,7 +552,7 @@ const Users = () => {
           <CModalTitle>Tambah User</CModalTitle>
         </CModalHeader>
         <CModalBody>
-          <CForm>
+          <CForm noValidate validated={validated} onSubmit={handleSaveAdd}>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="addUsername" className="col-form-label">
@@ -514,13 +564,15 @@ const Users = () => {
                   id="addUsername"
                   value={formValues.username}
                   onChange={(e) => setFormValues({ ...formValues, username: e.target.value })}
+                  required
                 />
+                <CFormFeedback invalid>Username is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="addName" className="col-form-label">
-                  Name
+                  Nama
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -528,7 +580,9 @@ const Users = () => {
                   id="addName"
                   value={formValues.name}
                   onChange={(e) => setFormValues({ ...formValues, name: e.target.value })}
+                  required
                 />
+                <CFormFeedback invalid>Nama is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -542,7 +596,9 @@ const Users = () => {
                   id="addTelepon"
                   value={formValues.telepon}
                   onChange={(e) => setFormValues({ ...formValues, telepon: e.target.value })}
+                  required
                 />
+                <CFormFeedback invalid>Telepon is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -556,7 +612,9 @@ const Users = () => {
                   id="password"
                   value={formValues.password}
                   onChange={(e) => setFormValues({ ...formValues, password: e.target.value })}
+                  required
                 />
+                <CFormFeedback invalid>Password is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -566,11 +624,18 @@ const Users = () => {
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
-                <CFormInput
+                <CFormSelect
                   id="addRole"
                   value={formValues.role}
                   onChange={(e) => setFormValues({ ...formValues, role: e.target.value })}
-                />
+                  required
+                >
+                  <option>Select a role</option>
+                  <option value="admin">Admin</option>
+                  <option value="cashier">Cashier</option>
+                  {/* <option value="superadmin">Superadmin</option> */}
+                </CFormSelect>
+                <CFormFeedback invalid>Role is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -583,7 +648,7 @@ const Users = () => {
                 <CFormInput
                   id="photo"
                   type="file"
-                  accept="image/png, image/jpeg, image/jpg" 
+                  accept="image/png, image/jpeg, image/jpg"
                   onChange={handleFileChange}
                   required
                 />
@@ -595,6 +660,7 @@ const Users = () => {
                     style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover', marginTop: '10px' }}
                   />
                 )}
+                <CFormFeedback invalid>Gambar is required.</CFormFeedback>
               </CCol>
             </CRow>
           </CForm>

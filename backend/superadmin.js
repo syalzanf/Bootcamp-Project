@@ -11,8 +11,6 @@ require('dotenv').config();
 // const secretKey = 'secret_key'; 
 const jwtSecret = process.env.ACCESS_TOKEN_SECRET;
 
-
-
 async function loginUser(username, password) {
   try {
     // Mengambil user dari database
@@ -20,7 +18,7 @@ async function loginUser(username, password) {
     console.log('User:', user); 
     
     if (!user) {
-      throw new Error('Invalid username or password');
+      throw new Error('User tidak ada');
     }
 
     if (user.status !== 'active') {
@@ -58,12 +56,81 @@ async function loginUser(username, password) {
     };
   } catch (error) {
     console.error('Login error:', error.message); 
-    return {
-      status: 400,
-      message: error.message
-    };
+    // return {
+    //   status: 400,
+    //   message: error.message
+    // };
+    throw error;
   }
 }
+
+
+// async function loginUser(username, password) {
+//   try {
+//     // Mengambil user dari database
+//     const user = await User.findOne({ where: { username } });
+//     console.log('User:', user); 
+    
+//     if (!user) {
+//       throw new Error('Invalid username or password');
+//     }
+
+//     if (user.status !== 'active') {
+//       throw new Error('Account is not active')  ;
+//     }
+
+//     // Memeriksa apakah password cocok
+//     const isMatch = await bcrypt.compare(password, user.password);
+//     console.log('Password match:', isMatch); 
+
+//     if (!isMatch) {
+//       throw new Error('Invalid username or password');
+//     }
+
+//     // Menghasilkan token JWT
+//     const token = jwt.sign(
+//       { username: user.username, role: user.role },
+//       jwtSecret,
+//       { expiresIn: '1h' }
+//     );
+//     console.log('Generated Token:', token);
+
+//     // Menghasilkan refresh token
+//     const refreshToken = jwt.sign(
+//       { id: user.id, role: user.role },
+//       jwtSecret,
+//       { expiresIn: '30d' } // berlaku selama 30 hari
+//     );
+
+//     // Simpan refresh token di database
+//     await User.update({ refreshToken }, { where: { id: user.id } });
+
+//     // Mengembalikan hasil login
+//     return {
+//       message: 'Login successful',
+//       token,
+//       refreshToken,
+//       user: {
+//         id: user.id,
+//         username: user.username,
+//         name: user.name, 
+//         role: user.role,
+//         telepon: user.telepon,
+//         photo: user.photo,
+//       }
+//     };
+//   } catch (error) {
+//     console.error('Login error:', error.message); 
+//     return {
+//       status: 400,
+//       message: error.message
+//     };
+//   }
+// }
+
+
+// Fungsi untuk verifikasi token
+// Fungsi untuk verifikasi token
 
 
 // Fungsi untuk verifikasi token
@@ -107,7 +174,6 @@ async function verifyToken(token) {
   }
 }
 
-
 async function addUser(username, name, telepon, role, password, photo) {
   try {
 
@@ -124,6 +190,13 @@ async function addUser(username, name, telepon, role, password, photo) {
 
     if (existingUser) {
       throw new Error('Username already exists');
+    }
+
+    // Cek apakah phoneNumber sudah ada di database
+    const existingPhoneNumber = await User.findOne({ where: { telepon } });
+
+    if (existingPhoneNumber) {
+      throw new Error('Phone number already exists');
     }
 
     // Hash password sebelum menyimpannya ke database
@@ -145,7 +218,7 @@ async function addUser(username, name, telepon, role, password, photo) {
       user: newUser
     };
   } catch (error) {
-    throw error;
+    throw new Error(error.message);
   }
 }
 

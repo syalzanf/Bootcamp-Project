@@ -1,24 +1,3 @@
-// import React from 'react';
-// import { CCard, CCardBody, CCardHeader, CCol, CRow } from '@coreui/react';
-
-// const Cashier = () => {
-//   return (
-//     <CRow>
-//       <CCol>
-//         <CCard>
-//           <CCardHeader>
-//           testtttttttttttttt
-//           </CCardHeader>
-//           <CCardBody>
-//             {/* Tambahkan konten dashboard cashier di sini */}
-//           </CCardBody>
-//         </CCard>
-//       </CCol>
-//     </CRow>
-//   );
-// };
-
-// export default Cashier;
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -54,7 +33,7 @@ const TransactionReport = () => {
     const [modalVisible, setModalVisible] = useState(false)
     const [selectedDetails, setSelectedDetails] = useState([])
     const [startDate, setStartDate] = useState(null);
-    const [endDate, setEndDate] = useState(null);  
+    const [endDate, setEndDate] = useState(null);
 
 
 
@@ -73,6 +52,9 @@ const TransactionReport = () => {
                     withCredentials: true,
                 });
                 setTransactions(response.data);
+                console.log('TRANSAKSI', response.data)
+                console.log('TESTTT', response.items)
+
             } catch (err) {
                 setError('Error fetching transactions');
             } finally {
@@ -84,16 +66,6 @@ const TransactionReport = () => {
     }, []);
 
 
-    // const handleDetail = (item) => {
-    //   navigate(`/detail-penjualan-cashier?transaction_code=${item.transaction_code}`);
-    // }
-
-    const handleDetail = (details) => {
-      setSelectedDetails(details) 
-      setModalVisible(true)
-    }
-
-    
 
     if (loading) {
         return <div>Loading...</div>;
@@ -103,13 +75,31 @@ const TransactionReport = () => {
         return <div>{error}</div>;
     }
 
-    const filteredData = transactions.filter(item => {
-      const itemDate = new Date(item.date);
+    const formattedTransactions = transactions.flatMap(transaction => {
+      return transaction.items.map(item => ({
+        transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
+        transaction_code: transaction.transaction_code,
+        member: transaction.member,
+        // member: transaction.member ? transaction.member.nama : 'Guest',  // Jika member tidak ada, gunakan 'Guest'
+        cashier: transaction.cashier,
+        product_code: item.product_code,
+        product_name: item.product_name,
+        brand: item.brand,
+        type: item.type,
+        qty: item.qty,
+        price: item.price,
+        totalItems: item.totalItems
+    }));
+  })
+
+    // Filter data by date range
+    const filteredData = formattedTransactions.filter(item => {
+      const itemDate = new Date(item.transaction_date);
       return (
-        (!startDate || itemDate >= startDate) &&
-        (!endDate || itemDate <= endDate)
+          (!startDate || itemDate >= startDate) &&
+          (!endDate || itemDate <= endDate)
       );
-    });
+  });
 
     const columns = [
         { key: 'transaction_date', label: 'Date',  _render: (item) => new Date(item.date).toDateString() },
@@ -119,50 +109,10 @@ const TransactionReport = () => {
         { key: 'product_code', label: 'Kode Barang' },
         { key: 'product_name', label: 'Nama Barang' },
         { key: 'qty', label: 'Qty' },
-        { key: 'total', label: 'Total' },
-        // { key: 'payment', label: 'Payment' },
-        // { key: 'change', label: 'Change' },
-        // {
-        //   key: 'actions',
-        //   label: '',
-        //   _props: { className: 'text-center' },
-        //   filter: false,
-        //   sorter: false,
-        // },
+        { key: 'price', label: 'Harga' },
+        { key: 'totalItems', label: 'Total' },
     ];
 
-    const formattedTransactions = transactions.map(transaction => {
-      const details = transaction.items.map(item => ({
-        transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
-        transaction_code: transaction.transaction_code,
-        member: transaction.member,
-        cashier: transaction.cashier,
-        product_code: item.product_code,
-        product_name: item.product_name,
-        brand: item.brand,
-        type: item.type,
-        qty: item.qty,
-        price: item.price
-      }));
-
-      return transaction.items.map(item => ({
-          transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
-          transaction_code: transaction.transaction_code,
-          member: transaction.member,
-          cashier: transaction.cashier,
-          // total: transaction.total,
-          total : item.price * item.qty,
-          payment: transaction.payment,
-          change: transaction.change,
-          product_code: item.product_code,
-          product_name: item.product_name,
-          brand: item.brand,
-          type: item.type,
-          qty: item.qty,
-          price: item.price,
-          detail: details,
-      }));
-  }).flat();
 
     return (
       <CRow>
@@ -210,69 +160,13 @@ const TransactionReport = () => {
                     columnSorter
                     pagination
                     scopedColumns={{
-                      actions: (item) => (
-                        <td className="text-center">
-                          <CButton
-                            color="info"
-                            size="sm"
-                            shape="rounded-pill"
-                            onClick={() => handleDetail(item.detail)}
-                          >
-                            Detail
-                          </CButton>
-                        </td>
-                      ),
+          
                     }}
                 />
             </CCardBody>
         </CCard>
-        
-        <CModal alignment="center" size="lg" visible={modalVisible} onClose={() => setModalVisible(false)}>
-        <CModalHeader>
-          <CModalTitle>Detail Transaksi</CModalTitle>
-        </CModalHeader>
-        <CModalBody>
-          <CTable>
-            <CTableHead>
-              <CTableRow>
-                <CTableHeaderCell>Date</CTableHeaderCell>
-                <CTableHeaderCell>Transaction Code</CTableHeaderCell>
-                <CTableHeaderCell>Customer</CTableHeaderCell>
-                <CTableHeaderCell>Cashier</CTableHeaderCell>
-                <CTableHeaderCell>Kode Produk</CTableHeaderCell>
-                <CTableHeaderCell>Nama Produk</CTableHeaderCell>
-                <CTableHeaderCell>Brand</CTableHeaderCell>
-                <CTableHeaderCell>Tipe</CTableHeaderCell>
-                <CTableHeaderCell>Qty</CTableHeaderCell>
-                <CTableHeaderCell>Harga</CTableHeaderCell>
-              </CTableRow>
-            </CTableHead>
-            <CTableBody>
-              {Array.isArray (selectedDetails) && selectedDetails.map((detail, index) => (
-                <CTableRow key={index}>
-                  <CTableDataCell>{detail.transaction_date}</CTableDataCell>
-                  <CTableDataCell>{detail.transaction_code}</CTableDataCell>
-                  <CTableDataCell>{detail.member}</CTableDataCell>
-                  <CTableDataCell>{detail.cashier}</CTableDataCell>
-                  <CTableDataCell>{detail.product_code}</CTableDataCell>
-                  <CTableDataCell>{detail.product_name}</CTableDataCell>
-                  <CTableDataCell>{detail.brand}</CTableDataCell>
-                  <CTableDataCell>{detail.type}</CTableDataCell>
-                  <CTableDataCell>{detail.qty}</CTableDataCell>
-                  <CTableDataCell>{detail.price}</CTableDataCell>
-                </CTableRow>
-              ))}
-            </CTableBody>
-          </CTable>
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setModalVisible(false)}>
-            Close
-          </CButton>
-        </CModalFooter>
-      </CModal>
 
-      </CCol>   
+      </CCol>
       </CRow>
     );
 };

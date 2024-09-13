@@ -276,17 +276,29 @@ async function getAllTransactions() {
             order: [['transaction_date', 'DESC']] 
         });
 
+        // Fungsi untuk memformat angka dalam bentuk rupiah
+        const formatNumber = (number) => {
+            return new Intl.NumberFormat('id-ID', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+                useGrouping: true
+            }).format(number);
+        };
+
         const transactionsData = transactions.map(transaction => ({
             transaction_code: transaction.transaction_code,
             member: transaction.Member ? transaction.Member.nama : 'Guest',
             cashier: transaction.cashier,
             transaction_date: transaction.transaction_date,
-            total: transaction.total,
+            total: formatNumber(transaction.total),
             payment_method: transaction.payment_method,
-            payment: transaction.payment,
+            payment: formatNumber(transaction.payment),
             debit: transaction.debit,
-            change: transaction.change,
-            items: transaction.items // Items disimpan dalam format JSONB
+            change: formatNumber(transaction.change),
+            items: transaction.items.map(item => ({
+                ...item,
+                price: formatNumber(item.price),
+            }))
         }));
 
         return transactionsData;
@@ -326,7 +338,82 @@ async function getTransactionById(transactionId) {
         throw new Error('Error retrieving transaction: ' + error.message);
     }
 }
+
+async function getItemsCounter() {
+    const query = 'SELECT COUNT(*) AS count FROM products';
+    try {
+      const result = await pool.query(query);
+      return result.rows[0].count;
+    } catch (error) {
+      console.error('Error fetching items count:', error);
+      throw error;
+    }
+  }
+
+  async function getMinimumStock() {
+    const query = `
+      SELECT COUNT(*) AS product_count
+      FROM products
+      WHERE stock <= minimum_stock`;
+    try {
+      const result = await pool.query(query);
+      return result.rows[0].product_count;
+    } catch (error) {
+      console.error('Error fetching minimum stock items:', error);
+      throw error;
+    }
+  }
+
+  // Fungsi untuk mendapatkan jumlah barang pada bulan terakhir
+async function getLatestIncomingItems() {
+    const query = `
+      SELECT COUNT(*) AS item_count
+      FROM products
+      WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)`;
+    try {
+        const result = await pool.query(query);
+        return result.rows[0].item_count;
+    } catch (error) {
+      console.error('Error fetching items count for latest month:', error);
+      throw error;
+    }
+  }
   
+  // Fungsi untuk mendapatkan jumlah transaksi pada bulan terakhir
+async function getLatestSales() {
+    const query = `
+      SELECT COUNT(*) AS transaction_count
+      FROM transaksi
+      WHERE DATE_TRUNC('month', transaction_date) = DATE_TRUNC('month', CURRENT_DATE)`;
+    try {
+      const result = await pool.query(query);
+      return result.rows[0].transaction_count;
+    } catch (error) {
+      console.error('Error fetching transaction count for latest month:', error);
+      throw error;
+    }
+  }
+  
+  async function getAllTransactionsMonth() {
+    try {
+      // Menjalankan query untuk mengambil data transaksi
+      const result = await pool.query(`
+        SELECT
+          TO_CHAR(transaction_date, 'YYYY-MM') AS month,
+          COUNT(*) AS transaction_count,
+          SUM(total_amount) AS total_nominal
+        FROM transaksi
+        GROUP BY TO_CHAR(transaction_date, 'YYYY-MM')
+        ORDER BY month;
+      `);
+  
+      // Mengembalikan hasil query sebagai array objek
+      return result.rows;
+    } catch (error) {
+      // Menangani error jika ada
+      throw new Error('Error fetching transactions: ' + error.message);
+    }
+  };
 module.exports ={
     // loginUser,
     adminLogin,
@@ -341,7 +428,14 @@ module.exports ={
     deleteProduct,
     getListCustomers,
     getAllTransactions,
-    getTransactionById
+    getTransactionById,
+    getItemsCounter,
+    getMinimumStock,
+    getLatestSales,
+    getLatestIncomingItems,
+    getAllTransactionsMonth
+
+
 
 
 };

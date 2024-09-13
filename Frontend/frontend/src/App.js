@@ -16,6 +16,7 @@ const DashboardAdmin = React.lazy(() => import('./views/dashboard/DashboardAdmin
 const DashboardCashier = React.lazy(() => import('./views/dashboard/DashboardCashier'))
 const DashboardSuperadmin = React.lazy(() => import('./views/dashboard/DashboardSuperadmin'))
 const DataBarang = React.lazy(() => import('./views/pages/barang/DataBarang'))
+const Barang = React.lazy(() => import('./views/pages/barang/BarangList'))
 const Stok = React.lazy(() => import('./views/pages/barang/Stok'))
 const CustomersList = React.lazy(() => import('./views/pages/customers/CustomersList'))
 const Customers = React.lazy(() => import('./views/pages/customers/Customers'))
@@ -79,7 +80,7 @@ const App = () => {
                 <Route exact path="/admin-dashboard" element={<DashboardAdmin />} />
                 <Route exact path="/superadmin-dashboard" element={<DashboardSuperadmin />} />
                 <Route exact path="/cashier-dashboard" element={<DashboardCashier />} />
-                
+
 
 
                 <Route exact path="/dashboard-admin/*" name="Home" element={<DashboardAdmin />} />
@@ -88,6 +89,7 @@ const App = () => {
 
 
                 <Route exact path="/data-barang" element={<DataBarang />} />
+                <Route exact path="/barang" element={<Barang />} />
                 <Route exact path="/stok"element={<Stok />} />
                 <Route exact path="/customer-list" element={<CustomersList />} />
                 <Route exact path="/customers" element={<Customers />} />

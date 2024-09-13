@@ -72,6 +72,12 @@ const DataBarang = () => {
     }
   };
 
+  const formatNumber = (value) => {
+    return value.toLocaleString('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+    });
+  };
   
   const handleShowDetail = (barang) => {
     setSelectedBarang(barang);
@@ -235,7 +241,7 @@ const DataBarang = () => {
       const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
   
       if (file.size > maxSizeInBytes) {
-        alert(`Ukuran file terlalu besar. Maksimal ${maxSizeInMB} MB.`);
+        showAlert(`Ukuran file terlalu besar. Maksimal ${maxSizeInMB} MB.`, 'warning');
       } else {
         setFormValues({ ...formValues, image: file });
         setPreviewImage(URL.createObjectURL(file));
@@ -295,7 +301,14 @@ const DataBarang = () => {
     { key: 'product_code', label: 'Kode Barang' },
     { key: 'product_name', label: 'Nama Barang' },
     { key: 'brand', label: 'Merk' },
-    { key: 'price', label: 'Harga' },
+    { 
+      key: 'price',
+      label: 'Harga',
+      // fungsi format harga
+      sorter: false,
+      filter: false,
+      render: (item) => formatNumber( item.price)
+     },
     {
       key: 'actions',
       label: 'Actions',
@@ -317,6 +330,7 @@ const DataBarang = () => {
     <CRow>
       <CCol>
       <div className="mb-3">
+
         {alert.visible && (
           <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
             {alert.message}
@@ -654,6 +668,7 @@ const DataBarang = () => {
                   id="image"
                   type="file"
                   name="image"
+                  // value={formValues.image}
                   accept="image/png, image/jpeg, image/jpg" 
                   onChange={handleFileChange}
                   required

@@ -339,15 +339,28 @@ async function getTransactionReportByCashier(cashierName) {
             return { message: 'No transactions found for this cashier' };
         }
 
+        // Fungsi untuk memformat angka dalam bentuk rupiah
+        const formatNumber = (number) => {
+            return new Intl.NumberFormat('id-ID', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+                useGrouping: true
+            }).format(number);
+        };
+
         const transactionsData = transactions.map(transaction => ({
-            transaction_code: transaction.transaction_code,
+            transaction_code: transaction.transaction_code, 
             member: transaction.Member ? transaction.Member.nama : 'Guest',
             cashier: transaction.cashier,
             transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
-            total: transaction.total,
-            payment: transaction.payment,
-            change: transaction.change,
-            items: transaction.items
+            total: formatNumber(transaction.total),   
+            payment: formatNumber(transaction.payment), 
+            change: formatNumber(transaction.change),  
+            items: transaction.items.map(item => ({
+                ...item,
+                price: formatNumber(item.price),
+                totalItems: formatNumber (item.qty * item.price) // Menghitung totalItems
+            }))
         }));
 
         // const transactionsData = transactions.map(transaction => {

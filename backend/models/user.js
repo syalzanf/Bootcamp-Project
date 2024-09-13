@@ -38,7 +38,15 @@ const User = sequelize.define('users', {
   photo: {
     type: DataTypes.STRING,
     allowNull: false
-},
+  },
+  // createdAt: {
+  //   type: DataTypes.DATE,
+  //   defaultValue: DataTypes.NOW,
+  // },
+  // updatedAt: {
+  //   type: DataTypes.DATE,
+  //   defaultValue: DataTypes.NOW,
+  // },
 }, {
   tableName: 'users',
   timestamps: true,

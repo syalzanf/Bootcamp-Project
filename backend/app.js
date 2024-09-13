@@ -106,19 +106,19 @@
 
   //Rute Admin
   // Rute untuk login admin
-  app.post('/api/admin/login', async (req, res) => {
-    console.log("Login route hit");
+  // app.post('/api/admin/login', async (req, res) => {
+  //   console.log("Login route hit");
 
-    const { username, password } = req.body;
+  //   const { username, password } = req.body;
 
-    try {
-        const result = await admin.adminLogin(username, password);
-        res.status(200).json(result);
-    } catch (error) {
-        console.error(error);
-        res.status(401).json({ message: error.message });
-    }
-  });
+  //   try {
+  //       const result = await admin.adminLogin(username, password);
+  //       res.status(200).json(result);
+  //   } catch (error) {
+  //       console.error(error);
+  //       res.status(401).json({ message: error.message });
+  //   }
+  // });
 
 
   app.get('/api/users', async (req, res) => {
@@ -148,6 +148,72 @@
     }
   });
 
+  // app.post('/api/refresh-token', async (req, res) => {
+  //   const { refreshToken } = req.body;
+  
+  //   if (!refreshToken) {
+  //     return res.status(400).json({ message: 'Refresh token is required' });
+  //   }
+  
+  //   try {
+  //     // Verifikasi refresh token
+  //     const decoded = jwt.verify(refreshToken, jwtSecret);
+  //     console.log(decoded);
+  //     const user = await User.findOne({ where: { username: decoded.username } });
+  
+  //     if (!user) {
+  //       return res.status(403).json({ message: "invalid token" });
+  //     }
+  
+  //     const newToken = jwt.sign(
+  //       { username: user.username, role: user.role },
+  //       jwtSecret,
+  //       { expiresIn: '1h' }
+  //     );
+  
+  //     res.json({
+  //       token: newToken,
+  //     });
+  //   } catch (error) {
+  //     console.error('Error refreshing token:', error.message);
+  //     res.status(403).json({ message: 'Invalid refresh token' });
+  //   }
+  // });  
+
+  // app.post('/api/login', async (req, res) => {
+  //   const { username, password } = req.body;
+  
+  //   try {
+  //     // Autentikasi pengguna dan hasilkan token di dalam loginUser
+  //     const { user, token, refreshToken } = await superadmin.loginUser(username, password);
+  
+  //     if (user && token && refreshToken) {
+  //       // Setel token sebagai cookie
+  //       res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'strict' });
+  //       res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict' });
+
+
+  //       res.json({
+  //         message: 'Login berhasil',
+  //         user: {
+  //           id: user.id,
+  //           username: user.username,
+  //           role: user.role,
+  //           name: user.name,
+  //           telepon: user.telepon,
+  //           photo:user.photo,
+  //           token: token,
+  //           refreshToken: refreshToken
+  //         },
+  //       });
+  //     } else {
+  //       return res.status(401).json({ message: 'Username atau password salah' });
+  //     }
+  //   } catch (error) {
+  //     console.error('Kesalahan login:', error);
+  //     return res.status(500).json({ message: 'Kesalahan server internal' });
+  //   }
+  // });
   app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
   
@@ -155,11 +221,12 @@
       // Autentikasi pengguna dan hasilkan token di dalam loginUser
       const { user, token } = await superadmin.loginUser(username, password);
   
-      if (user && token) {
+      // if (user && token) {
         // Setel token sebagai cookie
         res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'strict' });
         
-        res.json({
+        // res.json({
+        return res.json({
           message: 'Login berhasil',
           user: {
             id: user.id,
@@ -171,12 +238,13 @@
             token: token
           },
         });
-      } else {
-        return res.status(401).json({ message: 'Username atau password salah' });
-      }
+      // } else {
+      //   return res.status(401).json({ message: 'Username atau password salah' });
+      // }
     } catch (error) {
       console.error('Kesalahan login:', error);
-      return res.status(500).json({ message: 'Kesalahan server internal' });
+      res.status(401).json({ message: error.message });
+      // return res.status(500).json({ message: 'Kesalahan server internal' });
     }
   });
   
@@ -194,8 +262,7 @@
 });
 
 // Rute update profile user
-// app.put('/api/profile', authenticateToken, upload.single('photo'), async (req, res) => {
-app.patch('/api/profile', authenticateToken, upload.single('photo'), async (req, res) => {
+app.put('/api/profile', authenticateToken, upload.single('photo'), async (req, res) => {
 
   const { username, name, telepon, password, role } = req.body;
   const userId = req.user.id; 
@@ -214,15 +281,35 @@ app.patch('/api/profile', authenticateToken, upload.single('photo'), async (req,
   }
 });
 
-  // // Rute yang memerlukan autentikasi
-  // app.get('/protected-route', authenticateToken, (req, res) => {
-  //   res.send('This is a protected route');
-  // });
+  // Rute yang memerlukan autentikasi
+  app.get('/protected-route', authenticateToken, (req, res) => {
+    res.send('This is a protected route');
+  });
 
-  // // Rute yang tidak memerlukan autentikasi
-  // app.get('/public-route', (req, res) => {
-  //   res.send('This is a public route');
-  // });
+  // Rute yang tidak memerlukan autentikasi
+  app.get('/public-route', (req, res) => {
+    res.send('This is a public route');
+  });
+
+
+// content dashboad admin
+app.get('/api/dashboard-admin', async (req, res) => {
+  try {
+    const itemsCounter = await admin.getItemsCounter(); // Fungsi untuk mendapatkan jumlah barang
+    const minimumStock = await admin.getMinimumStock(); // Fungsi untuk mendapatkan stok minimum
+    const latestIncomingItems = await admin.getLatestIncomingItems(); // Fungsi untuk mendapatkan barang masuk terbaru
+    const latestSales = await admin.getLatestSales(); // Fungsi untuk mendapatkan penjualan terbaru
+
+    res.json({
+      itemsCounter,
+      minimumStock,
+      latestIncomingItems,
+      latestSales
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching data' });
+  }
+});
 
 
   // Rute untuk membaca list stok produk
@@ -292,7 +379,7 @@ app.patch('/api/profile', authenticateToken, upload.single('photo'), async (req,
   app.post('/api/admin/products/add', upload.single('image'), authenticateToken, async (req, res) => {
     console.log(req.file); 
     const { product_code, product_name, brand, type, price, stock } = req.body;
-    const image = req.file ? `uploads/${req.file.filename}`: null;
+    const image = req.file ? `http://localhost:3000/uploads/${req.file.filename}`: null;
 
      // Validasi input
       if (validator.isEmpty(product_name)) {
@@ -412,6 +499,15 @@ app.patch('/api/profile', authenticateToken, upload.single('photo'), async (req,
   app.get('/api/admin/reportTransactions', authenticateToken, async (req, res) => {
     try {
         const transactions = await getAllTransactions();
+        res.status(200).json(transactions);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/admin/transactions-month', authenticateToken, async (req, res) => {
+    try {
+        const transactions = await admin.getAllTransactionsMonth();
         res.status(200).json(transactions);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -876,7 +972,7 @@ app.patch('/api/profile', authenticateToken, upload.single('photo'), async (req,
       });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: error.message });
+      res.status(400).json({ message: error.message });
     }
   });
 
@@ -933,7 +1029,7 @@ app.patch('/api/profile', authenticateToken, upload.single('photo'), async (req,
     const { id } = req.params;
     const { role } = req.body;
 
-    try {
+    try { 
       if (!role) {
         return res.status(400).json({ message: 'Role is required' });
       }

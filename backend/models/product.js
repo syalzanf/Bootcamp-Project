@@ -1,4 +1,5 @@
 const { DataTypes } = require('sequelize');
+const Brand = require('./brand')
 const sequelize = require('../configdb');
 
 const Product = sequelize.define('Product', {
@@ -15,8 +16,16 @@ const Product = sequelize.define('Product', {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    brand: {
-        type: DataTypes.STRING,
+    // brand: {
+    //     type: DataTypes.STRING,
+    //     allowNull: false,
+    // },
+    id_brand: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: Brand,
+            key: 'id_brand'
+        },
         allowNull: false,
     },
     type: {
@@ -40,4 +49,5 @@ const Product = sequelize.define('Product', {
     timestamps: false,
 });
 
+Product.belongsTo(Brand, { foreignKey: 'id_brand', as: 'brand' });
 module.exports = Product;

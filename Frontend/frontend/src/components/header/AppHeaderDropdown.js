@@ -249,6 +249,372 @@
 
 
 
+// import React, { useState, useEffect } from 'react';
+// import { useTranslation } from 'react-i18next'
+// import axios from 'axios';
+// import {
+//   CAvatar,
+//   CBadge,
+//   CDropdown,
+//   CDropdownDivider,
+//   CDropdownHeader,
+//   CDropdownItem,
+//   CDropdownMenu,
+//   CDropdownToggle,
+//   CModal,
+//   CModalBody,
+//   CModalFooter,
+//   CModalHeader,
+//   CModalTitle,
+//   CForm,
+//   CFormLabel,
+//   CFormInput,
+//   CCol,
+//   CRow,
+//   CButton,
+// } from '@coreui/react-pro'
+// import {
+//   cilBell,
+//   cilCreditCard,
+//   cilCommentSquare,
+//   cilEnvelopeOpen,
+//   cilFile,
+//   cilLockLocked,
+//   cilSettings,
+//   cilTask,
+//   cilUser,
+//   cilAccountLogout,
+// } from '@coreui/icons'
+// import CIcon from '@coreui/icons-react'
+
+// import avatar8 from './../../assets/images/avatars/test.jpg'
+
+// const AppHeaderDropdown = () => {
+//   const [profile, setProfile] = useState({
+//     username: '',
+//     name: '',
+//     telepon: '',
+//     photo: '',
+//     role: ''
+//   });
+
+//   const [editProfile, setEditProfile] = useState({
+//     name: '',
+//     telepon: '',
+//     photo: null,
+//   });
+
+//   const [previewImage, setPreviewImage] = useState(null);
+//   const [showVisible, setShowVisible] = useState(false);
+//   const [editVisible, setEditVisible] = useState(false);
+
+//   useEffect(() => {
+//     const fetchProfile = async () => {
+//       try {
+//         const token = localStorage.getItem('token');
+
+//         const response = await axios.get('http://localhost:3000/api/profile', {
+//           headers: { Authorization: `${token}` },
+//           withCredentials: true
+//         });
+//         setProfile(response.data.user);
+//         console.log('COBAA', response.data.user)
+//         setEditProfile({
+//           name: response.data.user.name,
+//           telepon: response.data.user.telepon,
+//           photo: response.data.user.photo,
+//         });
+//         setPreviewImage(response.data.user.photo ? `http://localhost:3000/${response.data.user.photo}` : null);
+//       } catch (error) {
+//         console.error('Error fetching profile:', error);
+//       }
+//     };
+
+//     fetchProfile();
+//   }, []);
+
+
+//   const handleShowProfile = () => {
+//     setShowVisible(true);
+//   };
+
+//   const handleEditProfile = (profile) => {
+//     setEditProfile({
+//       name: profile.name,
+//       telepon: profile.telepon,
+//       photo: null,
+//     });
+
+//     setPreviewImage(profile.photo ? `http://localhost:3000/${profile.photo}` : null);
+//     setShowVisible(false);
+//     setEditVisible(true);
+//   };
+
+
+//   const handleSaveEdit = async () => {
+//     const formData = new FormData();
+//     formData.append('name', editProfile.name);
+//     formData.append('telepon', editProfile.telepon);
+
+//     if (editProfile.photo) {
+//       formData.append('photo', editProfile.photo);
+//     }
+
+//     try {
+//       const token = localStorage.getItem('token');
+
+//       const response = await axios.put('http://localhost:3000/api/profile', formData, {
+//         headers: {
+//           Authorization: `${token}`,
+//           'Content-Type': 'multipart/form-data',
+//           withCredentials: true,
+//         },
+//       });
+
+//       setProfile({
+//         ...profile,
+//         name: response.data.user.name,
+//         telepon: response.data.user.telepon,
+//         photo: response.data.user.photo
+//       });
+
+//       fetchProfile();
+//       setEditVisible(false);
+
+//     } catch (error) {
+//       console.error('Failed to update profile:', error);
+//     }
+//   };
+
+//   const handleFileChange = (e) => {
+//     const file = e.target.files[0];
+//     setEditProfile((prevProfile) => ({
+//       ...prevProfile,
+//       photo: file,
+//     }));
+//     setPreviewImage(URL.createObjectURL(file));
+//   };
+
+//   const handleLogout = () => {
+//     localStorage.removeItem('token');
+//     window.location.href = '/login';
+//   };
+
+
+//   const { t } = useTranslation()
+
+//   // const avatarSrc = profile.photo ? `http://localhost:3000/${profile.photo}` : avatar8;
+
+//   return (
+//     <>
+//     <CDropdown variant="nav-item" alignment="end">
+//       <CDropdownToggle className="py-0" caret={false}>
+//         <CAvatar
+//           src={profile.photo ? `http://localhost:3000/${profile.photo}` : avatar8}
+//           // src={avatarSrc}
+//           size="md"
+//         />
+//       </CDropdownToggle>
+//       <CDropdownMenu className="pt-0">
+//         <CDropdownHeader className="bg-body-secondary text-body-secondary fw-semibold my-2">
+//           {t('settings')}
+//         </CDropdownHeader>
+//         <CDropdownItem href="#"  onClick={handleShowProfile}>
+//           <CIcon icon={cilUser} className="me-2" />
+//           {t('profile')}
+//         </CDropdownItem>
+//         <CDropdownItem href="#"  onClick={handleLogout}>
+//           <CIcon icon={cilAccountLogout} className="me-2" />
+//           {t('logout')}
+//         </CDropdownItem>
+//       </CDropdownMenu>
+//     </CDropdown>
+
+
+//     <CModal alignment="center" visible={showVisible} onClose={() => setShowVisible(false)}>
+//         <CModalHeader>
+//           <CModalTitle>Profile</CModalTitle>
+//         </CModalHeader>
+//         <CModalBody>
+//           <CForm>
+//           <CRow className="mb-3">
+//               <CCol sm={3}>
+//                 <CFormLabel htmlFor="photo" className="col-form-label">
+//                 </CFormLabel>
+//               </CCol>
+//               <CCol sm={9}>
+//                 <CAvatar
+//                   style={{ width: '250px', height: '250px' }}
+//                   src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'}
+//                   alt="user-profile"
+//                   // size="xl"
+//                 />
+//               </CCol>
+//             </CRow>
+//             <CRow className="mb-3">
+//               <CCol sm={3}>
+//                 <CFormLabel htmlFor="username" className="col-form-label">
+//                   Username
+//                 </CFormLabel>
+//               </CCol>
+//               <CCol sm={9}>
+//                 <CFormInput
+//                   id="username"
+//                   type="text"
+//                   value={profile.username}
+//                   readOnly
+//                   plainText
+//                 />
+//               </CCol>
+//             </CRow>
+//             <CRow className="mb-3">
+//               <CCol sm={3}>
+//                 <CFormLabel htmlFor="name" className="col-form-label">
+//                   Nama
+//                 </CFormLabel>
+//               </CCol>
+//               <CCol sm={9}>
+//                 <CFormInput
+//                   id="name"
+//                   value={profile.name}
+//                   readOnly
+//                   plainText
+//                   />
+//               </CCol>
+//             </CRow>
+//             <CRow className="mb-3">
+//               <CCol sm={3}>
+//                 <CFormLabel htmlFor="role" className="col-form-label">
+//                   Role
+//                 </CFormLabel>
+//               </CCol>
+//               <CCol sm={9}>
+//                 <CFormInput
+//                   id="role"
+//                   value={profile.role}
+//                   readOnly
+//                   plainText
+//                   />
+//               </CCol>
+//             </CRow>
+//             <CRow className="mb-3">
+//               <CCol sm={3}>
+//                 <CFormLabel htmlFor="telepon" className="col-form-label">
+//                   Telepon
+//                 </CFormLabel>
+//               </CCol>
+//               <CCol sm={9}>
+//                 <CFormInput
+//                   id="telepon"
+//                   placeholder="Telepon"
+//                   value={profile.telepon}
+//                   readOnly
+//                   plainText
+//                   />
+//               </CCol>
+//             </CRow>
+//           </CForm>
+//         </CModalBody>
+//         <CModalFooter>
+//           <CButton color="secondary" onClick={() => setShowVisible(false)}>Close</CButton>
+//           {/* <CButton color="primary" onClick={() => setShowEdit(true)}>Edit Profile</CButton> */}
+//           <CButton color="primary" onClick={handleEditProfile}>Edit Akun</CButton>
+//         </CModalFooter>
+//       </CModal>
+
+
+//       {/* modal untuk edit profile */}
+//       <CModal alignment="center" visible={editVisible} onClose={() => setEditVisible(false)}>
+//         <CModalHeader>
+//           <CModalTitle>Edit Profile</CModalTitle>
+//         </CModalHeader>
+//         <CModalBody>
+//           <CForm>
+//           <CRow className="mb-3">
+//               <CCol sm={3}>
+//                 <CFormLabel htmlFor="photo" className="col-form-label">
+//                 </CFormLabel>
+//               </CCol>
+//                {previewImage && (
+//                   <CAvatar
+//                     src={previewImage}
+//                     alt="Preview"
+//                     size="xl"
+//                     style={{ width: '150px', height: '150px' }}
+//                   />
+//                 )}
+//               <CCol sm={9}>
+
+//                 <CFormInput
+//                   type="file"
+//                   id="photo"
+//                   accept="image/png, image/jpeg, image/jpg"
+//                   onChange={handleFileChange}
+//                 />
+//               </CCol>
+//             </CRow>
+//             <CRow className="mb-3">
+//               <CCol sm={3}>
+//                 <CFormLabel htmlFor="username" className="col-form-label">
+//                   Username
+//                 </CFormLabel>
+//               </CCol>
+//               <CCol sm={9}>
+//                 <CFormInput
+//                   id="username"
+//                   type="text"
+//                   value={profile.username}
+//                   readOnly
+//                   plainText
+//                 />
+//               </CCol>
+//             </CRow>
+//             <CRow className="mb-3">
+//               <CCol sm={3}>
+//                 <CFormLabel htmlFor="name" className="col-form-label">
+//                   Nama
+//                 </CFormLabel>
+//               </CCol>
+//               <CCol sm={9}>
+//                 <CFormInput
+//                   id="name"
+//                   type="text"
+//                   value={profile.name}
+//                   onChange={(e) => setEditProfile({ ...editProfile, name: e.target.value })}
+//                 />
+//               </CCol>
+//             </CRow>
+//             <CRow className="mb-3">
+//               <CCol sm={3}>
+//                 <CFormLabel htmlFor="telepon" className="col-form-label">
+//                   Telepon
+//                 </CFormLabel>
+//               </CCol>
+//               <CCol sm={9}>
+//                 <CFormInput
+//                   id="telepon"
+//                   type="text"
+//                   value={profile.telepon}
+//                   onChange={(e) => setEditProfile({ ...editProfile, telepon: e.target.value })}
+//                   />
+//               </CCol>
+//             </CRow>
+//           </CForm>
+//         </CModalBody>
+//         <CModalFooter>
+//           <CButton color="secondary" onClick={() => setShowVisible(false)}>Close</CButton>
+//           {/* <CButton color="primary" onClick={() => setShowEdit(true)}>Edit Profile</CButton> */}
+//           <CButton color="primary" onClick={handleSaveEdit}>Save changes</CButton>
+//         </CModalFooter>
+//       </CModal>
+//     </>
+//   )
+// }
+
+// export default AppHeaderDropdown
+
+
+
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next'
 import axios from 'axios';
@@ -618,4 +984,3 @@ const AppHeaderDropdown = () => {
 }
 
 export default AppHeaderDropdown
-

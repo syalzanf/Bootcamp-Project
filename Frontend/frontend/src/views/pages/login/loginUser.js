@@ -41,7 +41,7 @@ const Login = () => {
         // Simpan role dan token ke local storage
         localStorage.setItem('userRole', user.role);
         localStorage.setItem('userName', user.name);
-        localStorage.setItem('userUsername', user.username); 
+        localStorage.setItem('userUsername', user.username);
 
         console.log("NAMEEE ", user.name);
 
@@ -74,17 +74,22 @@ const Login = () => {
 
       let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
 
+      // Cek jika ada pesan error dari backend
       if (error.response && error.response.data && error.response.data.message) {
         // Jika ada pesan error khusus dari backend
-        if (error.response.data.message === 'Account is not active') {
-          errorMessage = 'Akun tidak aktif.';
-        } else {
-          errorMessage = error.response.data.message;
-        }
-      } else {
-        // Jika tidak ada pesan error khusus dari backend
-        errorMessage = 'Username atau password salah.';
+        errorMessage = error.response.data.message;
       }
+      // if (error.response && error.response.data && error.response.data.message) {
+      //   // Jika ada pesan error khusus dari backend
+      //   if (error.response.data.message === 'Account is not active') {
+      //     errorMessage = 'Akun tidak aktif.';
+      //   } else {
+      //     errorMessage = error.response.data.message;
+      //   }
+      // } else {
+      //   // Jika tidak ada pesan error khusus dari backend
+      //   errorMessage = 'Username atau password salah.';
+      // }
 
       setError(errorMessage); // Menampilkan pesan error yang sesuai
     }
@@ -94,7 +99,7 @@ const Login = () => {
   //     console.error('Login error:', error.response ? error.response.data : error.message);
   //     setError('Username atau password salah.');
   //   }
-  // };  
+  // };
 
   return (
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">

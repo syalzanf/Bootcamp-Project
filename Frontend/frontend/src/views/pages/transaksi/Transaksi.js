@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import {
   CCard,
@@ -28,6 +28,10 @@ import {
   CAlert
 
 } from '@coreui/react-pro';
+import Select from 'react-select';
+import debounce from 'lodash/debounce';
+
+
 
 const TransactionPage = () => {
   const [userName, setUserName] = useState('');
@@ -68,6 +72,7 @@ const TransactionPage = () => {
     alamat: '',
   });
   const [isNameVisible, setIsNameVisible] = useState(false);
+  const [memberOptions, setMemberOptions] = useState([]);
 
 
   useEffect(() => {
@@ -177,36 +182,63 @@ const TransactionPage = () => {
     }
   };
 
-  const handleMemberSearch = async (telepon) => {
-    try {
-      const response = await axios.get(`http://localhost:3000/api/cashier/member/${telepon}`);
-
-      if (response.data && response.data.nama) {
-      const member = response.data.nama;
-      const memberId = response.data.member_id;
-
-      setSelectedMember(member);
-      setSelectedMemberId(memberId);
-
-      setIsNameVisible(true); 
-      showAlert('Member terdaftar', 'success');
-      console.log('MEMBER', response.data.member_id )
-
-    } else {
-      setIsNameVisible(false);
-      showAlert('Member tidak terdaftar', 'danger');
+  // fungsi handleMemberSearch dengan debounce
+  const handleMemberSearch = useCallback(
+    debounce(async (telepon) => {
+      if (!telepon) {
+        setMemberOptions([]); // kosongkan opsi jika input tidak ada
+        setSelectedMember(null);
+        setIsNameVisible(false);
+        return;
       }
 
-    } catch (error) {
-      console.error('Error searching member by phone:', error);
-      showAlert('Member tidak terdaftar', 'danger');
+      try {
+        const response = await axios.get(`http://localhost:3000/api/cashier/member/${telepon}`);
+        if (response.data && response.data.nama) {
+          const member = {
+            value: response.data.member_id,
+            label: response.data.nama
+          };
+          setMemberOptions([member]); // set opsi dengan member yang ditemukan
+          setSelectedMember(member);
+          setIsNameVisible(true);
+
+          showAlert('Member terdaftar', 'success');
+        } else {
+          setMemberOptions([]);
+          setSelectedMember(null);
+          setIsNameVisible(false);
+
+          showAlert('Member tidak terdaftar', 'danger');
+        }
+      } catch (error) {
+        setMemberOptions([]);
+          setSelectedMember(null);
+          setIsNameVisible(false);
+
+          showAlert('Member tidak terdaftar', 'danger');
+        console.error('Error searching member by phone:', error);
+        // showAlert('Terjadi kesalahan saat mencari member', 'danger');
+      }
+    }, 500), // debounce dengan delay 500ms
+    []
+  );
+  
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setMemberSearchInput(value);
+    handleMemberSearch(value); // memanggil fungsi handleMemberSearch dengan debounce
+  };
+
+  const handleSelectChange = (selectedOption) => {
+    setSelectedMember(selectedOption);
+    if (selectedOption) {
+      showAlert(`Member terpilih: ${selectedOption.label}`, 'success');
     }
   };
 
-
   const handleQtyChange = (e) => {
     const inputQty = e.target.value;
-
     if (inputQty > availableStock) {
       showAlert('Stok tidak muncukupi!', 'danger');
       setFormValues({
@@ -282,7 +314,7 @@ const TransactionPage = () => {
         transaction_code: transactionCode,
         id_cashier: localStorage.getItem("id"),
         // member_id: member ? member : null,
-        member_id: selectedMemberId ? selectedMemberId : null,
+        member_id: selectedMember.value ? selectedMember.value : null,
         cashier,
         total,
         payment_method: paymentMethod,
@@ -587,14 +619,20 @@ const TransactionPage = () => {
                   id="member-telepon"
                   type="text"
                   value={memberSearchInput}
-                  onChange={(e) => setMemberSearchInput(e.target.value)}
-                  onBlur={() => handleMemberSearch(memberSearchInput)}
+                  onChange={handleInputChange}
+                  placeholder="Masukkan nomor telepon"
+                  // onChange={(e) => setMemberSearchInput(e.target.value)}
+                  // onBlur={() => handleMemberSearch(memberSearchInput)}
                   />
                 {isNameVisible && (
-                <CFormInput
+                  <Select
+                  id="member-select"
                   value={selectedMember}
-                  onChange={(e) => setSelectedMember(e.target.value)}
-                  readOnly
+                  onChange={handleSelectChange}
+                  options={memberOptions} // Ganti nama opsi di sini
+                  placeholder="Pilih member"
+                  isClearable
+                  isSearchable
                 />
                 )}
               </CCol>

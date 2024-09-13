@@ -38,7 +38,7 @@ const _navAdmin = [
   },
   {
     component: CNavItem,
-    name: <Translation>{(t) => t('Stok')}</Translation>,
+    name: <Translation>{(t) => t('Stok Opname')}</Translation>,
     to: '/stok',
     icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
   },
@@ -67,6 +67,12 @@ const _navCashier = [
     component: CNavItem,
     name: <Translation>{(t) => t('Transaksi')}</Translation>,
     to: '/transaksi',
+    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: <Translation>{(t) => t('Data Barang')}</Translation>,
+    to: '/barang',
     icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
   },
   {

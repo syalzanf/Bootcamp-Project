@@ -102,6 +102,7 @@ const DashboardAdmin = React.lazy(() => import('./views/dashboard/DashboardAdmin
 const DashboardCashier = React.lazy(() => import('./views/dashboard/DashboardCashier'))
 const DashboardSuperadmin = React.lazy(() => import('./views/dashboard/DashboardSuperadmin'))
 const DataBarang = React.lazy(() => import('./views/pages/barang/DataBarang'))
+const Brand = React.lazy(() => import('./views/pages/barang/Brand'))
 const Barang = React.lazy(() => import('./views/pages/barang/BarangList'))
 const Stok = React.lazy(() => import('./views/pages/barang/Stok'))
 const CustomersList = React.lazy(() => import('./views/pages/customers/CustomersList'))
@@ -138,6 +139,12 @@ const adminRoutes = [
     path: '/data-barang',
     name: <Translation>{(t) => t('Data Barang')}</Translation>,
     element: DataBarang,
+    exact: true,
+  },
+  {
+    path: '/data-brand',
+    name: <Translation>{(t) => t('Brand')}</Translation>,
+    element: Brand,
     exact: true,
   },
   {

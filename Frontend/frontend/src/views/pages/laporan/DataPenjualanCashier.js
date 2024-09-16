@@ -67,7 +67,9 @@ const TransactionReport = () => {
     const handleDetail = (transactionCode) => {
       const transaction = transactions.find(t => t.transaction_code === transactionCode);
       if (transaction) {
-          setSelectedDetails(transaction.items); 
+          setSelectedDetails(transaction.items);
+          console.log('detailss', transaction.items)
+
           setModalVisible(true);
       }
   };
@@ -235,7 +237,7 @@ const TransactionReport = () => {
                   <CTableDataCell>{detail.cashier}</CTableDataCell> */}
                   <CTableDataCell>{detail.product_code}</CTableDataCell>
                   <CTableDataCell>{detail.product_name}</CTableDataCell>
-                  <CTableDataCell>{detail.brand}</CTableDataCell>
+                  <CTableDataCell>{detail.id_brand}</CTableDataCell>
                   <CTableDataCell>{detail.type}</CTableDataCell>
                   <CTableDataCell>{detail.qty}</CTableDataCell>
                   <CTableDataCell>{detail.price}</CTableDataCell>

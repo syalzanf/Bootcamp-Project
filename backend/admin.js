@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 const pool = require('./connection');
 const sequelize = require('./configdb');
 const {Transaksi, Member} = require('./models/transaksi');
+const Brand = require('./models/brand')
 
 
 
@@ -36,27 +37,37 @@ async function adminLogin(username, password) {
     }
   }
   
-  
 
 // Fungsi untuk mendapatkan data stok produk
 async function getListStockProducts() {
-    
     try {
-        // Query untuk mengambil semua data produk dari database
+        // Query untuk mengambil semua data produk dari database beserta nama brand
         const result = await pool.query(`
-        SELECT product_code, product_name, brand, type, stock, minimum_stock,
+        SELECT 
+        p.product_code, 
+        p.product_name, 
+        b.brand_name,  -- Mengambil nama brand dari tabel brands
+        p.type, 
+        p.stock, 
+        p.minimum_stock,
         CASE
-            WHEN stock <= minimum_stock THEN true
+            WHEN p.stock <= p.minimum_stock THEN true
             ELSE false
         END AS is_below_minimum_stock
-        FROM products
-        ORDER BY updated_at DESC
+        FROM 
+            products p
+        JOIN 
+            brands b ON p.id_brand = b.id_brand  -- Menggabungkan tabel products dengan brands
+        ORDER BY 
+            p.updated_at DESC;
+        
         `);
         return result.rows;
     } catch (error) {
         throw new Error('Error fetching products: ' + error.message);
     }
 }
+
 
 // async function getListStockProducts() {
 //     try {
@@ -136,7 +147,7 @@ async function checkProductExists(product_code, product_name) {
 }
 
 // Fungsi untuk menambahkan produk
-async function addProduct({ product_code, product_name, brand, type, price, stock, image }) {
+async function addProduct({ product_code, product_name, id_brand, type, price, stock, image }) {
     try {
 
         if (validator.isEmpty(product_name)) {
@@ -158,8 +169,8 @@ async function addProduct({ product_code, product_name, brand, type, price, stoc
 
         // Query untuk memasukkan data produk ke database
         const result = await pool.query(
-            'INSERT INTO products (product_code, product_name, brand, type, price, stock, image) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-            [product_code, product_name, brand, type, price, stock, image]
+            'INSERT INTO products (product_code, product_name, id_brand, type, price, stock, image) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+            [product_code, product_name, id_brand, type, price, stock, image]
         );        
         return result.rows[0];
     } catch (error) {
@@ -167,13 +178,77 @@ async function addProduct({ product_code, product_name, brand, type, price, stoc
     }
 }
 
+async function getListBrand() {
+    try {
+        const result = await pool.query('SELECT * FROM brands');
+        return result.rows;
+    } catch (error) {
+        console.error('Error fetching brand list:', error);
+        throw new Error('Failed to fetch brand list');
+    }
+}
+
+async function addBrand(brandName) {
+    try {
+        const result = await pool.query('INSERT INTO brands (brand_name) VALUES ($1) RETURNING *', [brandName]);
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error adding brand:', error);
+        throw new Error('Failed to add brand');
+    }
+}
+
+async function updateBrand(brandId, newBrandName) {
+    try {
+        const result = await pool.query('UPDATE brands SET brand_name = $1 WHERE id_brand = $2 RETURNING *', [newBrandName, brandId]);
+        if (result.rowCount === 0) {
+            throw new Error('Brand not found');
+        }
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error editing brand:', error);
+        throw new Error('Failed to edit brand');
+    }
+}
+
+async function deleteBrand(brandId) {
+    try {
+        const result = await pool.query('DELETE FROM brands WHERE id_brand = $1 RETURNING *', [brandId]);
+        if (result.rowCount === 0) {
+            throw new Error('Brand not found');
+        }
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error deleting brand:', error);
+        throw new Error('Failed to delete brand');
+    }
+}
 
 // Fungsi untuk mendapatkan semua produk
 async function getListProducts() {
     try {
         // Query untuk mengambil semua data produk dari database
-        const result = await pool.query('SELECT * FROM products ORDER BY updated_at DESC');
-        
+        const result = await pool.query(`
+        SELECT 
+            p.id_product, 
+            p.product_code, 
+            p.product_name, 
+            p.price, 
+            p.type,
+            p.stock,
+            p.image,
+            p.minimum_stock,
+            p.updated_at,
+            p.id_brand, 
+            b.brand_name  -- Mengambil nama brand dari tabel brands
+        FROM 
+            products p
+        JOIN 
+            brands b ON p.id_brand = b.id_brand  -- Menggabungkan tabel products dengan brands
+        ORDER BY 
+            p.updated_at DESC
+    `);
+    
         return result.rows;
     } catch (error) {
         throw new Error('Error fetching products: ' + error.message);
@@ -183,7 +258,7 @@ async function getListProducts() {
 // Fungsi untuk mendapatkan produk berdasarkan ID
 async function getProductById(id) {
     try {
-        const result = await pool.query('SELECT product_code, brand, type, price, stock, image FROM products WHERE id_products = $1', [id]);
+        const result = await pool.query('SELECT product_code, id_brand, type, price, stock, image FROM products WHERE id_products = $1', [id]);
         if (result.rows.length === 0) {
             throw new Error('Product not found');
         }
@@ -194,8 +269,28 @@ async function getProductById(id) {
 }
 
 // Fungsi untuk memperbarui produk
-async function updateProduct(id, { product_name, brand, type, price, stock, image }) {
+async function updateProduct(id, { product_name, id_brand, type, price, stock, image }) {
     try {
+        // Validasi input
+        if (!validator.isNumeric(price.toString()) || price <= 0) {
+            return { status: 400, message: 'Invalid price' };
+        }
+        if (!validator.isInt(stock.toString(), { min: 0 })) {
+            return { status: 400, message: 'Invalid stock' };
+        }
+
+        // Cek apakah ada produk dengan nama atau tipe yang sama di database
+        const queryCheck = `
+            SELECT * FROM products 
+            WHERE (product_name = $1 OR type = $2) AND id_product <> $3;
+        `;
+        const valuesCheck = [product_name, type, id ];
+        const resultCheck = await pool.query(queryCheck, valuesCheck);
+
+        if (resultCheck.rows.length > 0) {
+            return { status: 400, message: 'Product name or type already exists' };
+        }
+
         // Define the query and parameters based on whether the image is provided or not
         let query;
         let values;
@@ -203,19 +298,19 @@ async function updateProduct(id, { product_name, brand, type, price, stock, imag
         if (image === undefined || image === null) {
             query = `
                 UPDATE products 
-                SET product_name = $1, brand = $2, type = $3, price = $4, stock = $5
+                SET product_name = $1, id_brand = $2, type = $3, price = $4, stock = $5
                 WHERE id_product = $6
                 RETURNING *;
             `;
-            values = [product_name, brand, type, price, stock, id];
+            values = [product_name, id_brand, type, price, stock, id];
         } else {
             query = `
                 UPDATE products 
-                SET product_name = $1, brand = $2, type = $3, price = $4, stock = $5, image = $6
+                SET product_name = $1, id_brand = $2, type = $3, price = $4, stock = $5, image = $6
                 WHERE id_product = $7
                 RETURNING *;
             `;
-            values = [product_name, brand, type, price, stock, image, id];
+            values = [product_name, id_brand, type, price, stock, image, id];
         }
 
         // Execute the query
@@ -223,12 +318,12 @@ async function updateProduct(id, { product_name, brand, type, price, stock, imag
 
         // Check if the product was found and updated
         if (result.rows.length === 0) {
-            throw new Error('Product not found');
+            return { status: 404, message: 'Product not found' };
         }
 
-        return result.rows[0];
+        return { status: 200, data: result.rows[0] };
     } catch (error) {
-        throw new Error('Error updating product: ' + error.message);
+        return { status: 500, message: 'Error updating product: ' + error.message };
     }
 }
 
@@ -306,6 +401,87 @@ async function getAllTransactions() {
         throw new Error('Error retrieving transactions: ' + error.message);
     }
 }
+
+
+// async function getAllTransactions() {
+//     try {
+//         const transactions = await Transaksi.findAll({
+//             include: [{
+//                 model: Member,
+//                 attributes: ['nama'], // Ambil hanya nama dari tabel members
+//                 required: false // `false` memungkinkan untuk transaksi tanpa member (guest)
+//             }],
+//             order: [['transaction_date', 'DESC']]
+//         });
+
+//         const formatNumber = (number) => {
+//             return new Intl.NumberFormat('id-ID', {
+//                 minimumFractionDigits: 0,
+//                 maximumFractionDigits: 0,
+//                 useGrouping: true
+//             }).format(number);
+//         };
+
+//         // Ambil semua id_brand dari semua transaksi
+//         let allBrandIds = [];
+//         const transactionsData = transactions.map(transaction => {
+//             const items = transaction.items; // Tidak perlu mem-parse jika sudah JSON
+
+//             items.forEach(item => {
+//                 allBrandIds.push(item.id_brand);
+//             });
+
+//             return {
+//                 transaction_code: transaction.transaction_code,
+//                 member: transaction.Member ? transaction.Member.nama : 'Guest',
+//                 cashier: transaction.cashier,
+//                 transaction_date: transaction.transaction_date,
+//                 total: formatNumber(transaction.total),
+//                 payment_method: transaction.payment_method,
+//                 payment: formatNumber(transaction.payment),
+//                 debit: transaction.debit,
+//                 change: formatNumber(transaction.change),
+//                 items: items.map(item => ({
+//                     ...item,
+//                     price: formatNumber(item.price),
+//                     brand_name: 'Unknown Brand' // Tempatkan placeholder sementara
+//                 }))
+//             };
+//         });
+
+//         // Hapus duplikasi id_brand
+//         allBrandIds = [...new Set(allBrandIds)];
+
+//         // Ambil brand_name berdasarkan id_brand
+//         const brands = await Brand.findAll({
+//             where: { id_brand: allBrandIds },
+//             attributes: ['id_brand', 'brand_name']
+//         });
+
+//         // Buat map untuk akses cepat brand_name berdasarkan id_brand
+//         const brandMap = {};
+//         brands.forEach(brand => {
+//             brandMap[brand.id] = brand.brand_name;
+//         });
+
+//         // Update data transaksi dengan brand_name yang benar
+//         const finalTransactionsData = transactionsData.map(transaction => {
+//             return {
+//                 ...transaction,
+//                 items: transaction.items.map(item => ({
+//                     ...item,
+//                     price: formatNumber(item.price),
+//                     brand_name: brandMap[item.id_brand] || 'Unknown Brand' // Ambil brand_name dari brandMap
+//                 }))
+//             };
+//         });
+
+//         return finalTransactionsData;
+//     } catch (error) {
+//         console.error('Error retrieving transactions:', error);
+//         throw new Error('Error retrieving transactions: ' + error.message);
+//     }
+// }
 
 async function getTransactionById(transactionId) {
     try {
@@ -433,8 +609,11 @@ module.exports ={
     getMinimumStock,
     getLatestSales,
     getLatestIncomingItems,
-    getAllTransactionsMonth
-
+    getAllTransactionsMonth,
+    getListBrand,
+    addBrand,
+    updateBrand,
+    deleteBrand,
 
 
 

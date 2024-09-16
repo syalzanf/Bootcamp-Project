@@ -6,6 +6,8 @@ import { CSpinner, useColorModes } from '@coreui/react-pro';
 import './scss/style.scss';
 import './scss/examples.scss';
 import 'sweetalert2/dist/sweetalert2.min.css';
+import TimerComponent from './TimerComponent';
+
 // import { barangRoutes, adminRoutes, cashierRoutes, superadminRoutes } from './routes';
 
 // Layouts and Pages
@@ -16,6 +18,7 @@ const DashboardAdmin = React.lazy(() => import('./views/dashboard/DashboardAdmin
 const DashboardCashier = React.lazy(() => import('./views/dashboard/DashboardCashier'))
 const DashboardSuperadmin = React.lazy(() => import('./views/dashboard/DashboardSuperadmin'))
 const DataBarang = React.lazy(() => import('./views/pages/barang/DataBarang'))
+const Brand = React.lazy(() => import('./views/pages/barang/Brand'))
 const Barang = React.lazy(() => import('./views/pages/barang/BarangList'))
 const Stok = React.lazy(() => import('./views/pages/barang/Stok'))
 const CustomersList = React.lazy(() => import('./views/pages/customers/CustomersList'))
@@ -33,6 +36,60 @@ const App = () => {
   const storedTheme = useSelector((state) => state.theme);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const accessToken = localStorage.getItem('token');
+  const refreshToken = localStorage.getItem('token');
+  // const [timeLeft, setTimeLeft] = useState(3600); // 1 jam dalam detik (3600 detik)
+
+  // useEffect(() => {
+  //   // Set interval untuk mengurangi waktu setiap detik
+  //   const intervalId = setInterval(() => {
+  //     setTimeLeft((prevTime) => {
+  //       if (prevTime <= 0) {
+  //         clearInterval(intervalId); // Hentikan interval ketika waktu habis
+  //         handleLogout();
+  //         return 0; // Pastikan timeLeft tidak menjadi negatif
+  //       }
+  //       return prevTime - 1;
+  //     });
+  //   }, 1000); // 1000ms = 1 detik
+
+  //   // Cleanup interval ketika komponen di-unmount
+  //   return () => clearInterval(intervalId);
+  // }, []);
+
+  // useEffect(() => {
+  //   // Panggil refreshAccessToken 5 menit sebelum token kedaluwarsa
+  //   if (timeLeft <= 300) { // 5 menit dalam detik
+  //     refreshAccessToken();
+  //   }
+  // }, [timeLeft]);
+
+
+  // const refreshAccessToken = async () => {
+  //   try {
+  //     const refreshToken = localStorage.getItem('token');
+  //     const response = await axios.post('http://localhost:3000/api/refresh-token', { refreshToken });
+  //     setTimeLeft(3600); // Reset waktu ke 1 jam lagi
+  //     localStorage.setItem('token', response.data.token)
+  //     console.log('Token berhasil diperbarui:', response.data.token);
+  //   } catch (error) {
+  //     console.error('Gagal memperbarui token:', error);
+  //     handleLogout();
+  //   }
+  // };
+
+  // // Fungsi untuk format waktu dalam format mm:ss
+  // const formatTime = (seconds) => {
+  //   const minutes = Math.floor(seconds / 60);
+  //   const secs = seconds % 60;
+  //   return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  // };
+
+  // const handleLogout = () => {
+  //   // Proses logout (misalnya, hapus token dari localStorage)
+  //   localStorage.removeItem('token'); // Misal token disimpan di localStorage
+  //   navigate('/login'); // Redirect ke halaman login
+  // };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -69,13 +126,11 @@ const App = () => {
         <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
 
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={ <Login />} />
 
           {user ? (
             <>
               <Route element={<DefaultLayout />}>
-
-
                 {/* Route untuk login */}
                 <Route exact path="/admin-dashboard" element={<DashboardAdmin />} />
                 <Route exact path="/superadmin-dashboard" element={<DashboardSuperadmin />} />
@@ -90,6 +145,7 @@ const App = () => {
 
                 <Route exact path="/data-barang" element={<DataBarang />} />
                 <Route exact path="/barang" element={<Barang />} />
+                <Route exact path="/data-brand" element={<Brand />} />
                 <Route exact path="/stok"element={<Stok />} />
                 <Route exact path="/customer-list" element={<CustomersList />} />
                 <Route exact path="/customers" element={<Customers />} />

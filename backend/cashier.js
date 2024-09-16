@@ -35,11 +35,43 @@ async function cashierLogin(username, password) {
     }
 }
 
+async function getListBrand() {
+    try {
+        const result = await pool.query('SELECT * FROM brands');
+        return result.rows;
+    } catch (error) {
+        console.error('Error fetching brand list:', error);
+        throw new Error('Failed to fetch brand list');
+    }
+}
+
+
 // Fungsi untuk mendapatkan semua produk
 async function getListProducts() {
     try {
         // Query untuk mengambil semua data produk dari database
-        const result = await pool.query('SELECT product_code, product_name, brand, type, price, stock FROM products');
+        const result = await pool.query(
+            `
+            SELECT 
+            p.id_product, 
+            p.product_code, 
+            p.product_name, 
+            p.price, 
+            p.type,
+            p.stock,
+            p.image,
+            p.minimum_stock,
+            p.updated_at,
+            p.id_brand,
+            b.brand_name  -- Mengambil nama brand dari tabel brands
+        FROM 
+            products p
+        JOIN 
+            brands b ON p.id_brand = b.id_brand  -- Menggabungkan tabel products dengan brands
+        ORDER BY 
+            p.updated_at DESC
+            `
+            );
         return result.rows;
     } catch (error) {
         throw new Error('Error fetching products: ' + error.message);
@@ -49,7 +81,7 @@ async function getListProducts() {
 // Fungsi untuk mendapatkan produk berdasarkan ID
 async function getProductById(id) {
     try {
-        const result = await pool.query('SELECT product_code, brand, type, price, stock, image FROM products WHERE id_products = $1', [id]);
+        const result = await pool.query('SELECT product_code, id_brand, type, price, stock, image FROM products WHERE id_products = $1', [id]);
         if (result.rows.length === 0) {
             throw new Error('Product not found');
         }
@@ -256,7 +288,7 @@ async function createTransaction({ transaction_code, member_id, id_cashier,  cas
 
         return newTransaction;
     } catch (error) {
-        throw new Error('Error creating transaction: ' + error.message);
+        throw new Error('Error creating transact    ion: ' + error.message);
     }
 }
 
@@ -320,6 +352,76 @@ async function getAllMember() {
 
 
 // Mengambil laporan penjualan berdasarkan kasir
+// async function getTransactionReportByCashier(cashierName) {
+//     try {
+//         const transactions = await Transaksi.findAll({
+//             include: [
+//                 {
+//                     model: Member,
+//                     attributes: ['nama'], // nama dari tabel members
+//                     required: false // `false` untuk transaksi tanpa member (guest)
+//                 }
+//             ],
+//             where: {
+//                 cashier: cashierName
+//             }
+//         });
+
+//         // Memeriksa apakah transaksi ditemukan
+//         if (transactions.length === 0) {
+//             return { message: 'No transactions found for this cashier' };
+//         }
+
+//         // Fungsi untuk memformat angka dalam bentuk rupiah
+//         const formatNumber = (number) => {
+//             return new Intl.NumberFormat('id-ID', {
+//                 minimumFractionDigits: 0,
+//                 maximumFractionDigits: 0,
+//                 useGrouping: true
+//             }).format(number);
+//         };
+
+//         // Ambil data transaksi dan items JSON
+//         const transactionsData = await Promise.all(transactions.map(async (transaction) => {
+//             const parsedItems = JSON.parse(transaction.items);
+
+//             // Proses items untuk setiap transaksi
+//             const itemsWithBrand = await Promise.all(parsedItems.map(async (item) => {
+//                 // Ambil brand berdasarkan id_brand
+//                 const brand = await Brand.findOne({
+//                     where: { id: item.id_brand },
+//                     attributes: ['brand_name'] // Ambil nama brand
+//                 });
+
+//                 return {
+//                     product_name: item.product_name,
+//                     brand_name: brand ? brand.brand_name : 'Unknown Brand', // Jika brand tidak ditemukan, set default
+//                     qty: item.qty,
+//                     price: formatNumber(item.price),
+//                     totalItems: formatNumber(item.qty * item.price) // Menghitung total per item
+//                 };
+//             }));
+
+//             return {
+//                 transaction_code: transaction.transaction_code, 
+//                 member: transaction.Member ? transaction.Member.nama : 'Guest',
+//                 cashier: transaction.cashier,
+//                 transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
+//                 total: formatNumber(transaction.total),
+//                 payment: formatNumber(transaction.payment),
+//                 change: formatNumber(transaction.change),
+//                 items: itemsWithBrand // Menggunakan items yang sudah diproses dengan nama brand
+//             };
+//         }));
+
+//         return transactionsData;
+//     } catch (error) {
+//         throw new Error('Error retrieving sales report: ' + error.message);
+//     }
+// }
+
+
+
 async function getTransactionReportByCashier(cashierName) {
     try {
         const transactions = await Transaksi.findAll({
@@ -328,7 +430,8 @@ async function getTransactionReportByCashier(cashierName) {
                 model: Member,
                 attributes: ['nama'], // nama dari tabel members
                 required: false // `false` untuk transaksi tanpa member (guest)
-            }],
+            }
+        ],
             where: {
                 cashier: cashierName
             }
@@ -348,6 +451,7 @@ async function getTransactionReportByCashier(cashierName) {
             }).format(number);
         };
 
+        // Ambil data transaksi dan items JSON
         const transactionsData = transactions.map(transaction => ({
             transaction_code: transaction.transaction_code, 
             member: transaction.Member ? transaction.Member.nama : 'Guest',
@@ -415,7 +519,7 @@ async function getTransactionByCode(transactionCode) {
             items: transaction.items.map(item => ({
                 product_code: item.product_code,
                 product_name: item.product_name,
-                brand: item.brand,
+                id_brand: item.id_brand,
                 type: item.type,
                 quantity: item.quantity,
                 price: item.price
@@ -443,4 +547,6 @@ module.exports ={
     getTransactionById,
     getTransactionByCode,
     getMemberByTelepon,
+    getListBrand,
+ 
 };

@@ -38,6 +38,12 @@ const _navAdmin = [
   },
   {
     component: CNavItem,
+    name: <Translation>{(t) => t('Brand')}</Translation>,
+    to: '/data-brand',
+    icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
     name: <Translation>{(t) => t('Stok Opname')}</Translation>,
     to: '/stok',
     icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,

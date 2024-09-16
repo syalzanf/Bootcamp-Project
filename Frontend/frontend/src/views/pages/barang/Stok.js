@@ -21,6 +21,7 @@ import {
 } from '@coreui/react-pro'
 import { CSmartTable } from '@coreui/react-pro'
 
+
 const Stok = () => {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
@@ -29,14 +30,15 @@ const Stok = () => {
   const [formValues, setFormValues] = useState({
     product_code: '',
     product_name: '',
-    brand: '',
+    id_brand: '',
+    brand_name: '',
     type: '',
     price: '',
     stock: 0,
   })
   const [validated, setValidated] = useState(false)
-  const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
-
+  const [alert, setAlert] = useState({ visible: false, message: '', color: '' })
+  const [brands, setBrands] = useState([])
 
   // Fetch data from the API
   const fetchData = async () => {
@@ -60,6 +62,26 @@ const Stok = () => {
     fetchData()
   }, [])
 
+  useEffect(() => {
+  const fetchBrands = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:3000/api/admin/brands', {
+        headers: { Authorization: `${token}` },
+        withCredentials: true,
+      });
+
+      // Simpan data brands ke dalam state
+      setBrands(response.data);
+      console.log('Fetched brands:', response.data);  // Log untuk debugging
+    } catch (error) {
+      console.error('Error fetching brands:', error);
+    }
+  };
+
+  fetchBrands();
+}, []);
+
   // Handle change in form inputs
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -68,101 +90,117 @@ const Stok = () => {
       [name]: value,
     })
   }
-
-  // Handle product code change and fetch product details
   const handleProductCodeChange = async (selectedItems) => {
-    const selectedCode = selectedItems[0]?.value || ''
-    setFormValues({ ...formValues, product_code: selectedCode })
-
+    const selectedCode = selectedItems[0]?.value || '';
+    setFormValues({ ...formValues, product_code: selectedCode });
+  
     if (selectedCode) {
       try {
-        const token = localStorage.getItem('token')
-
+        const token = localStorage.getItem('token');
         const response = await axios.get(`http://localhost:3000/api/admin/products/${selectedCode}`, {
           headers: { Authorization: `${token}` },
           withCredentials: true,
-        })
-
-        const product = response.data
+        });
+  
+        const product = response.data;
+  
+        // Pastikan brands sudah terisi
+        if (brands.length === 0) {
+          console.error('Data brands masih kosong. Pastikan data sudah diambil.');
+          return;
+        }
+  
+        // Cari brand berdasarkan id_brand produk
+        const selectedBrand = brands.find(brand => brand.id_brand === product.id_brand);
+        const brandName = selectedBrand ? selectedBrand.brand_name : 'Merk tidak ditemukan';
+  
         setFormValues({
           ...formValues,
           product_code: product.product_code,
           product_name: product.product_name,
-          brand: product.brand,
+          id_brand: product.id_brand,
+          brand_name: brandName,
           type: product.type,
           stock: product.stock >= 0 ? product.stock : 0,
-          // stock: product.stock,
           price: product.price,
-        })
+        });
+  
+        console.log('Product id_brand:', product.id_brand);
+        console.log('Brands:', brands);
+        console.log('Selected brand:', selectedBrand);
+  
       } catch (error) {
-        console.error('Error fetching product details:', error)
+        console.error('Error fetching product details:', error);
       }
     }
-  }
+  };
+  
 
   // Handle form submission to add stock
   const handleSubmit = async (event) => {
-    event.preventDefault()
-    const form = event.currentTarget
-
+    event.preventDefault();
+    const form = event.currentTarget;
+  
     if (form.checkValidity() === false) {
-      event.stopPropagation()
-      setValidated(true)
-      return
+      event.stopPropagation();
+      setValidated(true);
+      return;
     }
-
+  
     // Pastikan ada data pada form
-    if (!formValues.product_code || !formValues.product_name || !formValues.brand || !formValues.type || !formValues.stock || !formValues.price) {
-      setValidated(true)
-      return
+    if (!formValues.product_code || !formValues.product_name || !formValues.id_brand || !formValues.type || !formValues.stock || !formValues.price) {
+      setValidated(true);
+      return;
     }
-
-    const newStock = Number(formValues.stock)
+  
+    const newStock = Number(formValues.stock);
     if (isNaN(newStock) || newStock <= 0) {
-      console.error('Invalid stock value')
-      return
+      console.error('Invalid stock value');
+      return;
     }
-
-    setValidated(true)
-
+  
+    setValidated(true);
+  
     try {
-      const token = localStorage.getItem('token')
-      const productCode = formValues.product_code
-
+      const token = localStorage.getItem('token');
+      const productCode = formValues.product_code;
+  
       await axios.post(`http://localhost:3000/api/admin/products/stock/${productCode}`, {
         formValues,
         stock: newStock,
       }, {
         headers: { Authorization: `${token}` },
         withCredentials: true,
-      })
-
+      });
+  
       showAlert('Product successfully Added!', 'light');
-
-      setModalVisible(false)
-      fetchData()
+  
+      setModalVisible(false);
+      fetchData();
     } catch (error) {
-      console.error('Error adding stock:', error.response ? error.response.data : error.message)
+      console.error('Error adding stock:', error.response ? error.response.data : error.message);
     }
-  }
+  };
+  
 
   const showAlert = (message, color) => {
     setAlert({
       visible: true,
       message,
       color
-    });
+    })
     setTimeout(() => {
-      setAlert(prev => ({ ...prev, visible: false }));
-    }, 3000);
-  };
+      setAlert(prev => ({ ...prev, visible: false }))
+    }, 3000)
+  }
 
   // Reset form values
   const resetForm = () => {
     setFormValues({
       product_code: '',
       product_name: '',
-      brand: '',
+      id_brand: '',
+      brand_name: '',
       type: '',
       price: '',
       stock: 0,
@@ -184,10 +222,9 @@ const Stok = () => {
   const columns = [
     { key: 'product_code', label: 'Kode Barang', _style: { width: '20%' } },
     { key: 'product_name', label: 'Nama Barang', _style: { width: '30%' } },
-    { key: 'brand', label: 'Merk', _style: { width: '20%' } },
+    { key: 'brand_name', label: 'Merk', _style: { width: '20%' } }, // Tampilkan nama merk
     { key: 'type', label: 'Tipe', _style: { width: '20%' } },
     { key: 'stock', label: 'Stok', _style: { width: '10%' } },
-
   ]
 
   if (loading) {
@@ -201,23 +238,23 @@ const Stok = () => {
   return (
     <CRow>
       <CCol xs={12}>
-      <div className="mb-3">
-        {alert.visible && (
-          <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
-            {alert.message}
-          </CAlert>
-        )}
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <CButton
-            color="primary"
-            size="sm"
-            shape="rounded-pill"
-            onClick={() => setModalVisible(true)}
-          >
-            Tambah Stok
-          </CButton>
+        <div className="mb-3">
+          {alert.visible && (
+            <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
+              {alert.message}
+            </CAlert>
+          )}
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <CButton
+              color="primary"
+              size="sm"
+              shape="rounded-pill"
+              onClick={() => setModalVisible(true)}
+            >
+              Tambah Stok
+            </CButton>
+          </div>
         </div>
-      </div>
         <CCard className="mb-4">
           <CCardHeader>
             <strong>Product Stock Table</strong>
@@ -280,11 +317,28 @@ const Stok = () => {
                 <CFormInput
                   id="brand"
                   name="brand"
-                  value={formValues.brand}
+                  value={formValues.brand_name}  
                   readOnly
                   required
                 />
                 <CFormFeedback invalid>Merk is required.</CFormFeedback>
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="product_name" className="col-form-label">
+                  Nama Barang
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="product_name"
+                  name="product_name"
+                  value={formValues.product_name}
+                  readOnly
+                  required
+                />
+                <CFormFeedback invalid>Nama Barang is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -307,7 +361,7 @@ const Stok = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="stock" className="col-form-label">
-                  Stock
+                  Stok
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -315,17 +369,17 @@ const Stok = () => {
                   id="stock"
                   name="stock"
                   type="number"
+                  // value={formValues.stock}
                   onChange={handleChange}
-                  min="0"
                   required
                 />
-                <CFormFeedback invalid>Stock is required.</CFormFeedback>
+                <CFormFeedback invalid>Stok is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="price" className="col-form-label">
-                  Price
+                  Harga
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -334,19 +388,18 @@ const Stok = () => {
                   name="price"
                   type="number"
                   value={formValues.price}
-                  onChange={handleChange}
-                  min="0"
+                  readOnly
                   required
                 />
-                <CFormFeedback invalid>Price is required.</CFormFeedback>
+                <CFormFeedback invalid>Harga is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CModalFooter>
               <CButton color="secondary" onClick={handleModalClose}>
                 Close
               </CButton>
-              <CButton type="submit" color="primary">
-                Add Stock
+              <CButton color="primary" type="submit">
+                Save changes
               </CButton>
             </CModalFooter>
           </CForm>
@@ -355,5 +408,4 @@ const Stok = () => {
     </CRow>
   )
 }
-
 export default Stok

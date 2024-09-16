@@ -40,7 +40,8 @@ const TransactionPage = () => {
   const [formValues, setFormValues] = useState({
     product_code: '',
     product_name: '',
-    brand: '',
+    id_brand: '',    // Tetap simpan id_brand untuk pengiriman ke backend
+    brand_name: '',  // Untuk menampilkan nama brand di frontend
     type: '',
     price: '',
     stock: '',
@@ -73,20 +74,56 @@ const TransactionPage = () => {
   });
   const [isNameVisible, setIsNameVisible] = useState(false);
   const [memberOptions, setMemberOptions] = useState([]);
+  const token = localStorage.getItem("token");
 
+
+  // const [brands, setBrands] = useState([]);
+
+
+  // useEffect(() => {
+  //   const fetchBrands = async () => {
+  //     try {
+  //       const token = localStorage.getItem('token');
+  //       const response = await axios.get('http://localhost:3000/api/cashier/brands', {
+  //         headers: { Authorization: `${token}` },
+  //         withCredentials: true
+  //       });
+  //       if (Array.isArray(response.data)) {
+  //         setBrands(response.data);
+  //       } else {
+  //         console.error('Data format is not an array:', response.data);
+  //         setBrands([]);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching brands:', error.response ? error.response.data : error.message);
+  //     }
+  //   };
+  
+  //   fetchBrands();
+  // }, []);
 
   useEffect(() => {
-    axios.get('http://localhost:3000/api/cashier/products')
+    const token = localStorage.getItem("token");
+    axios.get('http://localhost:3000/api/cashier/products',  {
+      headers: { Authorization: `${token}` },
+      withCredentials: true
+    })
       .then(response => {
         setProducts(response.data);
+        console.log('PRODUCT', response.data)
       })
       .catch(error => {
         console.error('Error fetching products:', error);
       });
 
-      axios.get('http://localhost:3000/api/cashier/customers')
+      axios.get('http://localhost:3000/api/cashier/customers',{
+        headers: { Authorization: `${token}` },
+        withCredentials: true
+      })
       .then(response => {
         setMembers(response.data); // simpan data member di state
+
+        
       })
       .catch(error => {
         console.error('Error fetching members:', error);
@@ -130,6 +167,8 @@ const TransactionPage = () => {
     const selectedProduct = products.find(product => product.product_code === selectedCode);
 
     console.log('Selected Product:', selectedProduct);
+    console.log('Brand Name:', selectedProduct.brand_name);
+
 
     if (selectedProduct) {
       if (selectedProduct.stock === 0) {
@@ -142,7 +181,8 @@ const TransactionPage = () => {
         ...formValues,
         product_code: '',
         product_name: '',
-        brand: '',
+        id_brand: '',
+        brand_name: '',
         type: '',
         price: '',
         stock: '',
@@ -155,7 +195,8 @@ const TransactionPage = () => {
         ...formValues,
         product_code: selectedProduct.product_code,
         product_name: selectedProduct.product_name,
-        brand: selectedProduct.brand,
+        id_brand: selectedProduct.id_brand || '',       // Tetap simpan id_brand untuk backend
+        brand_name: selectedProduct.brand_name, // Tampilkan brand_name di frontend
         type: selectedProduct.type,
         price: selectedProduct.price,
         stock: selectedProduct.stock,
@@ -171,7 +212,8 @@ const TransactionPage = () => {
         ...formValues,
         product_code: '',
         product_name: '',
-        brand: '',
+        id_brand: '',
+        brand_name: '',
         type: '',
         price: '',
         stock: '',
@@ -193,7 +235,11 @@ const TransactionPage = () => {
       }
 
       try {
-        const response = await axios.get(`http://localhost:3000/api/cashier/member/${telepon}`);
+
+        const response = await axios.get(`http://localhost:3000/api/cashier/member/${telepon}`,{
+          headers: { Authorization: `${token}` },
+          withCredentials: true
+        });
         if (response.data && response.data.nama) {
           const member = {
             value: response.data.member_id,
@@ -255,12 +301,24 @@ const TransactionPage = () => {
 
 
   const addItemToCart = () => {
-    const newItem = { ...formValues, qty: Number(formValues.qty) };
-    if (newItem.qty <= 0) {
+    const newItem = {
+      product_code: formValues.product_code,
+      product_name: formValues.product_name,
+      id_brand: formValues.id_brand,   // hanya id_brand yang disimpan
+      brand_name: formValues.brand_name, // untuk tampilan saja
+      type: formValues.type,
+      price: formValues.price,
+      qty: Number(formValues.qty)
+    };
+
+    console.log('NewItem', newItem)
+
+      if (newItem.qty <= 0) {
       alert('Quantity must be greater than 0.');
       return;
     }
     const updatedCart = [...cartItems, newItem];
+    
     setCartItems(updatedCart);
     updateTotal(updatedCart);
 
@@ -268,7 +326,8 @@ const TransactionPage = () => {
     setFormValues({
       product_code: '',
       product_name: '',
-      brand: '',
+      id_brand: '',
+      brand_name: '',
       type: '',
       price: '',
       qty: '',
@@ -288,7 +347,7 @@ const TransactionPage = () => {
 
   useEffect(() => {
     setChange(payment >= total ? payment - total : 0);
-  }, [payment, total]);
+  }, [payment, total]); 
 
   const handlePaymentMethodChange = (e) => {
     const method = e.target.value;
@@ -308,72 +367,88 @@ const TransactionPage = () => {
   };
 
 
-    const handleSubmitTransaction = async () => {
-      const cashier = localStorage.getItem('userName');
-      const transactionData = {
-        transaction_code: transactionCode,
-        id_cashier: localStorage.getItem("id"),
-        // member_id: member ? member : null,
-        member_id: selectedMember.value ? selectedMember.value : null,
-        cashier,
-        total,
-        payment_method: paymentMethod,
-        debit_card_code: paymentMethod === 'debit' && debitCardCode ? debitCardCode : 0,
-        payment,
-        change,
-        items: cartItems,
-      };
+      const handleSubmitTransaction = async () => {
+        const cashier = localStorage.getItem('userName');
+        const transactionData = {
+          transaction_code: transactionCode,
+          id_cashier: localStorage.getItem("id"),
+          // member_id: member ? member : null,
+          member_id: selectedMember ? selectedMember.value : null,
+          cashier,
+          total,
+          payment_method: paymentMethod,
+          debit_card_code: paymentMethod === 'debit' && debitCardCode ? debitCardCode : 0,
+          payment,
+          change,
+          items: cartItems.map(item => ({
+            product_code: item.product_code,
+            product_name: item.product_name,
+            id_brand: item.id_brand, // hanya id_brand yang dikirim ke backend
+            type: item.type,
+            price: item.price,
+            qty: item.qty
+          }))
+        };
 
-      try {
-        const response = await axios.post('http://localhost:3000/api/cashier/transaksi', transactionData);
+        try {
+          const token = localStorage.getItem('token');
 
-        console.log('TRANSAKSI RESPONSE DATA', response.data)
-        console.log('CEK TRANSACTION ID', response.data.id)
-        const transactionId = response.data.id;
+          const response = await axios.post('http://localhost:3000/api/cashier/transaksi', transactionData, {
+            headers: { Authorization: `${token}` },
+            withCredentials: true
+          });
+
+          console.log('TRANSAKSI RESPONSE DATA', response.data)
+          console.log('CEK TRANSACTION ID', response.data.id)
+          const transactionId = response.data.id;
 
 
-        const receiptResponse = await axios.get(`http://localhost:3000/api/generate-receipt/${transactionId}`);
+          const receiptResponse = await axios.get(`http://localhost:3000/api/generate-receipt/${transactionId}`,  {
+            headers: { Authorization: `${token}` },
+            withCredentials: true
+          });
 
-        var file = base64ToBlob(receiptResponse.data.base64, "application/pdf")
-        var fileURL = URL.createObjectURL(file);
-        const printWindow = window.open(fileURL);
-        if (printWindow) {
-          printWindow.onload = () => {
-              printWindow.print();
-          };
+          var file = base64ToBlob(receiptResponse.data.base64, "application/pdf")
+          var fileURL = URL.createObjectURL(file);
+          const printWindow = window.open(fileURL);
+          if (printWindow) {
+            printWindow.onload = () => {
+                printWindow.print();
+            };
+          }
+
+          // Clean up the Blob URL after printing
+          // URL.revokeObjectURL(blobUrl);
+
+          showAlert('Member berhasil ditambahkan', 'success');
+          // setVisible(true);
+
+          setCartItems([]);
+          setFormValues({
+            product_code: '',
+            product_name: '',
+            id_brand: '',
+            // brand_name: '',
+            type: '',
+            price: '',
+            qty: '',
+          });
+          setSelectedMember(null);
+          // setMemberSearchInput('');
+          // setMembers('');
+          setDebitCardCode('');
+          setPaymentMethod('cash');
+          setPayment('');
+          setTotal('');
+          setChange('');
+
+          // if (printWindow) {
+          //   printWindow.print();
+          // }
+        } catch (error) {
+          alert('Gagal membuat transaksi: ' + error.message);
         }
-
-        // Clean up the Blob URL after printing
-        // URL.revokeObjectURL(blobUrl);
-
-        showAlert('Member berhasil ditambahkan', 'success');
-        // setVisible(true);
-
-        setCartItems([]);
-        setFormValues({
-          product_code: '',
-          product_name: '',
-          brand: '',
-          type: '',
-          price: '',
-          qty: '',
-        });
-        setSelectedMember(null);
-        // setMemberSearchInput('');
-        // setMembers('');
-        setDebitCardCode('');
-        setPaymentMethod('cash');
-        setPayment('');
-        setTotal('');
-        setChange('');
-
-        // if (printWindow) {
-        //   printWindow.print();
-        // }
-      } catch (error) {
-        alert('Gagal membuat transaksi: ' + error.message);
-      }
-    };
+      };
 
   function base64ToBlob(base64String, contentType) {
     const byteCharacters = atob(base64String);
@@ -409,7 +484,10 @@ const TransactionPage = () => {
           alamat: formMemberValues.alamat,
         };
 
-        const response = await axios.post('http://localhost:3000/api/cashier/customers/add', newCustomer);
+        const response = await axios.post('http://localhost:3000/api/cashier/customers/add', newCustomer, {
+          headers: { Authorization: `${token}` },
+          withCredentials: true
+        });
 
         showAlert('Member berhasil ditambahkan', 'success');
 
@@ -518,10 +596,10 @@ const TransactionPage = () => {
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
-                <CFormLabel htmlFor="brand">Merk</CFormLabel>
+                <CFormLabel htmlFor="brand_name">Merk</CFormLabel>
               </CCol>
               <CCol sm={9}>
-                <CFormInput id="brand" value={formValues.brand} readOnly />
+                <CFormInput id="brand_name" value={formValues.brand_name} readOnly />
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -586,7 +664,7 @@ const TransactionPage = () => {
                     <CTableRow key={index}>
                       <CTableDataCell>{item.product_code}</CTableDataCell>
                       <CTableDataCell>{item.product_name}</CTableDataCell>
-                      <CTableDataCell>{item.brand}</CTableDataCell>
+                      <CTableDataCell>{item.brand_name}</CTableDataCell>
                       <CTableDataCell>{item.type}</CTableDataCell>
                       <CTableDataCell>{item.price}</CTableDataCell>
                       <CTableDataCell>{item.qty}</CTableDataCell>

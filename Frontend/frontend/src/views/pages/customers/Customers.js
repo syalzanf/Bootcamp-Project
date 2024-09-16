@@ -37,15 +37,17 @@ const CustomerList = () => {
     telepon: '',
     alamat: '',
   });
-
-
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     console.log('Customers component rendered');
 
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/cashier/customers');
+        const response = await axios.get('http://localhost:3000/api/cashier/customers',  {
+          headers: { Authorization: `${token}` },
+          withCredentials: true
+        });
         if (Array.isArray(response.data)) {
           setCustomerData(response.data);
         } else {
@@ -81,7 +83,10 @@ const CustomerList = () => {
         alamat: formValues.alamat,
       };
 
-      const response = await axios.post('http://localhost:3000/api/cashier/customers/add', newCustomer);
+      const response = await axios.post('http://localhost:3000/api/cashier/customers/add', newCustomer,  {
+        headers: { Authorization: `${token}` },
+        withCredentials: true
+      });
 
       Swal.fire(
         'Added!',
@@ -138,7 +143,10 @@ const CustomerList = () => {
         alamat: formValues.alamat,
       };
   
-      const response = await axios.put(`http://localhost:3000/api/cashier/customers/${selectedCustomer.member_id}`, updatedCustomer);
+      const response = await axios.put(`http://localhost:3000/api/cashier/customers/${selectedCustomer.member_id}`, updatedCustomer,  {
+        headers: { Authorization: `${token}` },
+        withCredentials: true
+      });
   
       console.log('Pelanggan berhasil diperbarui:', response.data);
   
@@ -191,7 +199,10 @@ const CustomerList = () => {
       });
 
       if (result.isConfirmed) {
-      await axios.delete(`http://localhost:3000/api/cashier/customers/${customer.member_id}`);
+      await axios.delete(`http://localhost:3000/api/cashier/customers/${customer.member_id}`,  {
+        headers: { Authorization: `${token}` },
+        withCredentials: true
+      });
 
         setCustomerData((prevCustomers) =>
         prevCustomers.filter((item) => item.member_id !== customer.member_id)

@@ -41,6 +41,10 @@
       if (err) {
 
         console.error('Token verification error:', err);
+        
+        if (err.name === 'TokenExpiredError') {
+          return res.status(403).json({ message: 'Token expired' });
+        }
         return res.status(403).json({ message: 'Invalid token' });
       }
       req.user = user;
@@ -148,85 +152,52 @@
     }
   });
 
-  // app.post('/api/refresh-token', async (req, res) => {
-  //   const { refreshToken } = req.body;
+  app.post('/api/refresh-token', async (req, res) => {
+    const { refreshToken } = req.body;
   
-  //   if (!refreshToken) {
-  //     return res.status(400).json({ message: 'Refresh token is required' });
-  //   }
+    if (!refreshToken) {
+      return res.status(400).json({ message: 'Refresh token is required' });
+    }
   
-  //   try {
-  //     // Verifikasi refresh token
-  //     const decoded = jwt.verify(refreshToken, jwtSecret);
-  //     console.log(decoded);
-  //     const user = await User.findOne({ where: { username: decoded.username } });
+    try {
+      // Verifikasi refresh token
+      const decoded = jwt.verify(refreshToken, jwtSecret);
+      console.log(decoded);
+      const user = await User.findOne({ where: { username: decoded.username } });
   
-  //     if (!user) {
-  //       return res.status(403).json({ message: "invalid token" });
-  //     }
+      if (!user) {
+        return res.status(403).json({ message: "invalid token" });
+      }
   
-  //     const newToken = jwt.sign(
-  //       { username: user.username, role: user.role },
-  //       jwtSecret,
-  //       { expiresIn: '1h' }
-  //     );
+      const newToken = jwt.sign(
+        { username: user.username, role: user.role },
+        jwtSecret,
+        { expiresIn: '1h' }
+      );
   
-  //     res.json({
-  //       token: newToken,
-  //     });
-  //   } catch (error) {
-  //     console.error('Error refreshing token:', error.message);
-  //     res.status(403).json({ message: 'Invalid refresh token' });
-  //   }
-  // });  
+      res.json({
+        token: newToken,
+      });
+    } catch (error) {
+      console.error('Error refreshing token:', error.message);
+      res.status(403).json({ message: 'Invalid refresh token' });
+    }
+  });  
 
-  // app.post('/api/login', async (req, res) => {
-  //   const { username, password } = req.body;
-  
-  //   try {
-  //     // Autentikasi pengguna dan hasilkan token di dalam loginUser
-  //     const { user, token, refreshToken } = await superadmin.loginUser(username, password);
-  
-  //     if (user && token && refreshToken) {
-  //       // Setel token sebagai cookie
-  //       res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'strict' });
-  //       res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict' });
-
-
-  //       res.json({
-  //         message: 'Login berhasil',
-  //         user: {
-  //           id: user.id,
-  //           username: user.username,
-  //           role: user.role,
-  //           name: user.name,
-  //           telepon: user.telepon,
-  //           photo:user.photo,
-  //           token: token,
-  //           refreshToken: refreshToken
-  //         },
-  //       });
-  //     } else {
-  //       return res.status(401).json({ message: 'Username atau password salah' });
-  //     }
-  //   } catch (error) {
-  //     console.error('Kesalahan login:', error);
-  //     return res.status(500).json({ message: 'Kesalahan server internal' });
-  //   }
-  // });
   app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
   
     try {
       // Autentikasi pengguna dan hasilkan token di dalam loginUser
-      const { user, token } = await superadmin.loginUser(username, password);
+      const { user, token, refreshToken } = await superadmin.loginUser(username, password);
   
-      // if (user && token) {
+      if (user && token) {
         // Setel token sebagai cookie
         res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'strict' });
-        
-        // res.json({
-        return res.json({
+        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict' });
+
+
+        res.json({
           message: 'Login berhasil',
           user: {
             id: user.id,
@@ -235,18 +206,80 @@
             name: user.name,
             telepon: user.telepon,
             photo:user.photo,
-            token: token
+            token: token,
+            refreshToken: refreshToken
           },
         });
-      // } else {
-      //   return res.status(401).json({ message: 'Username atau password salah' });
-      // }
+      } else {
+        return res.status(401).json({ message: 'login gagal' });
+      }
     } catch (error) {
       console.error('Kesalahan login:', error);
-      res.status(401).json({ message: error.message });
-      // return res.status(500).json({ message: 'Kesalahan server internal' });
+      return res.status(500).json({ message: 'Kesalahan server internal' });
     }
   });
+
+  // app.post('/api/login', async (req, res) => {
+  //   const { username, password } = req.body;
+  
+  //   try {
+  //     // Autentikasi pengguna dan hasilkan token di dalam loginUser
+  //     const { user, token } = await superadmin.loginUser(username, password);
+  
+  //     // if (user && token) {
+  //       // Setel token sebagai cookie
+  //       res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'strict' });
+        
+  //       // res.json({
+  //       return res.json({
+  //         message: 'Login berhasil',
+  //         user: {
+  //           id: user.id,
+  //           username: user.username,
+  //           role: user.role,
+  //           name: user.name,
+  //           telepon: user.telepon,
+  //           photo:user.photo,
+  //           token: token
+  //         },
+  //       });
+  //     // } else {
+  //     //   return res.status(401).json({ message: 'Username atau password salah' });
+  //     // }
+  //   } catch (error) {
+  //     console.error('Kesalahan login:', error);
+  //     res.status(401).json({ message: error.message });
+  //     // return res.status(500).json({ message: 'Kesalahan server internal' });
+  //   }
+  // });
+
+  // app.post('/api/token/refresh', async (req, res) => {
+  //   const { refreshToken } = req.body;
+    
+  //   if (!refreshToken) {
+  //     return res.status(401).json({ message: 'Refresh token is required' });
+  //   }
+  
+  //   try {
+  //     // Verifikasi refresh token
+  //     const decoded = jwt.verify(refreshToken, jwtRefreshSecret);
+      
+  //     // Buat token akses baru
+  //     const newAccessToken = jwt.sign(
+  //       { username: decoded.username, role: decoded.role },
+  //       jwtSecret,
+  //       { expiresIn: '1h' } // Access token baru berlaku 1 jam
+  //     );
+  
+  //     return res.json({
+  //       message: 'Token refreshed successfully',
+  //       accessToken: newAccessToken,
+  //     });
+  //   } catch (error) {
+  //     return res.status(403).json({ message: 'Invalid or expired refresh token' });
+  //   }
+  // });
+  
   
   
   app.get('/api/profile',  authenticateToken, async (req, res) => {
@@ -262,19 +295,20 @@
 });
 
 // Rute update profile user
-app.put('/api/profile', authenticateToken, upload.single('photo'), async (req, res) => {
+app.put('/api/profile/:id', authenticateToken, upload.single('photo'), async (req, res) => {
 
   const { username, name, telepon, password, role } = req.body;
-  const userId = req.user.id; 
+  const userId = req.params.id; 
   const photo = req.file ? `/uploads/${req.file.filename}` : null;
-
+console.log("userId")
   try {
     const updatedUser = await superadmin.updateUser(userId, { username, name, telepon, password, role, photo });
-
+    console.log("Updated User Data:", updatedUser.user);
+    
     res.status(200).json({
       message: updatedUser.message,
       user: updatedUser.user,
-      photo_url: photo ? `http://localhost:3000${updatedUser.user.photo}` : null,
+      photo: photo ? `http://localhost:3000${updatedUser.user.photo}` : null,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -363,6 +397,17 @@ app.get('/api/dashboard-admin', async (req, res) => {
   });
 
 
+  // Rute untuk membaca semua brand
+  app.get('/api/admin/brands', authenticateToken, async (req, res) => {
+    try {
+        const products = await admin.getListBrand();
+        res.status(200).json(products);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+  });
+
   // Rute untuk membaca semua produk
   app.get('/api/admin/products', authenticateToken, async (req, res) => {
     try {
@@ -378,8 +423,8 @@ app.get('/api/dashboard-admin', async (req, res) => {
   // Rute untuk menambahkan produk baru
   app.post('/api/admin/products/add', upload.single('image'), authenticateToken, async (req, res) => {
     console.log(req.file); 
-    const { product_code, product_name, brand, type, price, stock } = req.body;
-    const image = req.file ? `http://localhost:3000/uploads/${req.file.filename}`: null;
+    const { product_code, product_name, id_brand, type, price, stock } = req.body;
+    const image = req.file ? `uploads/${req.file.filename}`: null;
 
      // Validasi input
       if (validator.isEmpty(product_name)) {
@@ -402,7 +447,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
        }
 
         // Tambah produk ke database
-        const product = await admin.addProduct({ product_code, product_name, brand, type, price, stock, image});
+        const product = await admin.addProduct({ product_code, product_name, id_brand, type, price, stock, image});
         res.status(201).json({ 
           message: 'Product added successfully',
           product,
@@ -432,7 +477,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
   // Rute untuk mengupdate produk berdasarkan id
   app.put('/api/admin/products/:id', upload.single('image'), authenticateToken, async (req, res) => {
     const { id } = req.params;
-    const { product_name, brand, type, price, stock, } = req.body;
+    const { product_name, id_brand, type, price, stock, } = req.body;
     
     const image = req.file ? `uploads/${req.file.filename}` : null;
     console.log('Image:', image); // Cek apakah image tidak null
@@ -440,7 +485,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
     try {
         const updatedProduct = await admin.updateProduct(id, {
           product_name,
-          brand,
+          id_brand,
           type,
           price,
           stock,
@@ -530,8 +575,74 @@ app.get('/api/dashboard-admin', async (req, res) => {
     }
   });
 
+  // Rute untuk membaca semua brand
+  app.get('/api/cashier/brands', authenticateToken, async (req, res) => {
+    try {
+        const products = await cashier.getListBrand();
+        res.status(200).json(products);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+  });
+
+    // Rute untuk membaca semua brand
+    app.get('/api/brands', authenticateToken, async (req, res) => {
+      try {
+          const products = await admin.getListBrand();
+          res.status(200).json(products);
+      } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: error.message });
+      }
+    });
+
+  // Rute untuk menambah brand
+  app.post('/api/brands/add', authenticateToken, async (req, res) => {
+    const { brand_name } = req.body;
+    
+    if (!brand_name) {
+        return res.status(400).json({ error: 'Brand name is required' });
+    }
+
+    try {
+        const newBrand = await admin.addBrand(brand_name);
+        res.status(201).json(newBrand);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+  // Rute untuk mengupdate brand
+  app.put('/api/brands/edit/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    const { brand_name } = req.body;
+
+    if (!brand_name) {
+        return res.status(400).json({ error: 'Brand name is required' });
+    }
+
+    try {
+        const updatedBrand = await admin.updateBrand(id, brand_name);
+        res.status(200).json(updatedBrand);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete('/api/brands/delete/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const deletedBrand = await admin.deleteBrand(id);
+        res.status(200).json({ message: 'Brand deleted successfully', deletedBrand });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
   // Rute untuk membaca semua produk
-  app.get('/api/cashier/products', async (req, res) => {
+  app.get('/api/cashier/products', authenticateToken, async (req, res) => {
     try {
         const products = await cashier.getListProducts();
         res.status(200).json(products);
@@ -542,7 +653,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
   });
 
   // Rute untuk membaca produk berdasarkan id
-  app.get('/api/cashier/products/:id', async (req, res) => {
+  app.get('/api/cashier/products/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     try {
         const product = await cashier.getProductById(id);
@@ -554,7 +665,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
   });
 
   // Rute untuk membaca semua customer
-  app.get('/api/cashier/customers', async (req, res) => {
+  app.get('/api/cashier/customers', authenticateToken, async (req, res) => {
     try {
         const customers = await cashier.getListCustomers();
         res.status(200).json(customers);
@@ -565,7 +676,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
   });
 
   //Rute untuk menambah customer
-  app.post('/api/cashier/customers/add', async (req, res) => {
+  app.post('/api/cashier/customers/add', authenticateToken, async (req, res) => {
     const { nama, telepon, alamat } = req.body;
 
     try {
@@ -578,7 +689,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
   });
 
   // Rute untuk mengupdate customer berdasarkan id
-  app.put('/api/cashier/customers/:id', async (req, res) => {
+  app.put('/api/cashier/customers/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const { nama, telepon, alamat } = req.body;
 
@@ -592,7 +703,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
   });
 
   // Rute untuk menghapus customer berdasarkan id
-  app.delete('/api/cashier/customers/:id', async (req, res) => {
+  app.delete('/api/cashier/customers/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -627,7 +738,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
       }
   });
 
-  app.get('/api/cashier/member/:telepon', async (req, res) => {
+  app.get('/api/cashier/member/:telepon', authenticateToken, async (req, res) => {
     const telepon = req.params.telepon;
 
     try {
@@ -642,13 +753,12 @@ app.get('/api/dashboard-admin', async (req, res) => {
     }
 });
 
-  app.post('/api/cashier/transaksi', async (req, res) => {
+  app.post('/api/cashier/transaksi', authenticateToken, async (req, res) => {
     try {
       const { 
         id,
         transaction_code,
         member_id, 
-        // telepon, 
         id_cashier, 
         cashier, 
         total, 
@@ -658,14 +768,6 @@ app.get('/api/dashboard-admin', async (req, res) => {
         change, 
         items 
       } = req.body;
-  
-      // const member = await getMemberByTelepon(telepon);
-
-      // if (!member) {
-      //   return res.status(404).json({ message: 'Member tidak ditemukan' });
-      // }
-
-      // const member_id = member.member_id;
   
       const newTransaction = await createTransaction({
         id,
@@ -759,7 +861,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
 
 
   // Rute untuk menghasilkan PDF receipt berdasarkan id transaksi
-  app.get('/api/generate-receipt/:id', async (req, res) => {
+  app.get('/api/generate-receipt/:id', authenticateToken, async (req, res) => {
   try {
     const transactionId = req.params.id;
     const transaction = await cashier.getTransactionById(transactionId);
@@ -814,7 +916,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
     // Items ke PDF
     doc.fontSize(12).text('Items:');
     transaction.items.forEach(item => {
-      doc.text(`${item.product_name} - ${item.brand} - ${item.type} - ${item.price} - ${item.qty}`);
+      doc.text(`${item.product_name} - ${item.id_brand} - ${item.type} - ${item.price} - ${item.qty}`);
     });
 
     doc.end();
@@ -895,7 +997,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
   // Rute untuk membaca semua member
   
   
-  app.get('/api/cashier/members', async (req, res) => {
+  app.get('/api/cashier/members', authenticateToken, async (req, res) => {
     try {
         const users = await cashier.getAllMember();
         res.status(200).json(users);
@@ -907,7 +1009,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
 
 
   // Mendapatkan laporan penjualan berdasarkan cashier
-  app.get('/api/cashier/laporanTransaksi/:cashierName', async (req, res) => {
+  app.get('/api/cashier/laporanTransaksi/:cashierName',authenticateToken, async (req, res) => {
     try {
         const { cashierName } = req.params;
         const report = await getTransactionReportByCashier(cashierName);
@@ -932,7 +1034,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
   });
 
   // Rute untuk membaca semua users
-  app.get('/api/superadmin/users', async (req, res) => {
+  app.get('/api/superadmin/users', authenticateToken, async (req, res) => {
     try {
         const users = await superadmin.getAllUsers();
         res.status(200).json(users);
@@ -943,7 +1045,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
   });
 
   // Rute untuk mendapatkan user berdasarkan ID
-  app.get('/api/superadmin/users/:id', async (req, res) => {
+  app.get('/api/superadmin/users/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -959,7 +1061,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
   });
 
   // Rute untuk menambahkan user baru
-  app.post('/api/superadmin/users/add', upload.single('photo'), async (req, res) => { 
+  app.post('/api/superadmin/users/add', authenticateToken, upload.single('photo'), async (req, res) => { 
     const { username, name, telepon, role, password} = req.body;
 
     const photo = req.file ?  `/uploads/${req.file.filename}` : null;
@@ -977,7 +1079,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
   });
 
   // Rute untuk mengupdate user
-  app.put('/api/superadmin/users/:id', upload.single('photo'), async (req, res) => {
+  app.put('/api/superadmin/users/:id', authenticateToken, upload.single('photo'), async (req, res) => {
     const { id } = req.params;
     const { username, name, telepon, password, role } = req.body;
 
@@ -1025,7 +1127,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
 
 
   // Rute untuk mengupdate user role
-  app.put('/api/superadmin/users/:id/role', async (req, res) => {
+  app.put('/api/superadmin/users/:id/role', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const { role } = req.body;
 
@@ -1045,7 +1147,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
 
 
   // Rute untuk menghapus user
-  app.delete('/api/superadmin/users/:id', async (req, res) => {
+  app.delete('/api/superadmin/users/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -1057,9 +1159,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
     }
   });
 
-
-
-app.put('/api/user/:id/status', async (req, res) => {
+app.put('/api/user/:id/status', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const { status } = req.body; // 'active' atau 'inactive'
 
@@ -1073,8 +1173,6 @@ app.put('/api/user/:id/status', async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
-  
-
 
 
   app.listen(port, () => {

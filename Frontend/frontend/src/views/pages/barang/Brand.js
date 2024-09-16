@@ -1,3 +1,26 @@
+// import React from 'react';
+// import { CCard, CCardBody, CCardHeader, CCol, CRow } from '@coreui/react';
+
+// const CashierDashboard = () => {
+//   return (
+//     <CRow>
+//       <CCol>
+//         <CCard>
+//           <CCardHeader>
+//             Brandddd
+//           </CCardHeader>
+//           <CCardBody>
+//             {/* Tambahkan konten dashboard cashier di sini */}
+//           </CCardBody>
+//         </CCard>
+//       </CCol>
+//     </CRow>
+//   );
+// };
+
+// export default CashierDashboard;
+
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';

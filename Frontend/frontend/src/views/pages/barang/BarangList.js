@@ -208,7 +208,7 @@ const DataBarang = () => {
                     <span className="me-2">:</span>
                     <CFormInput
                       id="brand"
-                      value={selectedBarang.brand}
+                      value={selectedBarang.brand_name}
                       readOnly
                       plainText
                     />

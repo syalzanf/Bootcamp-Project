@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../configdb');
-const Product = require('./product');
+// const Brand = require('./brand')
 
 
 const Transaksi = sequelize.define('Transaksi', {
@@ -129,6 +129,8 @@ const Member = sequelize.define('Member', {
 
   
 Transaksi.belongsTo(Member, { foreignKey: 'member_id' });
+// Transaksi.belongsTo(Brand, { foreignKey: 'id_brand' });
+
 Member.hasMany(Transaksi, { foreignKey: 'member_id' });
 
 module.exports = {Transaksi, Member};

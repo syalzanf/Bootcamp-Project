@@ -6,7 +6,7 @@ import {
   CCardHeader,
   CSmartTable,
   CButton,
-  CCollapse, 
+  CCollapse,
 } from '@coreui/react-pro';
 import '../../../scss/_custom.scss';
 
@@ -84,8 +84,8 @@ const TransactionReport = () => {
       payment_method: transaction.payment_method,
       payment: transaction.payment,
       change: transaction.change,
-      detail: transaction.items.map(item => 
-          `${item.product_code} - ${item.product_name} - ${item.brand} - ${item.type} - ${item.qty} - ${item.price}`
+      detail: transaction.items.map(item =>
+          `${item.product_code} - ${item.product_name} - ${item.id_brand} - ${item.type} - ${item.qty} - ${item.price}`
       ).join(', '),
   }));
 
@@ -97,7 +97,7 @@ const TransactionReport = () => {
 
           <CCardBody>
               <CSmartTable
-              
+
                   clickableRows
                   tableProps={{
                     striped: true,

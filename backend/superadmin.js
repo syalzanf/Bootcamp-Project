@@ -10,60 +10,10 @@ require('dotenv').config();
 
 // const secretKey = 'secret_key'; 
 const jwtSecret = process.env.ACCESS_TOKEN_SECRET;
+const jwtRefreshSecret = process.env.JWT_REFRESH_TOKEN_SECRET;
 
-async function loginUser(username, password) {
-  try {
-    // Mengambil user dari database
-    const user = await User.findOne({ where: { username } });
-    console.log('User:', user); 
-    
-    if (!user) {
-      throw new Error('User tidak ada');
-    }
-
-    if (user.status !== 'active') {
-      throw new Error('Account is not active')  ;
-    }
-
-    // Memeriksa apakah password cocok
-    const isMatch = await bcrypt.compare(password, user.password);
-    console.log('Password match:', isMatch); 
-
-    if (!isMatch) {
-      throw new Error('Invalid username or password');
-    }
-
-    // Menghasilkan token JWT
-    const token = jwt.sign(
-      { username: user.username, role: user.role },
-      jwtSecret,
-      { expiresIn: '1h' }
-    );
-    console.log('Generated Token:', token);
-
-    // Mengembalikan hasil login
-    return {
-      message: 'Login successful',
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        name: user.name, 
-        role: user.role,
-        telepon: user.telepon,
-        photo: user.photo,
-      }
-    };
-  } catch (error) {
-    console.error('Login error:', error.message); 
-    // return {
-    //   status: 400,
-    //   message: error.message
-    // };
-    throw error;
-  }
-}
-
+console.log('Access Token Secret:', jwtSecret);
+console.log('Refresh Token Secret:', jwtRefreshSecret);
 
 // async function loginUser(username, password) {
 //   try {
@@ -72,7 +22,7 @@ async function loginUser(username, password) {
 //     console.log('User:', user); 
     
 //     if (!user) {
-//       throw new Error('Invalid username or password');
+//       throw new Error('User tidak ada');
 //     }
 
 //     if (user.status !== 'active') {
@@ -95,21 +45,10 @@ async function loginUser(username, password) {
 //     );
 //     console.log('Generated Token:', token);
 
-//     // Menghasilkan refresh token
-//     const refreshToken = jwt.sign(
-//       { id: user.id, role: user.role },
-//       jwtSecret,
-//       { expiresIn: '30d' } // berlaku selama 30 hari
-//     );
-
-//     // Simpan refresh token di database
-//     await User.update({ refreshToken }, { where: { id: user.id } });
-
 //     // Mengembalikan hasil login
 //     return {
 //       message: 'Login successful',
 //       token,
-//       refreshToken,
 //       user: {
 //         id: user.id,
 //         username: user.username,
@@ -121,16 +60,74 @@ async function loginUser(username, password) {
 //     };
 //   } catch (error) {
 //     console.error('Login error:', error.message); 
-//     return {
-//       status: 400,
-//       message: error.message
-//     };
+//     // return {
+//     //   status: 400,
+//     //   message: error.message
+//     // };
+//     throw error;
 //   }
 // }
 
 
-// Fungsi untuk verifikasi token
-// Fungsi untuk verifikasi token
+async function loginUser(username, password) {
+  try {
+    // Mengambil user dari database
+    const user = await User.findOne({ where: { username } });
+    console.log('User:', user); 
+    
+    if (!user) {
+      throw new Error('User tidak ada');
+    }
+
+    if (user.status !== 'active') {
+      throw new Error('Account is not active');
+    }
+
+    // Memeriksa apakah password cocok
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password match:', isMatch); 
+
+    if (!isMatch) {
+      throw new Error('Invalid username or password');
+    }
+
+    // Menghasilkan token JWT
+    const token = jwt.sign(
+      { username: user.username, role: user.role },
+      jwtSecret,
+      { expiresIn: '1h' } // access token berlaku selama 1 jam
+    );
+
+    // Menghasilkan refresh token
+    const refreshToken = jwt.sign(
+      { username: user.username, role: user.role },
+      jwtRefreshSecret,
+      { expiresIn: '7d' } // refresh token berlaku selama 7 hari
+    );
+
+    console.log('Generated Access Token:', token);
+    console.log('Generated Refresh Token:', refreshToken);
+
+    // Mengembalikan hasil login
+    return {
+      message: 'Login successful',
+      token,
+      refreshToken,
+      user: {
+        id: user.id,
+        username: user.username,
+        name: user.name, 
+        role: user.role,
+        telepon: user.telepon,
+        photo: user.photo,
+      }
+    };
+  } catch (error) {
+    console.error('Login error:', error.message); 
+    throw error;
+  }
+}
+
 
 
 // Fungsi untuk verifikasi token
@@ -351,6 +348,8 @@ async function updateUserStatus(userId, newStatus) {
 
   async function updateUser(id, { username, name, telepon, password, role, photo }) {
     try {
+      console.log("id", id);
+      
       // Cek apakah pengguna dengan ID yang diberikan ada di database
       const checkUser = await pool.query(
         `SELECT * FROM users WHERE id = $1`,
@@ -397,21 +396,22 @@ async function updateUserStatus(userId, newStatus) {
   
       // Hapus trailing comma dan spasi
       updateQuery = updateQuery.slice(0, -2);
-      updateQuery += ` WHERE id = $${index}`;
+      updateQuery += ` WHERE id = $${index} RETURNING *`;
       values.push(id);
   
       // Lakukan update
       const result = await pool.query(updateQuery, values);
   
+      // Mengembalikan user yang telah diperbarui
       return {
         message: 'User updated successfully',
-        user: result.rows[0]
+        user: result.rows[0] // Ini akan berisi data user yang diperbarui
       };
     } catch (error) {
       throw error;
     }
   }
-
+  
 async function updateUserRole(id, role) {
   const query = 'UPDATE users SET role = $1 WHERE id = $2 RETURNING *';
   const values = [role, id];

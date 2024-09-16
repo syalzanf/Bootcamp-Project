@@ -79,27 +79,9 @@ const Login = () => {
         // Jika ada pesan error khusus dari backend
         errorMessage = error.response.data.message;
       }
-      // if (error.response && error.response.data && error.response.data.message) {
-      //   // Jika ada pesan error khusus dari backend
-      //   if (error.response.data.message === 'Account is not active') {
-      //     errorMessage = 'Akun tidak aktif.';
-      //   } else {
-      //     errorMessage = error.response.data.message;
-      //   }
-      // } else {
-      //   // Jika tidak ada pesan error khusus dari backend
-      //   errorMessage = 'Username atau password salah.';
-      // }
-
       setError(errorMessage); // Menampilkan pesan error yang sesuai
     }
   };
-
-  //   } catch (error) {
-  //     console.error('Login error:', error.response ? error.response.data : error.message);
-  //     setError('Username atau password salah.');
-  //   }
-  // };
 
   return (
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">

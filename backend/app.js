@@ -346,11 +346,28 @@ app.get('/api/dashboard-admin', async (req, res) => {
 });
 
 
+app.get('/api/stock/total',authenticateToken, async (req, res) => {
+  try {
+    const totalStock  = await admin.getTotalStock();
+    const amount  = await admin.getTotalStockValue();
+
+    res.json({
+    totalStock,
+    amount,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching data' });
+  }
+});
+
   // Rute untuk membaca list stok produk
   app.get('/api/admin/products/stock', authenticateToken, async (req, res) => {
     try {
         const stockProducts = await admin.getListStockProducts();
-        res.status(200).json(stockProducts);
+        res.status(200).json(
+          stockProducts,
+        );
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
@@ -597,21 +614,18 @@ app.get('/api/dashboard-admin', async (req, res) => {
       }
     });
 
-  // Rute untuk menambah brand
-  app.post('/api/brands/add', authenticateToken, async (req, res) => {
-    const { brand_name } = req.body;
+    // Rute untuk menambah brand
+    app.post('/api/brands/add', authenticateToken, async (req, res) => {
+      const { brand_name } = req.body;
     
-    if (!brand_name) {
-        return res.status(400).json({ error: 'Brand name is required' });
-    }
 
-    try {
-        const newBrand = await admin.addBrand(brand_name);
-        res.status(201).json(newBrand);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+      try {
+          const newBrand = await admin.addBrand(brand_name);
+          res.status(201).json(newBrand);
+      } catch (error) {
+          res.status(500).json({ error: error.message });
+      }
+  });
 
   // Rute untuk mengupdate brand
   app.put('/api/brands/edit/:id', authenticateToken, async (req, res) => {
@@ -619,7 +633,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
     const { brand_name } = req.body;
 
     if (!brand_name) {
-        return res.status(400).json({ error: 'Brand name is required' });
+      return res.status(400).json({ error: 'Nama brand diperlukan' });
     }
 
     try {
@@ -916,7 +930,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
     // Items ke PDF
     doc.fontSize(12).text('Items:');
     transaction.items.forEach(item => {
-      doc.text(`${item.product_name} - ${item.id_brand} - ${item.type} - ${item.price} - ${item.qty}`);
+      doc.text(`${item.product_name} - ${item.brand_name} - ${item.type} - ${item.price} - ${item.qty}`);
     });
 
     doc.end();

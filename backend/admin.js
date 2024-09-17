@@ -188,28 +188,64 @@ async function getListBrand() {
     }
 }
 
-async function addBrand(brandName) {
+// Fungsi untuk memeriksa apakah brand sudah ada
+async function checkBrandExists(brandName) {
     try {
-        const result = await pool.query('INSERT INTO brands (brand_name) VALUES ($1) RETURNING *', [brandName]);
-        return result.rows[0];
+        const result = await pool.query(
+            'SELECT * FROM brands WHERE brand_name = $1',
+            [brandName]
+        );
+        return result.rows.length > 0;
     } catch (error) {
-        console.error('Error adding brand:', error);
-        throw new Error('Failed to add brand');
+        throw new Error('Error checking product existence: ' + error.message);
     }
 }
 
-async function updateBrand(brandId, newBrandName) {
+async function addBrand(brandName) {
     try {
-        const result = await pool.query('UPDATE brands SET brand_name = $1 WHERE id_brand = $2 RETURNING *', [newBrandName, brandId]);
-        if (result.rowCount === 0) {
-            throw new Error('Brand not found');
-        }
-        return result.rows[0];
+      const brandExists = await checkBrandExists(brandName);
+  
+      if (brandExists) {
+        throw new Error('Brand already exists');
+      }
+        const result = await pool.query(
+        'INSERT INTO brands (brand_name) VALUES ($1) RETURNING *',
+        [brandName]
+      );
+  
+      return result.rows[0];
     } catch (error) {
-        console.error('Error editing brand:', error);
-        throw new Error('Failed to edit brand');
+      console.error('Error adding brand:', error);
+      throw new Error('Failed to add brand');
     }
-}
+  }
+  
+
+// async function updateBrand(brandId, brand_name) {
+//     try {
+//         const result = await pool.query('UPDATE brands SET brand_name = $1 WHERE id_brand = $2 RETURNING *', [newBrandName, brandId]);
+//         if (result.rowCount === 0) {
+//             throw new Error('Brand not found');
+//         }
+//         return result.rows[0];
+//     } catch (error) {
+//         console.error('Error editing brand:', error);
+//         throw new Error('Failed to edit brand');
+//     }
+// }
+
+async function updateBrand(id, brand_name) {
+    const query = 'UPDATE brands SET brand_name = $1 WHERE id_brand = $2 RETURNING *';
+    const values = [brand_name, id];
+  
+    try {
+      const result = await pool.query(query, values);
+      return result.rows[0]; 
+    } catch (error) {
+      throw new Error('Gagal mengupdate brand');
+    }
+  }
+  
 
 async function deleteBrand(brandId) {
     try {
@@ -515,6 +551,7 @@ async function getTransactionById(transactionId) {
     }
 }
 
+
 async function getItemsCounter() {
     const query = 'SELECT COUNT(*) AS count FROM products';
     try {
@@ -590,6 +627,43 @@ async function getLatestSales() {
       throw new Error('Error fetching transactions: ' + error.message);
     }
   };
+
+  async function getTotalStock() {
+    const query = `
+      SELECT SUM(stock) AS total_stock
+      FROM products`;
+    try {
+      const result = await pool.query(query);
+      return result.rows[0].total_stock;
+    } catch (error) {
+      console.error('Error fetching total stock:', error);
+      throw error;
+    }
+  }
+
+  async function getTotalStockValue() {
+    const query = `
+      SELECT SUM(stock * price) AS total_stock_value
+      FROM products`;
+    try {
+      const result = await pool.query(query);
+      const totalStockValue = result.rows[0].total_stock_value;
+  
+      // Format angka ke format Rupiah
+      const formattedValue = new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(totalStockValue);
+  
+      return formattedValue;
+    } catch (error) {
+      console.error('Error fetching total stock value:', error);
+      throw error;
+    }
+  }
+  
 module.exports ={
     // loginUser,
     adminLogin,
@@ -610,7 +684,10 @@ module.exports ={
     getLatestSales,
     getLatestIncomingItems,
     getAllTransactionsMonth,
+    getTotalStock,
+    getTotalStockValue,
     getListBrand,
+    checkBrandExists,
     addBrand,
     updateBrand,
     deleteBrand,

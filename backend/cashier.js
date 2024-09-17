@@ -467,6 +467,8 @@ async function getTransactionReportByCashier(cashierName) {
             }))
         }));
 
+        
+
         // const transactionsData = transactions.map(transaction => {
         //     // Hitung total per item
         //     const totalItems = transaction.items.reduce((sum, item) => {

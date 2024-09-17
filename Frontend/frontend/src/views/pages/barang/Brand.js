@@ -1,26 +1,3 @@
-// import React from 'react';
-// import { CCard, CCardBody, CCardHeader, CCol, CRow } from '@coreui/react';
-
-// const CashierDashboard = () => {
-//   return (
-//     <CRow>
-//       <CCol>
-//         <CCard>
-//           <CCardHeader>
-//             Brandddd
-//           </CCardHeader>
-//           <CCardBody>
-//             {/* Tambahkan konten dashboard cashier di sini */}
-//           </CCardBody>
-//         </CCard>
-//       </CCol>
-//     </CRow>
-//   );
-// };
-
-// export default CashierDashboard;
-
-
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -30,9 +7,7 @@ import {
   CCardHeader,
   CCol,
   CRow,
-  CSmartTable,
   CButton,
-  CAlert,
   CModal,
   CModalBody,
   CModalFooter,
@@ -41,275 +16,48 @@ import {
   CForm,
   CFormLabel,
   CFormInput,
-  CBadge,
   CFormFeedback,
-  CFormSelect,
+  CSmartTable,
+  CAlert
 } from '@coreui/react-pro';
-
 import '../../../scss/_custom.scss';
 
-const Users = () => {
-  const [userData, setUserData] = useState([]);
+const Brand = () => {
+  const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [visible, setVisible] = useState(false);
-  const [addVisible, setAddVisible] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
+  const [addVisible, setAddVisible] = useState(false);
+  const [selectedBrand, setSelectedBrand] = useState(null);
   const [validated, setValidated] = useState(false);
-
-  const [previewImage, setPreviewImage] = useState(null);
   const [formValues, setFormValues] = useState({
-    name: '',
-    username: '',
-    password: '',
-    telepon: '',
-    role: '',
-    status: '',
-    photo : null,
+    brand_name: '',
   });
-  const token = localStorage.getItem("token");
+  const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
 
+  useEffect(() => {
+    fetchBrands();
+  }, []);
 
-  const fetchData = async () => {
+  const fetchBrands = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/superadmin/users', {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:3000/api/brands', {
         headers: { Authorization: `${token}` },
         withCredentials: true
       });
-
       if (Array.isArray(response.data)) {
-        setUserData(response.data);
+        setBrands(response.data);
       } else {
         console.error('Data format is not an array:', response.data);
-        setUserData([]);
+        setBrands([]);
       }
     } catch (error) {
       console.error('Error fetching data:', error.response ? error.response.data : error.message);
       setError(error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-  fetchData();  // Panggil fetchData saat komponen mount
-}, []);
-
-  const handleAdd = () => {
-    setFormValues({
-      name: '',
-      username: '',
-      password: '',
-      telepon: '',
-      role: '',
-      status: '',
-      photo: null,
-    });
-    setPreviewImage(null);
-    setAddVisible(true);
-  };
-
-
-  const handleSaveAdd = async (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-
-    if (form.checkValidity() === false) {
-      event.stopPropagation();
-      setValidated(true);
-      return;
-    }
-
-
-    // if (!formValues.name || !formValues.username || !formValues.password || !formValues.telepon || !formValues.role || !formValues.photo ) {
-    //   setValidated(true);
-    //   return;
-    // }
-
-    try {
-      const formData = new FormData();
-
-      formData.append('name', formValues.name);
-      formData.append('username', formValues.username);
-      formData.append('password', formValues.password);
-      formData.append('telepon', formValues.telepon);
-      formData.append('role', formValues.role);
-      formData.append('status', formValues.status);
-
-      if (formValues.photo) {
-        formData.append('photo', formValues.photo);
-      }
-
-      const response = await axios.post('http://localhost:3000/api/superadmin/users/add', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      Swal.fire(
-        'Added!',
-        'User details have been added.',
-        'success',
-        {
-          background: '#343a40',
-          color: '#fff',
-        }
-      );
-
-      setAddVisible(false);
-      fetchData();
-      // setUserData((prevUsers) => [...prevUsers, response.data]);
-
-    } catch (error) {
-      console.error('Error memperbarui data pengguna:', error.response ? error.response.data : error.message);
-      const errorMessage = error.response?.data?.message || 'An error occurred';
-      Swal.fire({
-        title: 'Failed!',
-        text: errorMessage,
-        icon: 'error',
-        background: '#343a40',
-        color: '#fff',
-    });
-    }
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const maxSizeInMB = 1;
-      const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
-
-      if (file.size > maxSizeInBytes) {
-        showAlert(`Ukuran file terlalu besar. Maksimal ${maxSizeInMB} MB.`, 'danger');
-        setFormValues({ ...formValues, photo: null });
-        setPreviewImage(null);
-        setAddVisible(false)
-      } else {
-        setFormValues({ ...formValues, photo: file });
-        setPreviewImage(URL.createObjectURL(file));
-      }
-    }
-  };
-
-
-  const handleEdit = (user) => {
-    setSelectedUser(user);
-    setFormValues({
-      name: user.name,
-      username: user.username,
-      password: '', // hanya diisi jika user ingin mengubahnya
-      telepon: user.telepon,
-      role: user.role,
-      status: user.status,
-      photo: null,
-    });
-
-    setPreviewImage(user.photo ? `http://localhost:3000${user.photo}` : null);
-    setEditVisible(true);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!selectedUser || !selectedUser.id) {
-      console.error("No selectedUser or ID missing");
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-
-      formData.append('name', formValues.name);
-      formData.append('username', formValues.username);
-
-      // jika password diisi, maka tambahkan ke formData, jika tidak, biarkan password lama tetap ada
-      if (formValues.password) {
-        formData.append('password', formValues.password);
-      }
-
-      formData.append('telepon', formValues.telepon);
-      formData.append('role', formValues.role);
-      formData.append('status', formValues.status);
-
-      // Jika ada foto baru yang diunggah, tambahkan ke FormData
-      if (formValues.photo) {
-        formData.append('photo', formValues.photo);
-      }
-      const response = await axios.put(`http://localhost:3000/api/superadmin/users/${selectedUser.id}`, formData,  {
-        headers: { 
-          Authorization: `${token}`,
-          'Content-Type': 'multipart/form-data',
-          },
-        withCredentials: true
-      });
-
-      console.log(response.data);
-
-      setEditVisible(false);
-
-      Swal
-      .fire(
-        'Updated!',
-        'User details have been updated.',
-        'success',
-        {
-          background: '#343a40',
-          color: '#fff',
-        }
-      );
-
-      fetchData();
-
-    } catch (error) {
-      console.error('Error updating user data:', error.response ? error.response.data : error.message);
-      Swal.fire(
-        'Failed!',
-        'There was an error updating the user.',
-        'error',
-        {
-          background: '#343a40',
-          color: '#fff',
-        }
-      );
-    }
-  };
-
-  const handleDelete = async (user) => {
-    try {
-      const result = await Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, delete it!',
-        background: '#343a40',
-        color: '#fff',
-      });
-
-      if (result.isConfirmed) {
-        await axios.delete(`http://localhost:3000/api/superadmin/users/${user.id}`, {
-          headers: { Authorization: `${token}` },
-          withCredentials: true
-        });
-
-        setUserData((prevUsers) =>
-          prevUsers.filter((item) => item.id !== user.id)
-        );
-
-        Swal.fire(
-          'Deleted!',
-          'User has been deleted.',
-          'success',
-          {
-            background: '#343a40',
-            color: '#fff',
-          }
-        );
-      }
-    } catch (error) {
-      console.error('Error deleting user:', error.response ? error.response.data : error.message);
     }
   };
 
@@ -324,12 +72,149 @@ const Users = () => {
     }, 3000);
   };
 
+  const handleAdd = () => {
+    setFormValues({
+      brand_name: '',
+    });
+    setAddVisible(true);
+  };
+
+  const handleAddNew = async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+
+    if (form.checkValidity() === false) {
+      event.stopPropagation();
+      setValidated(true);
+      return;
+    }
+
+    setValidated(true);
+
+    try {
+      const formData = {
+        brand_name: formValues.brand_name,
+      };
+
+      const token = localStorage.getItem('token');
+      const response = await axios.post('http://localhost:3000/api/brands/add', formData, {
+        headers: {
+          Authorization: `${token}`,
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true
+      });
+
+      setBrands([...brands, response.data]);
+
+      showAlert('Brand successfully added!', 'light');
+      setAddVisible(false);
+      setFormValues({
+        brand_name: '',
+      });
+
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        showAlert('Brand already exists.', 'danger');
+      } else {
+        showAlert('Failed to add brand!', 'danger');
+      }
+      console.error('Error adding data:', error.response ? error.response.data : error.message);
+    }
+  };
+
+  const handleEdit = (brand) => {
+    setSelectedBrand(brand);
+    setFormValues({
+      brand_name: brand.brand_name || '',
+    });
+    setEditVisible(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedBrand || !selectedBrand.id_brand) {
+      console.error("Brand atau ID tidak ditemukan");
+      return;
+    }
+
+    if (!formValues.brand_name) {
+      setValidated(true);
+      return;
+    }
+
+    try {
+      const formData = {
+        brand_name: formValues.brand_name,
+      };
+
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `http://localhost:3000/api/brands/edit/${selectedBrand.id_brand}`,
+        formData,
+        {
+          headers: {
+            'Authorization': `${token}`,
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true
+        }
+      );
+      const updatedBrands = brands.map(brand =>
+        brand.id_brand === selectedBrand.id_brand ? { ...brand, brand_name: formValues.brand_name } : brand
+      );
+      setBrands(updatedBrands);
+  
+
+      showAlert('Brand successfully updated!', 'light');
+      // fetchBrands();
+      setEditVisible(false);
+      setSelectedBrand(null);
+    } catch (error) {
+      showAlert('Failed to update brand!', 'danger');
+      console.error('Error updating data:', error.response ? error.response.data : error.message);
+    }
+  };
+
+  const handleDelete = async (brand) => {
+    try {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!',
+        background: '#343a40',
+        color: '#fff',
+      });
+
+      if (result.isConfirmed) {
+        const token = localStorage.getItem('token');
+
+        await axios.delete(`http://localhost:3000/api/brands/delete/${brand.id_brand}`, {
+          headers: { Authorization: `${token}` },
+          withCredentials: true
+        });
+        fetchBrands();
+
+        Swal.fire(
+          'Deleted!',
+          'The brand has been deleted.',
+          'success',
+          {
+            background: '#343a40',
+            color: '#fff',
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Error deleting data:', error.response ? error.response.data : error.message);
+    }
+  };
+
   const columns = [
-    { key: 'username', label: 'Username' },
-    { key: 'name', label: 'Nama' },
-    { key: 'telepon', label: 'Telepon' },
-    { key: 'role', label: 'Role' },
-    { key: 'status', label: 'Status' },
+    { key: 'brand_name', label: 'Nama Brand' },
     {
       key: 'actions',
       label: 'Actions',
@@ -338,37 +223,6 @@ const Users = () => {
       sorter: false,
     },
   ];
-
-  const handleStatus = async (item) => {
-    const newStatus = item.status === 'active' ? 'inactive' : 'active';
-    try {
-      const response = await axios.put(`http://localhost:3000/api/user/${item.id}/status`, {
-        headers: { Authorization: `${token}` },
-        withCredentials: true,
-        status: newStatus,
-      });
-
-      console.log('Status updated:', response.data);
-
-       // Update state userData
-      const updatedUsers = userData.map(user =>
-        user.id === item.id ? { ...user, status: newStatus } : user
-      );
-      setUserData(updatedUsers);
-
-    } catch (error) {
-      console.error('Error updating status:', error.response ? error.response.data : error.message);
-    }
-  };
-
-  const getBadge = (status) => {
-    switch (status) {
-      case 'active':
-        return 'success'
-      case 'inactive':
-        return 'secondary'
-    }
-  }
 
   if (loading) {
     return <div className="pt-3 text-center">Loading...</div>;
@@ -380,11 +234,6 @@ const Users = () => {
 
   return (
     <CRow>
-        {alert.visible && (
-          <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
-            {alert.message}
-          </CAlert>
-        )}
       <CCol>
         <div className="mb-3">
           {alert.visible && (
@@ -397,27 +246,26 @@ const Users = () => {
               color="primary"
               size="sm"
               shape="rounded-pill"
-              className="float-end"
+              className="me-2"
               onClick={handleAdd}
             >
-              Tambah User
+              Tambah Brand
             </CButton>
           </div>
         </div>
         <CCard>
-          <CCardHeader>
-            Data Users
-          </CCardHeader>
+          <CCardHeader>Data Brand</CCardHeader>
           <CCardBody>
             <CSmartTable
               clickableRows
               tableProps={{
                 striped: true,
-                hover: true
+                hover: true,
               }}
+              activePage={1}
+              footer
+              items={brands}
               columns={columns}
-              items={userData}
-              columnFilter
               tableFilter
               cleaner
               itemsPerPageSelect
@@ -425,29 +273,13 @@ const Users = () => {
               columnSorter
               pagination
               scopedColumns={{
-                status: (item) => (
-                  <td>
-                    <CBadge color={getBadge(item.status)}>{item.status}</CBadge>
-                  </td>
-                ),
                 actions: (item) => (
                   <td className="text-center">
-                    {item.role !== 'superadmin' && (
-                    <>
-                    <CButton
-                      color="info"
-                      size="sm"
-                      shape="rounded-pill"
-                      onClick={() => handleStatus(item)}
-                    >
-                      Status
-                    </CButton>{' '}
                     <CButton
                       color="warning"
                       size="sm"
                       shape="rounded-pill"
                       onClick={() => handleEdit(item)}
-                      disabled={item.role === 'superadmin'}
                     >
                       Edit
                     </CButton>{' '}
@@ -459,8 +291,6 @@ const Users = () => {
                     >
                       Hapus
                     </CButton>
-                    </>
-                    )}
                   </td>
                 ),
               }}
@@ -471,247 +301,75 @@ const Users = () => {
 
       <CModal alignment="center" visible={editVisible} onClose={() => setEditVisible(false)}>
         <CModalHeader>
-          <CModalTitle>Edit User</CModalTitle>
+          <CModalTitle>Edit Brand</CModalTitle>
         </CModalHeader>
         <CModalBody>
-          <CForm>
+          <CForm noValidate validated={validated} onSubmit={handleSaveEdit}>
             <CRow className="mb-3">
               <CCol sm={3}>
-                <CFormLabel htmlFor="username" className="col-form-label">
-                  Username
+                <CFormLabel htmlFor="brand_name" className="col-form-label">
+                  Nama Brand
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput
-                  id="username"
-                  value={formValues.username}
-                  onChange={(e) => setFormValues({ ...formValues, username: e.target.value })}
-                  disabled
-                />
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="password" className="col-form-label">
-                  New Password
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  // type="password"
-                  id="password"
-                  value={formValues.password}
-                  onChange={(e) => setFormValues({ ...formValues, password: e.target.value })}
-                  // placeholder="Leave blank to keep current password"
-                />
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="name" className="col-form-label">
-                  Name
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="name"
-                  value={formValues.name}
-                  onChange={(e) => setFormValues({ ...formValues, name: e.target.value })}
-                />
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="telepon" className="col-form-label">
-                  Telepon
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="telepon"
-                  value={formValues.telepon}
-                  onChange={(e) => setFormValues({ ...formValues, telepon: e.target.value })}
-                />
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="role" className="col-form-label">
-                  Role
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="role"
-                  value={formValues.role}
-                  onChange={(e) => setFormValues({ ...formValues, role: e.target.value })}
-                />
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="photo" className="col-form-label">
-                  Gambar
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="photo"
-                  type="file"
-                  accept="image/png, image/jpeg, image/jpg"
-                  onChange={handleFileChange}
+                  id="brand_name"
+                  placeholder="Nama Brand"
+                  value={formValues.brand_name}
+                  onChange={(e) => setFormValues({ ...formValues, brand_name: e.target.value })}
                   required
                 />
-                {previewImage && (
-                  <img
-                    src={previewImage}
-                    alt="Preview"
-                    style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover', marginTop: '10px' }}
-                  />
-                )}
+                <CFormFeedback invalid>Brand name is required</CFormFeedback>
               </CCol>
             </CRow>
+            <CModalFooter>
+              <CButton color="secondary" onClick={() => setEditVisible(false)}>
+                Close
+              </CButton>
+              <CButton type="submit" color="primary">
+                Save Changes
+              </CButton>
+            </CModalFooter>
           </CForm>
         </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setEditVisible(false)}>
-            Close
-          </CButton>
-          <CButton color="primary" onClick={handleSaveEdit}>
-            Save Changes
-          </CButton>
-        </CModalFooter>
       </CModal>
 
       <CModal alignment="center" visible={addVisible} onClose={() => setAddVisible(false)}>
         <CModalHeader>
-          <CModalTitle>Tambah User</CModalTitle>
+          <CModalTitle>Add Brand</CModalTitle>
         </CModalHeader>
         <CModalBody>
-          <CForm noValidate validated={validated} onSubmit={handleSaveAdd}>
+          <CForm noValidate validated={validated} onSubmit={handleAddNew}>
             <CRow className="mb-3">
               <CCol sm={3}>
-                <CFormLabel htmlFor="addUsername" className="col-form-label">
-                  Username
+                <CFormLabel htmlFor="brand_name" className="col-form-label">
+                  Nama Brand
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput
-                  id="addUsername"
-                  value={formValues.username}
-                  onChange={(e) => setFormValues({ ...formValues, username: e.target.value })}
+                  id="brand_name"
+                  placeholder="Nama Brand"
+                  value={formValues.brand_name}
+                  onChange={(e) => setFormValues({ ...formValues, brand_name: e.target.value })}
                   required
                 />
-                <CFormFeedback invalid>Username is required.</CFormFeedback>
+                <CFormFeedback invalid>Brand name is required</CFormFeedback>
               </CCol>
             </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="addName" className="col-form-label">
-                  Nama
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="addName"
-                  value={formValues.name}
-                  onChange={(e) => setFormValues({ ...formValues, name: e.target.value })}
-                  required
-                />
-                <CFormFeedback invalid>Nama is required.</CFormFeedback>
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="addTelepon" className="col-form-label">
-                  Telepon
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="addTelepon"
-                  value={formValues.telepon}
-                  onChange={(e) => setFormValues({ ...formValues, telepon: e.target.value })}
-                  required
-                />
-                <CFormFeedback invalid>Telepon is required.</CFormFeedback>
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="password" className="col-form-label">
-                  Password
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="password"
-                  value={formValues.password}
-                  onChange={(e) => setFormValues({ ...formValues, password: e.target.value })}
-                  required
-                />
-                <CFormFeedback invalid>Password is required.</CFormFeedback>
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="addRole" className="col-form-label">
-                  Role
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormSelect
-                  id="addRole"
-                  value={formValues.role}
-                  onChange={(e) => setFormValues({ ...formValues, role: e.target.value })}
-                  required
-                >
-                  <option>Select a role</option>
-                  <option value="admin">Admin</option>
-                  <option value="cashier">Cashier</option>
-                  {/* <option value="superadmin">Superadmin</option> */}
-                </CFormSelect>
-                <CFormFeedback invalid>Role is required.</CFormFeedback>
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="photo" className="col-form-label">
-                  Gambar
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="photo"
-                  type="file"
-                  accept="image/png, image/jpeg, image/jpg"
-                  onChange={handleFileChange}
-                  required
-                />
-                {/* <CFormFeedback invalid>Gambar is required.</CFormFeedback> */}
-                {previewImage && (
-                  <img
-                    src={previewImage}
-                    alt="Preview"
-                    style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover', marginTop: '10px' }}
-                  />
-                )}
-                <CFormFeedback invalid>Gambar is required.</CFormFeedback>
-              </CCol>
-            </CRow>
+            <CModalFooter>
+              <CButton color="secondary" onClick={() => setAddVisible(false)}>
+                Close
+              </CButton>
+              <CButton type="submit" color="primary">
+                Save Changes
+              </CButton>
+            </CModalFooter>
           </CForm>
         </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setAddVisible(false)}>
-            Close
-          </CButton>
-          <CButton color="primary" onClick={handleSaveAdd}>
-            Save changes
-          </CButton>
-        </CModalFooter>
       </CModal>
     </CRow>
   );
 };
 
-export default Users;
+export default Brand;

@@ -39,6 +39,9 @@ const Stok = () => {
   const [validated, setValidated] = useState(false)
   const [alert, setAlert] = useState({ visible: false, message: '', color: '' })
   const [brands, setBrands] = useState([])
+  const [totalStock, setTotalStock] = useState(0);
+  const [totalAmount, setTotalAmount] = useState(0);
+
 
   // Fetch data from the API
   const fetchData = async () => {
@@ -51,6 +54,8 @@ const Stok = () => {
       })
 
       setData(response.data)
+      
+      console.log('setttt', response.data)
     } catch (error) {
       setError(error)
     } finally {
@@ -61,6 +66,25 @@ const Stok = () => {
   useEffect(() => {
     fetchData()
   }, [])
+
+  const fetchTotalStock = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:3000/api/stock/total', {
+        headers: { Authorization: `${token}` },
+        withCredentials: true,
+      });
+      setTotalStock(response.data.totalStock);
+      setTotalAmount(response.data.amount);
+
+    } catch (error) {
+      console.error('Error fetching total stock:', error);
+    }
+  };
+  
+  useEffect(() => {
+    fetchTotalStock();
+  }, []);
 
   useEffect(() => {
   const fetchBrands = async () => {
@@ -177,6 +201,8 @@ const Stok = () => {
   
       setModalVisible(false);
       fetchData();
+      fetchTotalStock();
+
     } catch (error) {
       console.error('Error adding stock:', error.response ? error.response.data : error.message);
     }
@@ -244,6 +270,7 @@ const Stok = () => {
               {alert.message}
             </CAlert>
           )}
+          {/* <p>Product Stock Table</p> */}
           <div className="d-flex justify-content-between align-items-center mb-3">
             <CButton
               color="primary"
@@ -256,9 +283,11 @@ const Stok = () => {
           </div>
         </div>
         <CCard className="mb-4">
-          <CCardHeader>
-            <strong>Product Stock Table</strong>
-          </CCardHeader>
+        <CCardHeader>
+          <span>Stock: {totalStock}</span>
+          <span style={{ margin: '0 10px' }}>||</span>
+          <span>Amount: {totalAmount}</span>
+        </CCardHeader>
           <CCardBody>
             <CSmartTable
               clickableRows

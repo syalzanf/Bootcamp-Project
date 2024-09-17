@@ -367,9 +367,9 @@ const TransactionPage = () => {
   };
 
 
-      const handleSubmitTransaction = async () => {
-        const cashier = localStorage.getItem('userName');
-        const transactionData = {
+  const handleSubmitTransaction = async () => {
+      const cashier = localStorage.getItem('userName');
+      const transactionData = {
           transaction_code: transactionCode,
           id_cashier: localStorage.getItem("id"),
           // member_id: member ? member : null,
@@ -384,6 +384,7 @@ const TransactionPage = () => {
             product_code: item.product_code,
             product_name: item.product_name,
             id_brand: item.id_brand, // hanya id_brand yang dikirim ke backend
+            brand_name: item.brand_name,
             type: item.type,
             price: item.price,
             qty: item.qty
@@ -498,7 +499,7 @@ const TransactionPage = () => {
       } catch (error) {
         const errorMessage = error.response?.data?.message || 'An error occurred';
         showAlert(errorMessage, 'success');
-        setAddVisible(false);
+        // setAddVisible(false);
 
         console.error('Terjadi kesalahan:', error);
       }

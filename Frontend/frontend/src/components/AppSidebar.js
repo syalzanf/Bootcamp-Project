@@ -14,8 +14,10 @@ import {
 import CIcon from '@coreui/icons-react';
 
 import { AppSidebarNav } from './AppSidebarNav';
-import { logo } from 'src/assets/brand/logo';
-import { sygnet } from 'src/assets/brand/sygnet';
+// import { logo } from 'src/assets/brand/logo';
+// import { sygnet } from 'src/assets/brand/sygnet';
+import logo from 'src/assets/brand/logo1.png';
+
 
 // Import nav configurations
 import { _navAdmin, _navCashier, _navSuperadmin } from '../_nav';
@@ -70,8 +72,22 @@ const AppSidebar = () => {
       }}
     >
       <CSidebarHeader className="border-bottom">
-        <CSidebarBrand as={NavLink} to="/">
-          <CIcon customClassName="sidebar-brand-narrow" icon={sygnet} height={32} />
+        <CSidebarBrand as={NavLink} to="/"  style={{ textDecoration: 'none', color: 'inherit' }}>
+          {/* <CIcon customClassName="sidebar-brand-full" icon={logo} height={32} />
+          <CIcon customClassName="sidebar-brand-narrow" icon={sygnet} height={32} /> */}
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <img 
+            src={logo} 
+            alt="Logo" 
+            className="sidebar-brand-full" 
+            height={50} 
+          />
+        <span style={{ marginLeft: '10px', fontSize: '20px', fontWeight: 'bold',  fontFamily: 'Dancing Script, cursive'
+ }}>
+          MyBrand
+        </span>
+
+        </div>
         </CSidebarBrand>
         <CCloseButton
           className="d-lg-none"
@@ -110,7 +126,7 @@ export default React.memo(AppSidebar);
 //   const unfoldable = useSelector((state) => state.sidebarUnfoldable);
 //   const sidebarShow = useSelector((state) => state.sidebarShow);
 //   const userRole = localStorage.getItem('userRole') || 'guest'; // Ambil role dari localStorage
-  
+
 //   // Get the navigation array based on the user role
 //   const navigation = Nav(userRole);
 
@@ -151,6 +167,6 @@ export default React.memo(AppSidebar);
 
 
 // const userRole = localStorage.getItem('userRole') || 'guest'; // Ambil role dari localStorage
-  
+
 // // Get the navigation array based on the user role
 // const navigation = Nav(userRole);

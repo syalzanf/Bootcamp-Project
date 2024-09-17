@@ -85,7 +85,7 @@ const TransactionReport = () => {
       payment: transaction.payment,
       change: transaction.change,
       detail: transaction.items.map(item =>
-          `${item.product_code} - ${item.product_name} - ${item.id_brand} - ${item.type} - ${item.qty} - ${item.price}`
+          `${item.product_code} - ${item.product_name} - ${item.brand_name} - ${item.type} - ${item.qty} - ${item.price}`
       ).join(', '),
   }));
 

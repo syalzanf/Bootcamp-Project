@@ -54,7 +54,7 @@ const DataBarang = () => {
     try {
       const token = localStorage.getItem('token');
 
-      const response = await axios.get('http://localhost:3000/api/admin/products',  {
+      const response = await axios.get('/api/admin/products',  {
         headers: { Authorization: `${token}` },
         withCredentials: true
       });
@@ -115,7 +115,7 @@ const DataBarang = () => {
               footer
               items={barangData}
               columns={columns}
-              // columnFilter
+              columnFilter
               tableFilter
               cleaner
               itemsPerPageSelect

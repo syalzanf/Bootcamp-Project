@@ -21,6 +21,7 @@ import {
   CCol,
   CRow,
   CButton,
+  CAlert,
 } from '@coreui/react-pro';
 import {
   cilBell,
@@ -33,6 +34,7 @@ import {
   cilTask,
   cilUser,
   cilAccountLogout,
+  cilCheckCircle, cilWarning, cilInfo, cilXCircle,
 } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 
@@ -53,8 +55,38 @@ const AppHeaderDropdown = () => {
   const [editProfile, setEditProfile] = useState({
     name: '',
     telepon: '',
+    password:'',
     photo: null,
   });
+  const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
+
+  
+  const showAlert = (message, color) => {
+    setAlert({
+      visible: true,
+      message,
+      color
+    });
+    setTimeout(() => {
+      setAlert(prev => ({ ...prev, visible: false }));
+    }, 3000);
+  };
+
+    // untuk memilih ikon alert sesuai warna
+    const getIcon = (color) => {
+      switch (color) {
+        case 'success':
+          return <CIcon icon={cilCheckCircle} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'danger':
+          return <CIcon icon={cilXCircle} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'warning':
+          return <CIcon icon={cilWarning} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'info':
+          return <CIcon icon={cilInfo} className="flex-shrink-0 me-2" width={24} height={24} />;
+        default:
+          return null;
+      }
+    };
 
   const { t } = useTranslation();
 
@@ -80,6 +112,7 @@ const AppHeaderDropdown = () => {
         setEditProfile({
           name: profileData.name,
           telepon: profileData.telepon,
+          password: '',
           photo: profileData.photo ? `http://localhost:3000/${profileData.photo}` : null,
         });
       } catch (error) {
@@ -102,7 +135,7 @@ const AppHeaderDropdown = () => {
 
   const handleSaveEdit = async () => {
     if (!editProfile.name || !editProfile.telepon) {
-      alert('Please fill in all required fields.');
+      showAlert('Please fill in all required fields.', 'warning');
       return;
     }
 
@@ -114,12 +147,17 @@ const AppHeaderDropdown = () => {
       formData.append('photo', editProfile.photo);
     }
 
+
+    if (editProfile.password) { 
+      formData.append('password', editProfile.password);
+    }
+
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('id');
 
     try {
 
-      const response = await axios.put(`http://localhost:3000/api/profile/${userId}`, formData, {
+      const response = await axios.put(`/api/profile/${userId}`, formData, {
         headers: {
           Authorization: `${token}`,
           'Content-Type': 'multipart/form-data',
@@ -136,13 +174,20 @@ const AppHeaderDropdown = () => {
       
 
       setShowVisible(false);
-      alert('Profile updated successfully!');
+      showAlert('Profile updated successfully!', 'success');
 
-      window.location.reload();
+      window.location.reload(); //refresh profile
+
     } catch (error) {
-      console.error('Failed to update profile:', error);
-      alert('There was an error updating the profile. Please try again.');
-
+      if (error.response && error.response.data && error.response.data.message) {
+        // Jika pesan error dari backend ada
+        console.error('Error:', error.response.data.message);
+        showAlert(error.response.data.message, 'danger');
+      } else {
+        // Jika tidak ada pesan spesifik dari backend
+        console.error('Error:', error);
+        showAlert('Failed to update profile', 'danger');
+      }
     }
   };
 
@@ -162,6 +207,23 @@ const AppHeaderDropdown = () => {
 
   return (
     <>
+    {/* {alert.visible && (
+        <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-500">
+            {alert.message}
+        </CAlert>
+        )} */}
+
+{alert.visible && (
+        <CAlert
+          color={alert.color}
+          onClose={() => setAlert({ ...alert, visible: false })}
+          className="w-500 d-flex align-items-center"
+        >
+          {getIcon(alert.color)}
+          <div>{alert.message}</div>
+        </CAlert>
+      )}
+
       <CDropdown variant="nav-item" alignment="end">
         <CDropdownToggle className="py-0" caret={false}>
           <CAvatar
@@ -197,10 +259,26 @@ const AppHeaderDropdown = () => {
               </CCol>
               <CCol sm={9}>
                 <CAvatar
-                  style={{ width: '250px', height: '250px' }}
+                  style={{ width: '250px', height: '250px',  borderRadius: '0' }}
                   src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'}
                   alt="user-profile"
                 />
+                {/* <img
+                  style={{ width: '250px', height: '250px', objectFit: 'cover', borderRadius: '0' }}
+                  src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'}
+                  alt="user-profile"
+                /> */}
+
+                  {/* <img
+                    style={{
+                      width: '250px',
+                      height: '250px',
+                      objectFit: 'cover',
+                      borderRadius: '0', 
+                    }}
+                    src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'}
+                    alt="user-profile"
+                  /> */}
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -346,11 +424,27 @@ const AppHeaderDropdown = () => {
                 />
               </CCol>
             </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="password" className="col-form-label">
+                  Password
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  type="password"
+                  id="password"
+                  value={editProfile.password}
+                  onChange={(e) => setEditProfile((prev) => ({ ...prev, password: e.target.value }))} 
+                  placeholder="Password"
+                />
+              </CCol>
+            </CRow>
           </CForm>
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setEditVisible(false)}>Cancel</CButton>
-          <CButton color="primary" onClick={handleSaveEdit}>Save</CButton>
+          <CButton color="primary" onClick={handleSaveEdit}>Save change</CButton>
         </CModalFooter>
       </CModal>
     </>

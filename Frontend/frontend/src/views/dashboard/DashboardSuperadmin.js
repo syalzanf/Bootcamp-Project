@@ -56,7 +56,7 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    axios.get('http://localhost:3000/api/dashboard-admin')
+    axios.get('/api/dashboard-admin')
       .then(response => {
         console.log(response.data); // For debugging purposes
         setDashboardData(response.data);

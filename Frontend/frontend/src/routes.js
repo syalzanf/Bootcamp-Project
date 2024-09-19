@@ -99,7 +99,7 @@ import { Translation } from 'react-i18next'
 
 // Lazy loading components
 const DashboardAdmin = React.lazy(() => import('./views/dashboard/DashboardAdmin'))
-const DashboardCashier = React.lazy(() => import('./views/dashboard/DashboardCashier'))
+const DashboardCashier = React.lazy(() => import('./views/pages/transaksi/Transaksi'))
 const DashboardSuperadmin = React.lazy(() => import('./views/dashboard/DashboardSuperadmin'))
 const DataBarang = React.lazy(() => import('./views/pages/barang/DataBarang'))
 const Brand = React.lazy(() => import('./views/pages/barang/Brand'))
@@ -108,6 +108,7 @@ const Stok = React.lazy(() => import('./views/pages/barang/Stok'))
 const CustomersList = React.lazy(() => import('./views/pages/customers/CustomersList'))
 const Customers = React.lazy(() => import('./views/pages/customers/Customers'))
 const LaporanPenjualan = React.lazy(() => import('./views/pages/laporan/LaporanPenjualan'))
+const DataPenjualan = React.lazy(() => import('./views/pages/laporan/DataPenjualan'))
 const LaporanPenjualanCashier = React.lazy(() => import('./views/pages/laporan/LaporanPenjualanCashier'))
 const DataPenjualanCashier = React.lazy(() => import('./views/pages/laporan/DataPenjualanCashier'))
 const DetailPenjualanCashier = React.lazy(() => import('./views/pages/laporan/DetailPenjualan'))
@@ -165,6 +166,13 @@ const adminRoutes = [
     path: '/laporan-penjualan',
     name: <Translation>{(t) => t('Laporan Penjualan')}</Translation>,
     element: LaporanPenjualan,
+    exact: true,
+
+  },
+  {
+    path: '/data-penjualan',
+    name: <Translation>{(t) => t('Data Penjualan')}</Translation>,
+    element: DataPenjualan,
     exact: true,
 
   }
@@ -244,6 +252,12 @@ const superadminRoutes = [
     exact: true,
   },
   {
+    path: '/data-brand',
+    name: <Translation>{(t) => t('Brand')}</Translation>,
+    element: Brand,
+    exact: true,
+  },
+  {
     path: '/stok',
     name: <Translation>{(t) => t('Stok')}</Translation>,
     element: Stok,
@@ -259,8 +273,14 @@ const superadminRoutes = [
   },
   {
     path: '/laporan-penjualan',
-    name: <Translation>{(t) => t('Laporan Penjualan')}</Translation>,
+    name: <Translation>{(t) => t('Transaction Report')}</Translation>,
     element: LaporanPenjualan,
+    exact: true,
+  },
+  {
+    path: '/data-penjualan',
+    name: <Translation>{(t) => t('Transaction History')}</Translation>,
+    element: DataPenjualan,
     exact: true,
   },
 ];

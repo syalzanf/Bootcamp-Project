@@ -29,7 +29,7 @@ const Login = () => {
     event.preventDefault();
 
     try {
-      const response = await axios.post('http://localhost:3000/api/login', {
+      const response = await axios.post('/api/login', {
         username,
         password
       }, { withCredentials: true });
@@ -52,7 +52,7 @@ const Login = () => {
         console.log("TOKENnnn ", localStorage.getItem('token'));
         console.log("TOKENnnn2 ", user.token);
 
-        const response2 = await axios.get('http://localhost:3000/api/profile', {
+        const response2 = await axios.get('/api/profile', {
           headers: { Authorization: `${user.token}` },
           withCredentials: true
         });
@@ -122,6 +122,11 @@ const Login = () => {
                       <CCol xs={6}>
                         <CButton color="primary" className="px-4" type="submit">
                           Login
+                        </CButton>
+                      </CCol>
+                      <CCol xs={6} className="text-right">
+                        <CButton color="link" className="px-0">
+                          Forgot password?
                         </CButton>
                       </CCol>
                       <CCol xs={6} className="text-right">

@@ -42,6 +42,7 @@ const Users = () => {
     username: '',
     password: '',
     telepon: '',
+    email: '',
     role: '',
     status: '',
     photo : null,
@@ -51,7 +52,7 @@ const Users = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/superadmin/users', {
+      const response = await axios.get('/api/superadmin/users', {
         headers: { Authorization: `${token}` },
         withCredentials: true
       });
@@ -80,6 +81,7 @@ const Users = () => {
       username: '',
       password: '',
       telepon: '',
+      email: '',
       role: '',
       status: '',
       photo: null,
@@ -112,6 +114,7 @@ const Users = () => {
       formData.append('username', formValues.username);
       formData.append('password', formValues.password);
       formData.append('telepon', formValues.telepon);
+      formData.append('email', formValues.email);
       formData.append('role', formValues.role);
       formData.append('status', formValues.status);
 
@@ -119,12 +122,15 @@ const Users = () => {
         formData.append('photo', formValues.photo);
       }
 
-      const response = await axios.post('http://localhost:3000/api/superadmin/users/add', formData, {
+      const response = await axios.post('/api/superadmin/users/add', formData,
+      {
         headers: {
+           Authorization: `${token}`,
           'Content-Type': 'multipart/form-data',
         },
+        withCredentials: true
       });
-
+      
       Swal.fire(
         'Added!',
         'User details have been added.',
@@ -140,7 +146,7 @@ const Users = () => {
       // setUserData((prevUsers) => [...prevUsers, response.data]);
 
     } catch (error) {
-      console.error('Error memperbarui data pengguna:', error.response ? error.response.data : error.message);
+      console.error('Error menambah data pengguna:', error.response ? error.response.data : error.message);
       const errorMessage = error.response?.data?.message || 'An error occurred';
       Swal.fire({
         title: 'Failed!',
@@ -178,6 +184,7 @@ const Users = () => {
       username: user.username,
       password: '', // hanya diisi jika user ingin mengubahnya
       telepon: user.telepon,
+      email: user.email,
       role: user.role,
       status: user.status,
       photo: null,
@@ -205,6 +212,7 @@ const Users = () => {
       }
 
       formData.append('telepon', formValues.telepon);
+      formData.append('email', formValues.email);
       formData.append('role', formValues.role);
       formData.append('status', formValues.status);
 
@@ -212,7 +220,7 @@ const Users = () => {
       if (formValues.photo) {
         formData.append('photo', formValues.photo);
       }
-      const response = await axios.put(`http://localhost:3000/api/superadmin/users/${selectedUser.id}`, formData,  {
+      const response = await axios.put(`/api/superadmin/users/${selectedUser.id}`, formData,  {
         headers: { 
           Authorization: `${token}`,
           'Content-Type': 'multipart/form-data',
@@ -266,7 +274,7 @@ const Users = () => {
       });
 
       if (result.isConfirmed) {
-        await axios.delete(`http://localhost:3000/api/superadmin/users/${user.id}`, {
+        await axios.delete(`/api/superadmin/users/${user.id}`, {
           headers: { Authorization: `${token}` },
           withCredentials: true
         });
@@ -303,8 +311,9 @@ const Users = () => {
 
   const columns = [
     { key: 'username', label: 'Username' },
-    { key: 'name', label: 'Nama' },
-    { key: 'telepon', label: 'Telepon' },
+    { key: 'name', label: 'Name' },
+    { key: 'telepon', label: 'Phone' },
+    { key: 'email', label: 'Email' },
     { key: 'role', label: 'Role' },
     { key: 'status', label: 'Status' },
     {
@@ -317,9 +326,11 @@ const Users = () => {
   ];
 
   const handleStatus = async (item) => {
+    
     const newStatus = item.status === 'active' ? 'inactive' : 'active';
+
     try {
-      const response = await axios.put(`http://localhost:3000/api/user/${item.id}/status`, {
+      const response = await axios.put(`/api/user/${item.id}/status`, {
         headers: { Authorization: `${token}` },
         withCredentials: true,
         status: newStatus,
@@ -377,13 +388,13 @@ const Users = () => {
               className="float-end"
               onClick={handleAdd}
             >
-              Tambah User
+              Add User
             </CButton>
           </div>
         </div>
         <CCard>
           <CCardHeader>
-            Data Users
+            Users Data
           </CCardHeader>
           <CCardBody>
             <CSmartTable
@@ -434,7 +445,7 @@ const Users = () => {
                       shape="rounded-pill"
                       onClick={() => handleDelete(item)}
                     >
-                      Hapus
+                      Delete
                     </CButton>
                     </>
                     )}
@@ -500,7 +511,7 @@ const Users = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="telepon" className="col-form-label">
-                  Telepon
+                  Phone
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -508,6 +519,20 @@ const Users = () => {
                   id="telepon"
                   value={formValues.telepon}
                   onChange={(e) => setFormValues({ ...formValues, telepon: e.target.value })}
+                />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="email" className="col-form-label">
+                  Email
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="email"
+                  value={formValues.email}
+                  onChange={(e) => setFormValues({ ...formValues, email: e.target.value })}
                 />
               </CCol>
             </CRow>
@@ -528,7 +553,7 @@ const Users = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="photo" className="col-form-label">
-                  Gambar
+                  Image
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -562,7 +587,7 @@ const Users = () => {
 
       <CModal alignment="center" visible={addVisible} onClose={() => setAddVisible(false)}>
         <CModalHeader>
-          <CModalTitle>Tambah User</CModalTitle>
+          <CModalTitle>Add User</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm noValidate validated={validated} onSubmit={handleSaveAdd}>
@@ -585,7 +610,7 @@ const Users = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="addName" className="col-form-label">
-                  Nama
+                  Name
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -595,13 +620,13 @@ const Users = () => {
                   onChange={(e) => setFormValues({ ...formValues, name: e.target.value })}
                   required
                 />
-                <CFormFeedback invalid>Nama is required.</CFormFeedback>
+                <CFormFeedback invalid>Name is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="addTelepon" className="col-form-label">
-                  Telepon
+                  Phone
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -611,7 +636,23 @@ const Users = () => {
                   onChange={(e) => setFormValues({ ...formValues, telepon: e.target.value })}
                   required
                 />
-                <CFormFeedback invalid>Telepon is required.</CFormFeedback>
+                <CFormFeedback invalid>Phone is required.</CFormFeedback>
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="email" className="col-form-label">
+                  Email
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="email"
+                  value={formValues.email}
+                  onChange={(e) => setFormValues({ ...formValues, email: e.target.value })}
+                  required
+                />
+                <CFormFeedback invalid>Email is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -654,7 +695,7 @@ const Users = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="photo" className="col-form-label">
-                  Gambar
+                  Image
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -673,7 +714,7 @@ const Users = () => {
                     style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover', marginTop: '10px' }}
                   />
                 )}
-                <CFormFeedback invalid>Gambar is required.</CFormFeedback>
+                <CFormFeedback invalid>Image is required.</CFormFeedback>
               </CCol>
             </CRow>
           </CForm>

@@ -83,9 +83,10 @@
     }
 });
 
+
   app.use(cors({
     origin: 'http://localhost:3001',
-    credentials: true,
+    credentials: true, 
     allowedHeaders: ['Authorization', 'Content-Type'],
   }));
   
@@ -214,8 +215,8 @@
         return res.status(401).json({ message: 'login gagal' });
       }
     } catch (error) {
-      console.error('Kesalahan login:', error);
-      return res.status(500).json({ message: 'Kesalahan server internal' });
+      console.error('Kesalahan login:', error.message);
+      return res.status(400).json({ message: error.message });
     }
   });
 
@@ -297,12 +298,12 @@
 // Rute update profile user
 app.put('/api/profile/:id', authenticateToken, upload.single('photo'), async (req, res) => {
 
-  const { username, name, telepon, password, role } = req.body;
+  const { username, name, telepon, email, password, role } = req.body;
   const userId = req.params.id; 
   const photo = req.file ? `/uploads/${req.file.filename}` : null;
 console.log("userId")
   try {
-    const updatedUser = await superadmin.updateUser(userId, { username, name, telepon, password, role, photo });
+    const updatedUser = await superadmin.updateUser(userId, { username, name, telepon, email, password, role, photo });
     console.log("Updated User Data:", updatedUser.user);
     
     res.status(200).json({
@@ -617,15 +618,15 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
     // Rute untuk menambah brand
     app.post('/api/brands/add', authenticateToken, async (req, res) => {
       const { brand_name } = req.body;
-    
-
+  
       try {
           const newBrand = await admin.addBrand(brand_name);
           res.status(201).json(newBrand);
       } catch (error) {
-          res.status(500).json({ error: error.message });
+          res.status(400).json({ error: error.message });
       }
   });
+  
 
   // Rute untuk mengupdate brand
   app.put('/api/brands/edit/:id', authenticateToken, async (req, res) => {
@@ -805,7 +806,9 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
          
       });
     } catch (error) {
-      res.status(500).json({ message: 'Terjadi kesalahan', error: error.message });
+      res.status(500).json({
+         message: error.message
+      });
     }
   });
 
@@ -1076,12 +1079,12 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
 
   // Rute untuk menambahkan user baru
   app.post('/api/superadmin/users/add', authenticateToken, upload.single('photo'), async (req, res) => { 
-    const { username, name, telepon, role, password} = req.body;
+    const { username, name, telepon, email, role, password} = req.body;
 
     const photo = req.file ?  `/uploads/${req.file.filename}` : null;
 
     try {
-      const result = await superadmin.addUser(username,name, telepon, role, password, photo);
+      const result = await superadmin.addUser(username,name, telepon, email, role, password, photo);
       res.status(201).json({
         message: result.message,
         user: result.user
@@ -1095,7 +1098,7 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
   // Rute untuk mengupdate user
   app.put('/api/superadmin/users/:id', authenticateToken, upload.single('photo'), async (req, res) => {
     const { id } = req.params;
-    const { username, name, telepon, password, role } = req.body;
+    const { username, name, telepon, email, password, role } = req.body;
 
     try {
 
@@ -1123,6 +1126,7 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
       username,
       name,
       telepon,
+      email,
       password, 
       role,
       photo

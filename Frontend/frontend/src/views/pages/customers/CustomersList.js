@@ -21,7 +21,7 @@ import {
   const fetchData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/admin/customers', {
+      const response = await axios.get('/api/admin/customers', {
         headers: { Authorization: `${token}` },
         withCredentials: true
       });
@@ -49,10 +49,10 @@ import {
   }
 
   const columns = [
-    { key: 'kode_member', label: 'Kode Customer' },
-    { key: 'nama', label: 'Nama Customer' },
-    { key: 'telepon', label: 'Telepon' },
-    { key: 'alamat', label: 'Alamat' },
+    { key: 'kode_member', label: 'Customer Code' },
+    { key: 'nama', label: 'Customer Name' },
+    { key: 'telepon', label: 'Phone' },
+    { key: 'alamat', label: 'Address' },
   ];
 
   return (
@@ -60,7 +60,7 @@ import {
       <CCol>
         <CCard>
           <CCardHeader>
-            Data Customer
+            Customers Data
           </CCardHeader>
           <CCardBody>
           <CSmartTable

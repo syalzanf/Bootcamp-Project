@@ -48,7 +48,7 @@ const Stok = () => {
     try {
       const token = localStorage.getItem('token')
 
-      const response = await axios.get('http://localhost:3000/api/admin/products/stock', {
+      const response = await axios.get('/api/admin/products/stock', {
         headers: { Authorization: `${token}` },
         withCredentials: true,
       })
@@ -70,7 +70,7 @@ const Stok = () => {
   const fetchTotalStock = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/stock/total', {
+      const response = await axios.get('/api/stock/total', {
         headers: { Authorization: `${token}` },
         withCredentials: true,
       });
@@ -90,7 +90,7 @@ const Stok = () => {
   const fetchBrands = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/admin/brands', {
+      const response = await axios.get('/api/admin/brands', {
         headers: { Authorization: `${token}` },
         withCredentials: true,
       });
@@ -121,7 +121,7 @@ const Stok = () => {
     if (selectedCode) {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`http://localhost:3000/api/admin/products/${selectedCode}`, {
+        const response = await axios.get(`/api/admin/products/${selectedCode}`, {
           headers: { Authorization: `${token}` },
           withCredentials: true,
         });
@@ -189,7 +189,7 @@ const Stok = () => {
       const token = localStorage.getItem('token');
       const productCode = formValues.product_code;
   
-      await axios.post(`http://localhost:3000/api/admin/products/stock/${productCode}`, {
+      await axios.post(`/api/admin/products/stock/${productCode}`, {
         formValues,
         stock: newStock,
       }, {
@@ -246,11 +246,11 @@ const Stok = () => {
   }))
 
   const columns = [
-    { key: 'product_code', label: 'Kode Barang', _style: { width: '20%' } },
-    { key: 'product_name', label: 'Nama Barang', _style: { width: '30%' } },
-    { key: 'brand_name', label: 'Merk', _style: { width: '20%' } }, // Tampilkan nama merk
-    { key: 'type', label: 'Tipe', _style: { width: '20%' } },
-    { key: 'stock', label: 'Stok', _style: { width: '10%' } },
+    { key: 'product_code', label: 'Product Code', _style: { width: '20%' } },
+    { key: 'product_name', label: 'Product Name', _style: { width: '30%' } },
+    { key: 'brand_name', label: 'Brand', _style: { width: '20%' } }, // Tampilkan nama merk
+    { key: 'type', label: 'Type', _style: { width: '20%' } },
+    { key: 'stock', label: 'Stock', _style: { width: '10%' } },
   ]
 
   if (loading) {
@@ -278,7 +278,7 @@ const Stok = () => {
               shape="rounded-pill"
               onClick={() => setModalVisible(true)}
             >
-              Tambah Stok
+              Add Stock
             </CButton>
           </div>
         </div>
@@ -321,7 +321,7 @@ const Stok = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="product_code" className="col-form-label">
-                  Kode Barang
+                  Product Name
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -333,13 +333,13 @@ const Stok = () => {
                   value={options.find((option) => option.value === formValues.product_code)}
                   required
                 />
-                <CFormFeedback invalid>Kode Barang is required.</CFormFeedback>
+                <CFormFeedback invalid>Product Name is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="brand" className="col-form-label">
-                  Merk
+                  Brand
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -350,13 +350,13 @@ const Stok = () => {
                   readOnly
                   required
                 />
-                <CFormFeedback invalid>Merk is required.</CFormFeedback>
+                <CFormFeedback invalid>Brand is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="product_name" className="col-form-label">
-                  Nama Barang
+                  Product Name
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -367,13 +367,13 @@ const Stok = () => {
                   readOnly
                   required
                 />
-                <CFormFeedback invalid>Nama Barang is required.</CFormFeedback>
+                <CFormFeedback invalid>Product Name is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="type" className="col-form-label">
-                  Tipe
+                  Type
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -384,13 +384,13 @@ const Stok = () => {
                   readOnly
                   required
                 />
-                <CFormFeedback invalid>Tipe is required.</CFormFeedback>
+                <CFormFeedback invalid>Type is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="stock" className="col-form-label">
-                  Stok
+                  Stock
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -402,13 +402,13 @@ const Stok = () => {
                   onChange={handleChange}
                   required
                 />
-                <CFormFeedback invalid>Stok is required.</CFormFeedback>
+                <CFormFeedback invalid>Stock is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="price" className="col-form-label">
-                  Harga
+                  Price
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -420,7 +420,7 @@ const Stok = () => {
                   readOnly
                   required
                 />
-                <CFormFeedback invalid>Harga is required.</CFormFeedback>
+                <CFormFeedback invalid>Price is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CModalFooter>

@@ -43,7 +43,7 @@ const Brand = () => {
   const fetchBrands = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/brands', {
+      const response = await axios.get('/api/brands', {
         headers: { Authorization: `${token}` },
         withCredentials: true
       });
@@ -97,7 +97,7 @@ const Brand = () => {
       };
 
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:3000/api/brands/add', formData, {
+      const response = await axios.post('/api/brands/add', formData, {
         headers: {
           Authorization: `${token}`,
           'Content-Type': 'application/json',
@@ -131,7 +131,10 @@ const Brand = () => {
     setEditVisible(true);
   };
 
-  const handleSaveEdit = async () => {
+  const handleSaveEdit = async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    
     if (!selectedBrand || !selectedBrand.id_brand) {
       console.error("Brand atau ID tidak ditemukan");
       return;
@@ -149,7 +152,7 @@ const Brand = () => {
 
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:3000/api/brands/edit/${selectedBrand.id_brand}`,
+        `/api/brands/edit/${selectedBrand.id_brand}`,
         formData,
         {
           headers: {
@@ -159,6 +162,7 @@ const Brand = () => {
           withCredentials: true
         }
       );
+      
       const updatedBrands = brands.map(brand =>
         brand.id_brand === selectedBrand.id_brand ? { ...brand, brand_name: formValues.brand_name } : brand
       );
@@ -192,7 +196,7 @@ const Brand = () => {
       if (result.isConfirmed) {
         const token = localStorage.getItem('token');
 
-        await axios.delete(`http://localhost:3000/api/brands/delete/${brand.id_brand}`, {
+        await axios.delete(`/api/brands/delete/${brand.id_brand}`, {
           headers: { Authorization: `${token}` },
           withCredentials: true
         });
@@ -214,7 +218,7 @@ const Brand = () => {
   };
 
   const columns = [
-    { key: 'brand_name', label: 'Nama Brand' },
+    { key: 'brand_name', label: 'Brand Name' },
     {
       key: 'actions',
       label: 'Actions',
@@ -249,12 +253,12 @@ const Brand = () => {
               className="me-2"
               onClick={handleAdd}
             >
-              Tambah Brand
+              Add Brand
             </CButton>
           </div>
         </div>
         <CCard>
-          <CCardHeader>Data Brand</CCardHeader>
+          <CCardHeader>Brands Data</CCardHeader>
           <CCardBody>
             <CSmartTable
               clickableRows
@@ -289,7 +293,7 @@ const Brand = () => {
                       shape="rounded-pill"
                       onClick={() => handleDelete(item)}
                     >
-                      Hapus
+                      Delete
                     </CButton>
                   </td>
                 ),
@@ -308,7 +312,7 @@ const Brand = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="brand_name" className="col-form-label">
-                  Nama Brand
+                  Brand Name
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -343,13 +347,13 @@ const Brand = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="brand_name" className="col-form-label">
-                  Nama Brand
+                  Brand Name
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput
                   id="brand_name"
-                  placeholder="Nama Brand"
+                  placeholder="Brand Name"
                   value={formValues.brand_name}
                   onChange={(e) => setFormValues({ ...formValues, brand_name: e.target.value })}
                   required

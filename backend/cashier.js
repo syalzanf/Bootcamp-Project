@@ -37,8 +37,8 @@ async function cashierLogin(username, password) {
 
 async function getListBrand() {
     try {
-        const result = await pool.query('SELECT * FROM brands');
-        return result.rows;
+        const result = await pool.query('SELECT * FROM brands ORDER BY updated_at DESC');
+         return result.rows;
     } catch (error) {
         console.error('Error fetching brand list:', error);
         throw new Error('Failed to fetch brand list');
@@ -251,6 +251,9 @@ async function deleteCustomer(id) {
 async function createTransaction({ transaction_code, member_id, id_cashier,  cashier, total, payment_method, debit, payment, change, items }) {
 
     try {
+        if (payment < total) {
+            throw new Error('Jumlah bayar tidak mencukupi.');
+        }
 
         const newTransaction = await Transaksi.create({
             transaction_code,
@@ -288,7 +291,7 @@ async function createTransaction({ transaction_code, member_id, id_cashier,  cas
 
         return newTransaction;
     } catch (error) {
-        throw new Error('Error creating transact    ion: ' + error.message);
+        throw new Error(error.message);
     }
 }
 
@@ -351,98 +354,27 @@ async function getAllMember() {
   }
 
 
-// Mengambil laporan penjualan berdasarkan kasir
-// async function getTransactionReportByCashier(cashierName) {
-//     try {
-//         const transactions = await Transaksi.findAll({
-//             include: [
-//                 {
-//                     model: Member,
-//                     attributes: ['nama'], // nama dari tabel members
-//                     required: false // `false` untuk transaksi tanpa member (guest)
-//                 }
-//             ],
-//             where: {
-//                 cashier: cashierName
-//             }
-//         });
-
-//         // Memeriksa apakah transaksi ditemukan
-//         if (transactions.length === 0) {
-//             return { message: 'No transactions found for this cashier' };
-//         }
-
-//         // Fungsi untuk memformat angka dalam bentuk rupiah
-//         const formatNumber = (number) => {
-//             return new Intl.NumberFormat('id-ID', {
-//                 minimumFractionDigits: 0,
-//                 maximumFractionDigits: 0,
-//                 useGrouping: true
-//             }).format(number);
-//         };
-
-//         // Ambil data transaksi dan items JSON
-//         const transactionsData = await Promise.all(transactions.map(async (transaction) => {
-//             const parsedItems = JSON.parse(transaction.items);
-
-//             // Proses items untuk setiap transaksi
-//             const itemsWithBrand = await Promise.all(parsedItems.map(async (item) => {
-//                 // Ambil brand berdasarkan id_brand
-//                 const brand = await Brand.findOne({
-//                     where: { id: item.id_brand },
-//                     attributes: ['brand_name'] // Ambil nama brand
-//                 });
-
-//                 return {
-//                     product_name: item.product_name,
-//                     brand_name: brand ? brand.brand_name : 'Unknown Brand', // Jika brand tidak ditemukan, set default
-//                     qty: item.qty,
-//                     price: formatNumber(item.price),
-//                     totalItems: formatNumber(item.qty * item.price) // Menghitung total per item
-//                 };
-//             }));
-
-//             return {
-//                 transaction_code: transaction.transaction_code, 
-//                 member: transaction.Member ? transaction.Member.nama : 'Guest',
-//                 cashier: transaction.cashier,
-//                 transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
-//                 total: formatNumber(transaction.total),
-//                 payment: formatNumber(transaction.payment),
-//                 change: formatNumber(transaction.change),
-//                 items: itemsWithBrand // Menggunakan items yang sudah diproses dengan nama brand
-//             };
-//         }));
-
-//         return transactionsData;
-//     } catch (error) {
-//         throw new Error('Error retrieving sales report: ' + error.message);
-//     }
-// }
-
-
-
 async function getTransactionReportByCashier(cashierName) {
     try {
         const transactions = await Transaksi.findAll({
             
             include: [{
                 model: Member,
-                attributes: ['nama'], // nama dari tabel members
-                required: false // `false` untuk transaksi tanpa member (guest)
-            }
-        ],
+                attributes: ['nama'], // mengambil nama members
+                required: false  // jika transaksi tanpa member(guest)
+            }],
+            order: [['transaction_date', 'DESC']],
             where: {
                 cashier: cashierName
             }
         });
 
-        // Memeriksa apakah transaksi ditemukan
+        // memeriksa apakah transaksi ditemukan
         if (transactions.length === 0) {
             return { message: 'No transactions found for this cashier' };
         }
 
-        // Fungsi untuk memformat angka dalam bentuk rupiah
+        // untuk memformat angka dalam bentuk rupiah
         const formatNumber = (number) => {
             return new Intl.NumberFormat('id-ID', {
                 minimumFractionDigits: 0,
@@ -451,7 +383,17 @@ async function getTransactionReportByCashier(cashierName) {
             }).format(number);
         };
 
-        // Ambil data transaksi dan items JSON
+        const formatRupiah = (number) => {
+            return new Intl.NumberFormat('id-ID', {
+              style: 'currency',
+              currency: 'IDR',
+              minimumFractionDigits: 0
+            }).format(number);
+          };
+
+        // Menghitung total penjualan
+        const totalSales = transactions.reduce((sum, transaction) => sum + transaction.total, 0);
+
         const transactionsData = transactions.map(transaction => ({
             transaction_code: transaction.transaction_code, 
             member: transaction.Member ? transaction.Member.nama : 'Guest',
@@ -467,29 +409,10 @@ async function getTransactionReportByCashier(cashierName) {
             }))
         }));
 
-        
-
-        // const transactionsData = transactions.map(transaction => {
-        //     // Hitung total per item
-        //     const totalItems = transaction.items.reduce((sum, item) => {
-        //         const itemTotal = item.price * item.quantity; 
-        //         return sum + itemTotal;
-        //     }, 0);
-
-        //     return {
-        //         transaction_code: transaction.transaction_code,
-        //         member: transaction.Member ? transaction.Member.nama : 'Guest',
-        //         cashier: transaction.cashier,
-        //         transaction_date: transaction.transaction_date,
-        //         total: transaction.total,
-        //         payment: transaction.payment,
-        //         change: transaction.change,
-        //         items: transaction.items,
-        //         totalItems: totalItems
-        //     };
-        // });
-
-        return transactionsData;
+        return {
+            transactions: transactionsData,
+            totalSales: formatRupiah(totalSales) 
+        };
     } catch (error) {
         throw new Error('Error retrieving sales report: ' + error.message);
     }
@@ -497,19 +420,14 @@ async function getTransactionReportByCashier(cashierName) {
 
 async function getTransactionByCode(transactionCode) {
     try {
-        // Mengambil detail transaksi berdasarkan transaction_code
         const transaction = await Transaksi.findOne({
             where: {
                 transaction_code: transactionCode
             },
         });
-
-        // Memeriksa apakah transaksi ditemukan
         if (!transaction) {
             return { message: 'Transaction not found' };
         }
-
-        // Menggabungkan detail transaksi dan items
         const transactionData = {
             transaction_code: transaction.transaction_code,
             member: transaction.Member ? transaction.Member.nama : 'Guest',

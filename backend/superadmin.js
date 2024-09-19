@@ -105,8 +105,8 @@ async function loginUser(username, password) {
       { expiresIn: '7d' } // refresh token berlaku selama 7 hari
     );
 
-    console.log('Generated Access Token:', token);
-    console.log('Generated Refresh Token:', refreshToken);
+    // console.log('Generated Access Token:', token);
+    // console.log('Generated Refresh Token:', refreshToken);
 
     // Mengembalikan hasil login
     return {
@@ -171,15 +171,25 @@ async function verifyToken(token) {
   }
 }
 
-async function addUser(username, name, telepon, role, password, photo) {
+async function addUser(username, name, telepon, email, role, password, photo) {
   try {
 
-    if (!username || !name || !telepon || !role || !password || !photo) {
-      throw new Error('All fields are required');
-    }
+    // if (!username || !name || !telepon  || !email || !role || !password || !photo) {
+    //   throw new Error('All fields are required');
+    //
 
     if (!validator.isMobilePhone(telepon, 'id-ID')) {
       throw new Error('Invalid phone number format');
+    }
+     if (!validator.isEmail(email)) {
+      throw new Error('Invalid email format');
+    }
+
+    // Cek apakah email memiliki domain ".com"
+    const emailParts = email.split('@');
+    const domain = emailParts[1] ? emailParts[1].toLowerCase() : '';
+    if (!domain.endsWith('.com')) {
+      throw new Error('Email must end with ".com"');
     }
 
     // Cek apakah username sudah ada di database
@@ -196,6 +206,13 @@ async function addUser(username, name, telepon, role, password, photo) {
       throw new Error('Phone number already exists');
     }
 
+    // Cek apakah email sudah ada di database
+    const existingEmail = await User.findOne({ where: { email } });
+
+    if (existingEmail) {
+      throw new Error('Email already exists');
+    }
+
     // Hash password sebelum menyimpannya ke database
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -205,6 +222,7 @@ async function addUser(username, name, telepon, role, password, photo) {
       name,
       telepon,
       password: hashedPassword,
+      email,
       role,
       photo,
       status: 'active'
@@ -346,7 +364,7 @@ async function updateUserStatus(userId, newStatus) {
     } 
   }
 
-  async function updateUser(id, { username, name, telepon, password, role, photo }) {
+  async function updateUser(id, { username, name, telepon, email, password, role, photo }) {
     try {
       console.log("id", id);
       
@@ -359,7 +377,22 @@ async function updateUserStatus(userId, newStatus) {
       if (checkUser.rows.length === 0) {
         throw new Error('User not found');
       }
-  
+      
+      if (!validator.isMobilePhone(telepon, 'id-ID')) {
+        throw new Error('Invalid phone number format');
+      }
+
+      if (!validator.isEmail(email)) {
+        throw new Error('Invalid email format');
+      }
+
+      // Cek apakah email memiliki domain ".com"
+      const emailParts = email.split('@');
+      const domain = emailParts[1] ? emailParts[1].toLowerCase() : '';
+      if (!domain.endsWith('.com')) {
+        throw new Error('Email must end with ".com"');
+      }
+
       // Siapkan query update
       let updateQuery = `UPDATE users SET `;
       let values = [];
@@ -377,6 +410,10 @@ async function updateUserStatus(userId, newStatus) {
       if (telepon) {
         updateQuery += `telepon = $${index++}, `;
         values.push(telepon);
+      }
+      if (email) {
+        updateQuery += `email = $${index++}, `;
+        values.push(email);
       }
       if (password) {
         // Hash password baru sebelum menyimpan

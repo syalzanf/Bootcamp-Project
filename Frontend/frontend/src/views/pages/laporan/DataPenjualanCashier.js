@@ -46,14 +46,12 @@ const TransactionReport = () => {
                   throw new Error('cashierName is not available in localStorage');
               }
 
-                const response = await axios.get(`http://localhost:3000/api/cashier/laporanTransaksi/${cashierName}`, {
+                const response = await axios.get(`/api/cashier/laporanTransaksi/${cashierName}`, {
                   headers: { Authorization: `${token}` },
                     withCredentials: true,
                 });
-                setTransactions(response.data);
-         
-                // console.log('CEKKK', response.data);
-
+                setTransactions(response.data.transactions);
+              
             } catch (err) {
                 setError('Error fetching transactions');
             } finally {
@@ -82,14 +80,6 @@ const TransactionReport = () => {
         return <div>{error}</div>;
     }
 
-    const filteredData = transactions.filter(item => {
-      const itemDate = new Date(item.date);
-      return (
-        (!startDate || itemDate >= startDate) &&
-        (!endDate || itemDate <= endDate)
-      );
-    });
-
     const columns = [
           { 
             key: 'transaction_date', 
@@ -111,45 +101,12 @@ const TransactionReport = () => {
         },
     ];
 
-  //   const formattedTransactions = transactions.map(transaction => {
-  //     const details = transaction.items.map(item => ({
-  //       transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
-  //       transaction_code: transaction.transaction_code,
-  //       member: transaction.member,
-  //       cashier: transaction.cashier,
-  //       product_code: item.product_code,
-  //       product_name: item.product_name,
-  //       brand: item.brand,
-  //       type: item.type,
-  //       qty: item.qty,
-  //       price: item.price
-  //     }));
-
-  //     return transaction.items.map(item => ({
-  //         transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
-  //         transaction_code: transaction.transaction_code,
-  //         member: transaction.member,
-  //         cashier: transaction.cashier,
-  //         total: transaction.total,
-  //         // total : item.price * item.qty,
-  //         payment: transaction.payment,
-  //         change: transaction.change,
-  //         product_code: item.product_code,
-  //         product_name: item.product_name,
-  //         brand: item.brand,
-  //         type: item.type,
-  //         qty: item.qty,
-  //         price: item.price,
-  //         detail: details,
-  //     }));
-  // }).flat();
-
     return (
       <CRow>
       <CCol>
         <CCard>
             <CCardHeader>
-                <p>Data Penjualan</p>
+                <p>Transactions Date</p>
             </CCardHeader>
             <CCardBody>
               {/* <div>
@@ -198,7 +155,7 @@ const TransactionReport = () => {
                             shape="rounded-pill"
                             onClick={() => handleDetail(item.transaction_code)}
                           >
-                            Detail
+                            Details
                           </CButton>
                         </td>
                       ),
@@ -209,7 +166,7 @@ const TransactionReport = () => {
         
         <CModal alignment="center" size="lg" visible={modalVisible} onClose={() => setModalVisible(false)}>
         <CModalHeader>
-          <CModalTitle>Detail Transaksi</CModalTitle>
+          <CModalTitle>Transactions Details</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CTable>
@@ -219,12 +176,12 @@ const TransactionReport = () => {
                 <CTableHeaderCell>Transaction Code</CTableHeaderCell>
                 <CTableHeaderCell>Customer</CTableHeaderCell>
                 <CTableHeaderCell>Cashier</CTableHeaderCell> */}
-                <CTableHeaderCell>Kode Produk</CTableHeaderCell>
-                <CTableHeaderCell>Nama Produk</CTableHeaderCell>
+                <CTableHeaderCell>Product Code</CTableHeaderCell>
+                <CTableHeaderCell>Product Name</CTableHeaderCell>
                 <CTableHeaderCell>Brand</CTableHeaderCell>
-                <CTableHeaderCell>Tipe</CTableHeaderCell>
+                <CTableHeaderCell>Type</CTableHeaderCell>
                 <CTableHeaderCell>Qty</CTableHeaderCell>
-                <CTableHeaderCell>Harga</CTableHeaderCell>
+                <CTableHeaderCell>Price</CTableHeaderCell>
               </CTableRow>
             </CTableHead>
             <CTableBody>
@@ -237,7 +194,7 @@ const TransactionReport = () => {
                   <CTableDataCell>{detail.cashier}</CTableDataCell> */}
                   <CTableDataCell>{detail.product_code}</CTableDataCell>
                   <CTableDataCell>{detail.product_name}</CTableDataCell>
-                  <CTableDataCell>{detail.id_brand}</CTableDataCell>
+                  <CTableDataCell>{detail.brand_name}</CTableDataCell>
                   <CTableDataCell>{detail.type}</CTableDataCell>
                   <CTableDataCell>{detail.qty}</CTableDataCell>
                   <CTableDataCell>{detail.price}</CTableDataCell>

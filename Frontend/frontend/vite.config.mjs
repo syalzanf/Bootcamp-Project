@@ -43,6 +43,14 @@ export default defineConfig(() => {
       host: "0.0.0.0",
       port: 3001,
       proxy: {
+        '/api': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        },
+        '/public' :{
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        }
         // https://vitejs.dev/config/server-options.html
       },
     },

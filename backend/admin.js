@@ -215,8 +215,11 @@ async function addBrand(brandName) {
   
       return result.rows[0];
     } catch (error) {
-      console.error('Error adding brand:', error);
-      throw new Error('Failed to add brand');
+        if (error.message === 'Brand already exists') {
+            throw new Error('Brand already exists');
+        } else {
+            throw new Error('Failed to add brand');
+        }
     }
   }
   
@@ -245,7 +248,7 @@ async function updateBrand(id, brand_name) {
       throw new Error('Gagal mengupdate brand');
     }
   }
-  
+ 
 
 async function deleteBrand(brandId) {
     try {
@@ -284,7 +287,12 @@ async function getListProducts() {
         ORDER BY 
             p.updated_at DESC
     `);
-    
+        // const formattedProducts = result.rows.map(product => ({
+        //     ...product,
+        //     price: formatNumber(product.price)  // Format harga
+        // }));    
+
+        // return formattedProducts;
         return result.rows;
     } catch (error) {
         throw new Error('Error fetching products: ' + error.message);
@@ -396,6 +404,15 @@ async function getListCustomers() {
     }
 }
 
+// untuk memformat angka dalam bentuk rupiah
+ const formatNumber = (number) => {
+    return new Intl.NumberFormat('id-ID', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+        useGrouping: true
+    }).format(number);
+};
+
 async function getAllTransactions() {
     try {
         const transactions = await Transaksi.findAll({
@@ -407,14 +424,18 @@ async function getAllTransactions() {
             order: [['transaction_date', 'DESC']] 
         });
 
-        // Fungsi untuk memformat angka dalam bentuk rupiah
-        const formatNumber = (number) => {
+
+
+        const formatRupiah = (number) => {
             return new Intl.NumberFormat('id-ID', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-                useGrouping: true
+              style: 'currency',
+              currency: 'IDR',
+              minimumFractionDigits: 0
             }).format(number);
-        };
+          };
+
+        // hitung total penjualan
+        const totalSales = transactions.reduce((sum, transaction) => sum + transaction.total, 0);
 
         const transactionsData = transactions.map(transaction => ({
             transaction_code: transaction.transaction_code,
@@ -429,95 +450,18 @@ async function getAllTransactions() {
             items: transaction.items.map(item => ({
                 ...item,
                 price: formatNumber(item.price),
+                totalItems: formatNumber (item.qty * item.price) 
             }))
         }));
 
-        return transactionsData;
+        return {
+            transactions: transactionsData,
+            totalSales: formatRupiah(totalSales) 
+        };
     } catch (error) {
         throw new Error('Error retrieving transactions: ' + error.message);
     }
 }
-
-
-// async function getAllTransactions() {
-//     try {
-//         const transactions = await Transaksi.findAll({
-//             include: [{
-//                 model: Member,
-//                 attributes: ['nama'], // Ambil hanya nama dari tabel members
-//                 required: false // `false` memungkinkan untuk transaksi tanpa member (guest)
-//             }],
-//             order: [['transaction_date', 'DESC']]
-//         });
-
-//         const formatNumber = (number) => {
-//             return new Intl.NumberFormat('id-ID', {
-//                 minimumFractionDigits: 0,
-//                 maximumFractionDigits: 0,
-//                 useGrouping: true
-//             }).format(number);
-//         };
-
-//         // Ambil semua id_brand dari semua transaksi
-//         let allBrandIds = [];
-//         const transactionsData = transactions.map(transaction => {
-//             const items = transaction.items; // Tidak perlu mem-parse jika sudah JSON
-
-//             items.forEach(item => {
-//                 allBrandIds.push(item.id_brand);
-//             });
-
-//             return {
-//                 transaction_code: transaction.transaction_code,
-//                 member: transaction.Member ? transaction.Member.nama : 'Guest',
-//                 cashier: transaction.cashier,
-//                 transaction_date: transaction.transaction_date,
-//                 total: formatNumber(transaction.total),
-//                 payment_method: transaction.payment_method,
-//                 payment: formatNumber(transaction.payment),
-//                 debit: transaction.debit,
-//                 change: formatNumber(transaction.change),
-//                 items: items.map(item => ({
-//                     ...item,
-//                     price: formatNumber(item.price),
-//                     brand_name: 'Unknown Brand' // Tempatkan placeholder sementara
-//                 }))
-//             };
-//         });
-
-//         // Hapus duplikasi id_brand
-//         allBrandIds = [...new Set(allBrandIds)];
-
-//         // Ambil brand_name berdasarkan id_brand
-//         const brands = await Brand.findAll({
-//             where: { id_brand: allBrandIds },
-//             attributes: ['id_brand', 'brand_name']
-//         });
-
-//         // Buat map untuk akses cepat brand_name berdasarkan id_brand
-//         const brandMap = {};
-//         brands.forEach(brand => {
-//             brandMap[brand.id] = brand.brand_name;
-//         });
-
-//         // Update data transaksi dengan brand_name yang benar
-//         const finalTransactionsData = transactionsData.map(transaction => {
-//             return {
-//                 ...transaction,
-//                 items: transaction.items.map(item => ({
-//                     ...item,
-//                     price: formatNumber(item.price),
-//                     brand_name: brandMap[item.id_brand] || 'Unknown Brand' // Ambil brand_name dari brandMap
-//                 }))
-//             };
-//         });
-
-//         return finalTransactionsData;
-//     } catch (error) {
-//         console.error('Error retrieving transactions:', error);
-//         throw new Error('Error retrieving transactions: ' + error.message);
-//     }
-// }
 
 async function getTransactionById(transactionId) {
     try {

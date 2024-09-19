@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
@@ -6,159 +7,120 @@ import {
   CCardHeader,
   CSmartTable,
   CButton,
-  CCollapse,
+  CRow,
+  CCol,
+
+
 } from '@coreui/react-pro';
-import '../../../scss/_custom.scss';
-
-
 const TransactionReport = () => {
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [details, setDetails] = useState([])
+    const [transactions, setTransactions] = useState([]);
+    const [totalSales, setTotalSales] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+  
+    useEffect(() => {
+        const fetchTransactions = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const cashierName = localStorage.getItem('userName');
 
+                if (!cashierName) {
+                  throw new Error('cashierName is not available in localStorage');
+              }
 
-  useEffect(() => {
-      const fetchTransactions = async () => {
-          try {
-              const token = localStorage.getItem('token');
-              const response = await axios.get('http://localhost:3000/api/admin/reportTransactions', {
+                const response = await axios.get('/api/admin/reportTransactions', {
                   headers: { Authorization: `${token}` },
-                  withCredentials: true,
-              });
-              setTransactions(response.data);
-          } catch (err) {
-              setError('Error fetching transactions');
-          } finally {
-              setLoading(false);
-          }
-      };
+                    withCredentials: true,
+                });
+                setTransactions(response.data.transactions);
+                setTotalSales(response.data.totalSales);
+                
+                console.log('TRANSAKSI', response.data)
+                console.log('TESTTT', response.items)
 
-      fetchTransactions();
-  }, []);
+            } catch (err) {
+                setError('Error fetching transactions');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-  if (loading) {
-      return <div>Loading...</div>;
-  }
+        fetchTransactions();
+    }, []);
 
-  if (error) {
-      return <div>{error}</div>;
-  }
-
-  const columns = [
-      { key: 'transaction_date', label: 'Date' },
-      { key: 'transaction_code', label: 'Transaction Code' },
-      { key: 'member', label: 'Customer' },
-      { key: 'cashier', label: 'Cashier' },
-      { key: 'total', label: 'Total' },
-      { key: 'payment_method', label: 'Payment Method' },
-      { key: 'payment', label: 'Payment' },
-      { key: 'change', label: 'Change' },
-      // { key: 'items', label: 'Items' },
-      {
-        key: 'show_details',
-        label: '',
-        _style: { width: '1%' },
-        filter: false,
-        sorter: false,
-      },
-  ];
-
-  const toggleDetails = (index) => {
-    const position = details.indexOf(index)
-    let newDetails = details.slice()
-    if (position !== -1) {
-      newDetails.splice(position, 1)
-    } else {
-      newDetails = [...details, index]
+    if (loading) {
+        return <div>Loading...</div>;
     }
-    setDetails(newDetails)
-  }
 
-  const formattedTransactions = transactions.map(transaction => ({
-    transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
-    transaction_code: transaction.transaction_code,
-      member: transaction.member,
-      cashier: transaction.cashier,
-      total: transaction.total,
-      payment_method: transaction.payment_method,
-      payment: transaction.payment,
-      change: transaction.change,
-      detail: transaction.items.map(item =>
-          `${item.product_code} - ${item.product_name} - ${item.brand_name} - ${item.type} - ${item.qty} - ${item.price}`
-      ).join(', '),
-  }));
+    if (error) {
+        return <div>{error}</div>;
+    }
 
-  return (
-      <CCard>
-          <CCardHeader className="">
-              <p>Laporan Penjualan</p>
-          </CCardHeader>
+    const formattedTransactions = transactions.flatMap(transaction => {
+      return transaction.items.map(item => ({
+        transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
+        transaction_code: transaction.transaction_code,
+        member: transaction.member,
+        // member: transaction.member ? transaction.member.nama : 'Guest',  // Jika member tidak ada, gunakan 'Guest'
+        cashier: transaction.cashier,
+        product_code: item.product_code,
+        product_name: item.product_name,
+        brand: item.brand,
+        type: item.type,
+        qty: item.qty,
+        price: item.price,
+        totalItems: item.totalItems
+    }));
+  })
 
-          <CCardBody>
-              <CSmartTable
+    const columns = [
+        { key: 'transaction_date', label: 'Date',  _render: (item) => new Date(item.date).toDateString() },
+        { key: 'transaction_code', label: 'Transaction Code' },
+        { key: 'cashier', label: 'Cashier' },
+        { key: 'member', label: 'Customer' },
+        { key: 'product_code', label: 'Product Code' },
+        { key: 'product_name', label: 'Product Name' },
+        { key: 'qty', label: 'Qty' },
+        { key: 'price', label: 'Price' },
+        { key: 'totalItems', label: 'Total' },
+    ];
 
-                  clickableRows
-                  tableProps={{
-                    striped: true,
-                    hover: true
-                   }}
-                  items={formattedTransactions}
-                  columns={columns}
-                  columnSorter
-                  pagination
-                  tableFilter
-                  columnFilter
-                  cleaner
-                  itemsPerPageSelect
-                  itemsPerPage={5}
-                  scopedColumns={{
-                    show_details: (item) => {
-                      return (
-                        <td className="py-2">
-                          <CButton
-                            color="primary"
-                            variant="outline"
-                            shape="square"
-                            size="sm"
-                            onClick={() => {
-                              toggleDetails(item.transaction_code)
-                            }}
-                          >
-                            {details.includes(item.transaction_code) ? 'Hide' : 'Show'}
-                          </CButton>
-                          </td>
-                      )
-                    },
-                    details: (item) => {
-                      return (
-                        <CCollapse visible={details.includes(item.transaction_code)}>
-                          <CCardBody>
-                            <p>{item.detail}</p>
-                            {/* <p className="text-body-secondary">User since: {item.registered}</p>
-                            <CButton size="sm" color="info">
-                              User Settings
-                            </CButton>
-                            <CButton size="sm" color="danger" className="ml-1">
-                              Delete
-                            </CButton> */}
-                          </CCardBody>
-                        </CCollapse>
-                      )
-                    },
-                  }}
-              />
-          </CCardBody>
-      </CCard>
-  );
+
+    return (
+      <CRow>
+      <CCol>
+        <CCard>
+          <CCardHeader className="d-flex justify-content-between align-items-center">
+              <p className="mb-0">Transaction Report</p>
+              {totalSales && <p className="mb-0">Total Sales: {totalSales}</p>}
+            </CCardHeader>
+            <CCardBody>
+                <CSmartTable
+                    clickableRows
+                    tableProps={{
+                      striped: true,
+                      hover: true,
+                    }}
+                    activePage={1}
+                    // footer
+                    items={formattedTransactions}
+                    columns={columns}
+                    columnFilter
+                    tableFilter
+                    cleaner
+                    itemsPerPageSelect
+                    itemsPerPage={5}
+                    columnSorter
+                    pagination
+                    scopedColumns={{
+                    }}
+                />
+            </CCardBody>
+        </CCard>
+
+      </CCol>
+      </CRow>
+    );
 };
 
-
 export default TransactionReport;
-
-
-
-
-
-
-

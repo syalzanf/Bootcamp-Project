@@ -57,7 +57,7 @@ const DataBarang = () => {
     try {
       const token = localStorage.getItem('token');
 
-      const response = await axios.get('http://localhost:3000/api/admin/products',  {
+      const response = await axios.get('/api/admin/products',  {
         headers: { Authorization: `${token}` },
         withCredentials: true
       });
@@ -79,7 +79,7 @@ const DataBarang = () => {
     const fetchBrands = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:3000/api/admin/brands', {
+        const response = await axios.get('/api/admin/brands', {
           headers: { Authorization: `${token}` },
           withCredentials: true
         });
@@ -155,9 +155,6 @@ const DataBarang = () => {
     setEditVisible(true);
   };
 
-  const handleBrand = () => {
-    navigate('/brand'); // navigasi ke halaman brand
-  };
 
 
   const handleAdd = () => {
@@ -290,7 +287,7 @@ const DataBarang = () => {
       }
 
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:3000/api/admin/products/add', formData, {
+      await axios.post('/api/admin/products/add', formData, {
         headers: { Authorization: `${token}` },
         withCredentials: true
       });
@@ -314,7 +311,7 @@ const DataBarang = () => {
       } else {
         showAlert('Failed to add product!', 'danger');
       }
-      setAddVisible(false);
+      setAddVisible(true);
       console.error('Error adding data:', error.response ? error.response.data : error.message);
     }
   };
@@ -376,7 +373,7 @@ const DataBarang = () => {
 
         const token = localStorage.getItem('token');
 
-        await axios.delete(`http://localhost:3000/api/admin/products/${barang.id_product}`,  {
+        await axios.delete(`/api/admin/products/${barang.id_product}`,  {
           headers: { Authorization: `${token}` },
           withCredentials: true
         });
@@ -398,12 +395,12 @@ const DataBarang = () => {
   };
 
   const columns =[
-    { key: 'product_code', label: 'Kode Barang' },
-    { key: 'product_name', label: 'Nama Barang' },
-    { key: 'brand_name', label: 'Merk' },
+    { key: 'product_code', label: 'Product Code' },
+    { key: 'product_name', label: 'Product Name' },
+    { key: 'brand_name', label: 'Brand' },
     {
       key: 'price',
-      label: 'Harga',
+      label: 'Price',
       // fungsi format harga
       sorter: false,
       filter: false,
@@ -427,15 +424,17 @@ const DataBarang = () => {
   }
 
   return (
-    <CRow>
-      <CCol>
-      <div className="mb-3">
-
-        {alert.visible && (
+    <>
+     {alert.visible && (
           <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
             {alert.message}
           </CAlert>
         )}
+    <CRow>
+      <CCol>
+      <div className="mb-3">
+
+       
         <div className="d-flex justify-content-between align-items-center">
           <CButton
             color="primary"
@@ -445,7 +444,7 @@ const DataBarang = () => {
             className="me-2"
             onClick={handleAdd}
           >
-            Tambah Barang
+            Add Product
           </CButton>
           {/* <CButton
             color="primary"
@@ -459,7 +458,7 @@ const DataBarang = () => {
         </div>
       </div>
         <CCard>
-          <CCardHeader>Data Barang</CCardHeader>
+          <CCardHeader>Product Data</CCardHeader>
           <CCardBody>
           <CSmartTable
               clickableRows
@@ -487,7 +486,7 @@ const DataBarang = () => {
                       shape="rounded-pill"
                       onClick={() => handleShowDetail(item)}
                     >
-                      Detail
+                      Details
                     </CButton>{' '}
                     <CButton
                       color="warning"
@@ -503,7 +502,7 @@ const DataBarang = () => {
                       shape="rounded-pill"
                       onClick={() => handleDelete(item)}
                     >
-                      Hapus
+                      Delete
                     </CButton>
                   </td>
                 ),
@@ -515,7 +514,7 @@ const DataBarang = () => {
 
       <CModal alignment="center" visible={editVisible} onClose={() => setEditVisible(false)}>
         <CModalHeader>
-          <CModalTitle>Edit Barang</CModalTitle>
+          <CModalTitle>Edit Product</CModalTitle>
         </CModalHeader>
         <CModalBody>
 
@@ -523,7 +522,7 @@ const DataBarang = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="product_code" className="col-form-label">
-                  Kode Barang
+                 Product Code
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -539,7 +538,7 @@ const DataBarang = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="product_name" className="col-form-label">
-                  Nama Barang
+                  Product Name
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -550,12 +549,12 @@ const DataBarang = () => {
                   onChange={(e) => setFormValues({ ...formValues, product_name: e.target.value })}
                   required
                 />
-                <CFormFeedback invalid>Nama Barang is required.</CFormFeedback>
+                <CFormFeedback invalid>Product Name is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
-                  Merk
+                  Brand
                 <CFormLabel htmlFor="id_brand" className="col-form-label">
                 </CFormLabel>
               </CCol>
@@ -574,13 +573,13 @@ const DataBarang = () => {
                     </option>
                   ))}
                 </select>
-                <CFormFeedback invalid>Merk is required.</CFormFeedback>
+                <CFormFeedback invalid>Brand is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="type" className="col-form-label">
-                  Tipe
+                  Type
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -591,13 +590,13 @@ const DataBarang = () => {
                   onChange={(e) => setFormValues({ ...formValues, type: e.target.value })}
                   required
                 />
-                <CFormFeedback invalid>Tipe is required.</CFormFeedback>
+                <CFormFeedback invalid>Type is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="stock" className="col-form-label">
-                  Stok
+                  Stock
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -609,31 +608,31 @@ const DataBarang = () => {
                   onChange={(e) => setFormValues({ ...formValues, stock: e.target.value })}
                   required
                 />
-                <CFormFeedback invalid>Stok is required.</CFormFeedback>
+                <CFormFeedback invalid>Stock is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="price" className="col-form-label">
-                  Harga
+                  Price
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput
                   id="price"
-                  placeholder="Harga"
+                  placeholder="Price"
                   type="number"
                   value={formValues.price}
                   onChange={(e) => setFormValues({ ...formValues, price: e.target.value })}
                   required
                 />
-                <CFormFeedback invalid>Harga is required.</CFormFeedback>
+                <CFormFeedback invalid>Price is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="image" className="col-form-label">
-                  Gambar
+                  Image
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -653,7 +652,7 @@ const DataBarang = () => {
                   onChange={handleFileChange}
                   required
                 />
-              <CFormFeedback invalid>Gambar is required.</CFormFeedback>
+              <CFormFeedback invalid>Image is required.</CFormFeedback>
               </CCol>
             </CRow>
           </CForm>
@@ -671,7 +670,7 @@ const DataBarang = () => {
         {selectedBarang && (
           <CModal alignment="center" visible={visible} onClose={() => setVisible(false)}>
             <CModalHeader>
-              <CModalTitle>Detail Barang</CModalTitle>
+              <CModalTitle>Product Details</CModalTitle>
             </CModalHeader>
             <CModalBody>
               <CForm>
@@ -689,7 +688,7 @@ const DataBarang = () => {
                 <CRow className="mb-3">
                   <CCol sm={3}>
                     <CFormLabel htmlFor="product_code" className="col-form-label">
-                      Kode Barang
+                      Product Code
                     </CFormLabel>
                   </CCol>
                   <CCol sm={9}>
@@ -707,7 +706,7 @@ const DataBarang = () => {
                 <CRow className="mb-3">
                   <CCol sm={3}>
                     <CFormLabel htmlFor="product_name" className="col-form-label">
-                      Nama Barang
+                      Product Name
                     </CFormLabel>
                   </CCol>
                   <CCol sm={9}>
@@ -725,7 +724,7 @@ const DataBarang = () => {
                 <CRow className="mb-3">
                   <CCol sm={3}>
                     <CFormLabel htmlFor="id_brand" className="col-form-label">
-                      Merk
+                      Brand
                     </CFormLabel>
                   </CCol>
                   <CCol sm={9}>
@@ -743,7 +742,7 @@ const DataBarang = () => {
                 <CRow className="mb-3">
                   <CCol sm={3}>
                     <CFormLabel htmlFor="type" className="col-form-label">
-                      Tipe
+                      Type
                     </CFormLabel>
                   </CCol>
                   <CCol sm={9}>
@@ -761,7 +760,7 @@ const DataBarang = () => {
                 <CRow className="mb-3">
                   <CCol sm={3}>
                     <CFormLabel htmlFor="stock" className="col-form-label">
-                      Stok
+                      Stock
                     </CFormLabel>
                   </CCol>
                   <CCol sm={9}>
@@ -779,7 +778,7 @@ const DataBarang = () => {
                 <CRow className="mb-3">
                   <CCol sm={3}>
                     <CFormLabel htmlFor="price" className="col-form-label">
-                      Harga
+                      Price
                     </CFormLabel>
                   </CCol>
                   <CCol sm={9}>
@@ -804,14 +803,14 @@ const DataBarang = () => {
 
       <CModal alignment="center" visible={addVisible} onClose={() => setAddVisible(false)}>
         <CModalHeader>
-          <CModalTitle>Tambah Barang</CModalTitle>
+          <CModalTitle>Add Product</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm noValidate validated={validated} onSubmit={handleAddNew}>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="product_name" className="col-form-label">
-                  Nama Barang
+                  Product Name
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -822,12 +821,12 @@ const DataBarang = () => {
                   onChange={(e) => setFormValues({ ...formValues, product_name: e.target.value })}
                   required
                 />
-                <CFormFeedback invalid>Nama Barang is required.</CFormFeedback>
+                <CFormFeedback invalid>Product Name is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
-                  Merk
+                  Brand
                 <CFormLabel htmlFor="id_brand" className="col-form-label">
                 </CFormLabel>
               </CCol>
@@ -839,20 +838,20 @@ const DataBarang = () => {
                   onChange={(e) => setFormValues({ ...formValues, id_brand: e.target.value })}
 
                 >
-                <option value="" disabled>Pilih Merk</option>
+                <option value="" disabled>Select Brand</option>
                   {brands.map((brand) => (
                     <option key={brand.id_brand} value={brand.id_brand}>
                        {brand.brand_name}
                     </option>
                   ))}
                 </select>
-                <CFormFeedback invalid>Merk is required.</CFormFeedback>
+                <CFormFeedback invalid>Brand is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="type" className="col-form-label">
-                  Tipe
+                  Type
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -863,13 +862,13 @@ const DataBarang = () => {
                   onChange={(e) => setFormValues({ ...formValues, type: e.target.value })}
                   required
                 />
-                <CFormFeedback invalid>Tipe is required.</CFormFeedback>
+                <CFormFeedback invalid>Type is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="stock" className="col-form-label">
-                  Stok
+                  Stock
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -881,13 +880,13 @@ const DataBarang = () => {
                   onChange={(e) => setFormValues({ ...formValues, stock: e.target.value })}
                   required
                 />
-                <CFormFeedback invalid>Stok is required.</CFormFeedback>
+                <CFormFeedback invalid>Stock is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="price" className="col-form-label">
-                  Harga
+                  Price
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -899,13 +898,13 @@ const DataBarang = () => {
                   onChange={(e) => setFormValues({ ...formValues, price: e.target.value })}
                   required
                 />
-                <CFormFeedback invalid>Harga is required.</CFormFeedback>
+                <CFormFeedback invalid>Price is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="image" className="col-form-label">
-                  Gambar
+                  Image
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -916,7 +915,7 @@ const DataBarang = () => {
                   onChange={handleFileChange}
                   required
                 />
-                <CFormFeedback invalid>Gambar is required.</CFormFeedback>
+                <CFormFeedback invalid>Image is required.</CFormFeedback>
                 {previewImage && (
                   <img
                     src={previewImage}
@@ -934,6 +933,7 @@ const DataBarang = () => {
         </CModalFooter>
       </CModal>
     </CRow>
+    </>
   );
 };
 

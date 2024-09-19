@@ -44,7 +44,7 @@ const CustomerList = () => {
 
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/cashier/customers',  {
+        const response = await axios.get('/api/cashier/customers',  {
           headers: { Authorization: `${token}` },
           withCredentials: true
         });
@@ -83,7 +83,7 @@ const CustomerList = () => {
         alamat: formValues.alamat,
       };
 
-      const response = await axios.post('http://localhost:3000/api/cashier/customers/add', newCustomer,  {
+      const response = await axios.post('/api/cashier/customers/add', newCustomer,  {
         headers: { Authorization: `${token}` },
         withCredentials: true
       });
@@ -143,7 +143,7 @@ const CustomerList = () => {
         alamat: formValues.alamat,
       };
   
-      const response = await axios.put(`http://localhost:3000/api/cashier/customers/${selectedCustomer.member_id}`, updatedCustomer,  {
+      const response = await axios.put(`/api/cashier/customers/${selectedCustomer.member_id}`, updatedCustomer,  {
         headers: { Authorization: `${token}` },
         withCredentials: true
       });
@@ -199,7 +199,7 @@ const CustomerList = () => {
       });
 
       if (result.isConfirmed) {
-      await axios.delete(`http://localhost:3000/api/cashier/customers/${customer.member_id}`,  {
+      await axios.delete(`/api/cashier/customers/${customer.member_id}`,  {
         headers: { Authorization: `${token}` },
         withCredentials: true
       });
@@ -238,10 +238,10 @@ const CustomerList = () => {
 
 
   const columns = [
-    { key: 'kode_member', label: 'Kode Customer' },
-    { key: 'nama', label: 'Nama Customer' },
-    { key: 'telepon', label: 'Telepon' },
-    { key: 'alamat', label: 'Alamat' },
+    { key: 'kode_member', label: 'Customer Code' },
+    { key: 'nama', label: 'Customer Name' },
+    { key: 'telepon', label: 'Phone' },
+    { key: 'alamat', label: 'Address' },
     {
       key: 'actions',
       label: 'Actions',
@@ -276,13 +276,13 @@ const CustomerList = () => {
               className="float-end"
               onClick={handleAdd}
             >
-              Tambah Customer
+              Add Customer
             </CButton>
           </div>
         </div>
         <CCard>
           <CCardHeader>
-            Data Customer
+            Customers Data
           </CCardHeader>
           <CCardBody>
           <CSmartTable
@@ -317,7 +317,7 @@ const CustomerList = () => {
                       shape="rounded-pill"
                       onClick={() => handleDelete(item)}
                     >
-                      Hapus
+                      Delete
                     </CButton>
                   </td>
                 ),
@@ -336,7 +336,7 @@ const CustomerList = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="kode_member" className="col-form-label">
-                  Kode Customer
+                  Customer Code
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -352,7 +352,7 @@ const CustomerList = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="nama" className="col-form-label">
-                  Nama Customer
+                  Customer Name
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -367,7 +367,7 @@ const CustomerList = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="telepon" className="col-form-label">
-                  Telepon
+                  Phone
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -382,7 +382,7 @@ const CustomerList = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="alamat" className="col-form-label">
-                  Alamat
+                  Address
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -405,7 +405,7 @@ const CustomerList = () => {
 
       <CModal alignment="center" visible={addVisible} onClose={() => setAddVisible(false)}>
         <CModalHeader>
-          <CModalTitle>Tambah Customer</CModalTitle>
+          <CModalTitle>Add Customer</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm>
@@ -428,13 +428,13 @@ const CustomerList = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="nama" className="col-form-label">
-                  Nama Customer
+                  Customer Name
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput
                   id="nama"
-                  placeholder="Nama Customer"
+                  placeholder="Customer Name"
                   value={formValues.nama}
                   onChange={(e) => setFormValues({ ...formValues, nama: e.target.value })}
                 />
@@ -443,13 +443,13 @@ const CustomerList = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="telepon" className="col-form-label">
-                  Telepon
+                  Phone
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput
                   id="telepon"
-                  placeholder="Telepon"
+                  placeholder="Phone"
                   value={formValues.telepon}
                   onChange={(e) => setFormValues({ ...formValues, telepon: e.target.value })}
                 />
@@ -458,13 +458,13 @@ const CustomerList = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="alamat" className="col-form-label">
-                  Alamat
+                  Address
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput
                   id="alamat"
-                  placeholder="Alamat"
+                  placeholder="Address"
                   value={formValues.alamat}
                   onChange={(e) => setFormValues({ ...formValues, alamat: e.target.value })}
                 />

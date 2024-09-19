@@ -49,7 +49,7 @@ const TransactionPage = () => {
   });
   const [telepon, setTelepon] = useState('');
   const [members, setMembers] = useState([]);
-  const [paymentMethod, setPaymentMethod] = useState('cash'); // Default cash
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [payment, setPayment] = useState('');
   const [total, setTotal] = useState('');
   const [change, setChange] = useState('');
@@ -98,13 +98,13 @@ const TransactionPage = () => {
   //       console.error('Error fetching brands:', error.response ? error.response.data : error.message);
   //     }
   //   };
-  
+
   //   fetchBrands();
   // }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    axios.get('http://localhost:3000/api/cashier/products',  {
+    axios.get('/api/cashier/products',  {
       headers: { Authorization: `${token}` },
       withCredentials: true
     })
@@ -116,14 +116,14 @@ const TransactionPage = () => {
         console.error('Error fetching products:', error);
       });
 
-      axios.get('http://localhost:3000/api/cashier/customers',{
+      axios.get('/api/cashier/customers',{
         headers: { Authorization: `${token}` },
         withCredentials: true
       })
       .then(response => {
         setMembers(response.data); // simpan data member di state
 
-        
+
       })
       .catch(error => {
         console.error('Error fetching members:', error);
@@ -167,7 +167,7 @@ const TransactionPage = () => {
     const selectedProduct = products.find(product => product.product_code === selectedCode);
 
     console.log('Selected Product:', selectedProduct);
-    console.log('Brand Name:', selectedProduct.brand_name);
+    // console.log('Brand Name:', selectedProduct.brand_name);
 
 
     if (selectedProduct) {
@@ -236,7 +236,7 @@ const TransactionPage = () => {
 
       try {
 
-        const response = await axios.get(`http://localhost:3000/api/cashier/member/${telepon}`,{
+        const response = await axios.get(`/api/cashier/member/${telepon}`,{
           headers: { Authorization: `${token}` },
           withCredentials: true
         });
@@ -263,13 +263,13 @@ const TransactionPage = () => {
           setIsNameVisible(false);
 
           showAlert('Member tidak terdaftar', 'danger');
-        console.error('Error searching member by phone:', error);
+        // console.error('Error searching member by phone:', error);
         // showAlert('Terjadi kesalahan saat mencari member', 'danger');
       }
     }, 500), // debounce dengan delay 500ms
     []
   );
-  
+
   const handleInputChange = (e) => {
     const value = e.target.value;
     setMemberSearchInput(value);
@@ -314,11 +314,11 @@ const TransactionPage = () => {
     console.log('NewItem', newItem)
 
       if (newItem.qty <= 0) {
-      alert('Quantity must be greater than 0.');
+      showAlert('Quantity is require!', 'danger');
       return;
     }
     const updatedCart = [...cartItems, newItem];
-    
+
     setCartItems(updatedCart);
     updateTotal(updatedCart);
 
@@ -331,6 +331,7 @@ const TransactionPage = () => {
       type: '',
       price: '',
       qty: '',
+      stock: '',
     });
   };
 
@@ -347,18 +348,43 @@ const TransactionPage = () => {
 
   useEffect(() => {
     setChange(payment >= total ? payment - total : 0);
-  }, [payment, total]); 
+  }, [payment, total]);
+
+
+  // const handlePaymentMethodChange = (selectedOptions) => {
+  //   if (selectedOptions.length > 0) {
+  //     const method = selectedOptions[0].value; // Hanya satu pilihan yang diizinkan
+  //     setPaymentMethod([method]);
+  
+  //     if (method !== 'cash') {
+  //       // Jika metode pembayaran bukan 'cash', otomatis set payment dengan total
+  //       setPayment(total);
+  //     } else {
+  //       // Jika metode pembayaran adalah 'cash', kosongkan payment
+  //       setPayment('');
+  //     }
+  //   } else {
+  //     // Jika tidak ada pilihan
+  //     setPaymentMethod([]);
+  //     setPayment('');
+  //   }
+  // };
 
   const handlePaymentMethodChange = (e) => {
     const method = e.target.value;
     setPaymentMethod(method);
-    if (method === 'cash') {
+
+    if (method !== 'cash') {
+      // Set payment to total for methods other than cash
+      setPayment(total);
+    } else {
+      // Clear payment value if method is cash
       setPayment('');
     }
   };
 
   const handlePaymentChange = (e) => {
-    const value = e.target.value;
+    const value = e.target.value.replace(/[^0-9]/g, '');
     setPayment(value ? Number(value) : '');
   };
 
@@ -394,7 +420,7 @@ const TransactionPage = () => {
         try {
           const token = localStorage.getItem('token');
 
-          const response = await axios.post('http://localhost:3000/api/cashier/transaksi', transactionData, {
+          const response = await axios.post('/api/cashier/transaksi', transactionData, {
             headers: { Authorization: `${token}` },
             withCredentials: true
           });
@@ -404,7 +430,7 @@ const TransactionPage = () => {
           const transactionId = response.data.id;
 
 
-          const receiptResponse = await axios.get(`http://localhost:3000/api/generate-receipt/${transactionId}`,  {
+          const receiptResponse = await axios.get(`/api/generate-receipt/${transactionId}`,  {
             headers: { Authorization: `${token}` },
             withCredentials: true
           });
@@ -434,20 +460,22 @@ const TransactionPage = () => {
             price: '',
             qty: '',
           });
+          
           setSelectedMember(null);
           // setMemberSearchInput('');
           // setMembers('');
           setDebitCardCode('');
-          setPaymentMethod('cash');
+          setPaymentMethod('');
           setPayment('');
           setTotal('');
           setChange('');
+          setFormMemberValues('');
 
           // if (printWindow) {
           //   printWindow.print();
           // }
         } catch (error) {
-          alert('Gagal membuat transaksi: ' + error.message);
+          showAlert(error.response.data.message, 'danger');
         }
       };
 
@@ -485,7 +513,7 @@ const TransactionPage = () => {
           alamat: formMemberValues.alamat,
         };
 
-        const response = await axios.post('http://localhost:3000/api/cashier/customers/add', newCustomer, {
+        const response = await axios.post('/api/cashier/customers/add', newCustomer, {
           headers: { Authorization: `${token}` },
           withCredentials: true
         });
@@ -498,12 +526,31 @@ const TransactionPage = () => {
 
       } catch (error) {
         const errorMessage = error.response?.data?.message || 'An error occurred';
-        showAlert(errorMessage, 'success');
+        showAlert(errorMessage, 'danger');
         // setAddVisible(false);
 
         console.error('Terjadi kesalahan:', error);
       }
     };
+
+
+  const formatRupiah = (number) => {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0
+  }).format(number);
+};
+
+const paymentOptions = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'debit', label: 'Debit' },
+  { value: 'gopay', label: 'GoPay' },
+  { value: 'ovo', label: 'Ovo' },
+  { value: 'dana', label: 'Dana' },
+];
+
+
 
   return (
     <div>
@@ -522,14 +569,14 @@ const TransactionPage = () => {
               className="float-end"
               onClick={handleAdd}
             >
-              Tambah Member
+              Add Member
             </CButton>
           </div>
         </div>
       <CCol md={6}>
       <CCard>
         <CCardHeader>
-          <CCardTitle>Form Transaksi</CCardTitle>
+          <CCardTitle>Transaction Form</CCardTitle>
         </CCardHeader>
         <CCardBody>
           <CForm>
@@ -548,7 +595,7 @@ const TransactionPage = () => {
             </CRow> */}
             <CRow className="mb-3">
               <CCol sm={3}>
-                <CFormLabel htmlFor="transaction_date">Tanggal</CFormLabel>
+                <CFormLabel htmlFor="transaction_date">Date</CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput
@@ -561,7 +608,7 @@ const TransactionPage = () => {
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
-                <CFormLabel htmlFor="user_name">Kasir</CFormLabel>
+                <CFormLabel htmlFor="user_name">Cashier</CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput
@@ -574,7 +621,7 @@ const TransactionPage = () => {
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
-                <CFormLabel htmlFor="product_code">Kode Barang</CFormLabel>
+                <CFormLabel htmlFor="product_code">Product Code</CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CMultiSelect
@@ -589,7 +636,7 @@ const TransactionPage = () => {
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
-                <CFormLabel htmlFor="product_name">Nama Barang</CFormLabel>
+                <CFormLabel htmlFor="product_name">Product Name</CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput id="product_name" value={formValues.product_name} readOnly />
@@ -597,7 +644,7 @@ const TransactionPage = () => {
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
-                <CFormLabel htmlFor="brand_name">Merk</CFormLabel>
+                <CFormLabel htmlFor="brand_name">Brand</CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput id="brand_name" value={formValues.brand_name} readOnly />
@@ -605,7 +652,7 @@ const TransactionPage = () => {
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
-                <CFormLabel htmlFor="type">Tipe</CFormLabel>
+                <CFormLabel htmlFor="type">Type</CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput id="type" value={formValues.type} readOnly />
@@ -613,10 +660,18 @@ const TransactionPage = () => {
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
-                <CFormLabel htmlFor="price">Harga</CFormLabel>
+                <CFormLabel htmlFor="price">Price</CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput id="price" value={formValues.price} readOnly />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="stock">Stock</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput id="stock" value={formValues.stock} readOnly />
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -686,7 +741,11 @@ const TransactionPage = () => {
                 <CFormLabel htmlFor="total">Total</CFormLabel>
               </CCol>
               <CCol sm={9}>
-                <CFormInput id="total" value={total} readOnly />
+                <CFormInput
+                  id="total"
+                  value={formatRupiah(total)}
+                  readOnly
+                />
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -716,6 +775,20 @@ const TransactionPage = () => {
                 )}
               </CCol>
             </CRow>
+            {/* <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="payment_method">Payment Method</CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CMultiSelect
+                  options={paymentOptions}
+                  multiple={false}  // Hanya mengizinkan satu pilihan
+                  onChange={(selectedOptions) => handlePaymentMethodChange(selectedOptions)}
+                  value={paymentOptions.filter(option => paymentMethod.includes(option.value))}
+                />
+              </CCol>
+            </CRow> */}
+                        
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="payment">Payment Method</CFormLabel>
@@ -726,8 +799,13 @@ const TransactionPage = () => {
                       value={paymentMethod}
                       onChange={handlePaymentMethodChange}
                     >
+                      <option value="" disabled>Select Payment Method</option>
                       <option value="cash">Cash</option>
                       <option value="debit">Debit</option>
+                      <option value="gopay">GoPay</option>
+                      <option value="ovo">Ovo</option>
+                      <option value="dana">Dana</option>
+
                     </CFormSelect>
               </CCol>
             </CRow>
@@ -735,7 +813,7 @@ const TransactionPage = () => {
             {paymentMethod === 'debit' && (
                   <CRow className="mb-3">
                     <CCol sm={3}>
-                      <CFormLabel htmlFor="debit_card_code">Kode Kartu Debit</CFormLabel>
+                      <CFormLabel htmlFor="debit_card_code">Debit Card Code</CFormLabel>
                     </CCol>
                     <CCol sm={9}>
                       <CFormInput
@@ -755,7 +833,7 @@ const TransactionPage = () => {
                 <CFormInput
                   id="payment"
                   type="text"
-                  value={payment}
+                  value={formatRupiah(payment)}
                   onChange={handlePaymentChange}
                 />
               </CCol>
@@ -767,7 +845,7 @@ const TransactionPage = () => {
               <CCol sm={9}>
                 <CFormInput
                   id="change"
-                  value={`Rp. ${change}`}
+                  value={formatRupiah(change)}
                   readOnly
                 />
               </CCol>
@@ -782,7 +860,7 @@ const TransactionPage = () => {
 
       <CModal alignment="center" visible={addVisible} onClose={() => setAddVisible(false)}>
         <CModalHeader>
-          <CModalTitle>Tambah Customer</CModalTitle>
+          <CModalTitle>Add Customer</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm>
@@ -805,7 +883,7 @@ const TransactionPage = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="nama" className="col-form-label">
-                  Nama Customer
+                  Customer Name
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -820,7 +898,7 @@ const TransactionPage = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="telepon" className="col-form-label">
-                  Telepon
+                  Phone
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -835,7 +913,7 @@ const TransactionPage = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="alamat" className="col-form-label">
-                  Alamat
+                  Address
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>

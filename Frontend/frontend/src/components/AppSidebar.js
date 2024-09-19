@@ -16,7 +16,7 @@ import CIcon from '@coreui/icons-react';
 import { AppSidebarNav } from './AppSidebarNav';
 // import { logo } from 'src/assets/brand/logo';
 // import { sygnet } from 'src/assets/brand/sygnet';
-import logo from 'src/assets/brand/logo1.png';
+import logo from 'src/assets/brand/logo-jam.png';
 
 
 // Import nav configurations
@@ -82,8 +82,7 @@ const AppSidebar = () => {
             className="sidebar-brand-full" 
             height={50} 
           />
-        <span style={{ marginLeft: '10px', fontSize: '20px', fontWeight: 'bold',  fontFamily: 'Dancing Script, cursive'
- }}>
+        <span style={{ marginLeft: '10px', fontSize: '20px', fontWeight: 'bold',  fontFamily: 'Dancing Script, cursive'}}>
           MyBrand
         </span>
 

@@ -15,7 +15,7 @@ const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'));
 const Login = React.lazy(() => import('./views/pages/login/loginUser'));
 
 const DashboardAdmin = React.lazy(() => import('./views/dashboard/DashboardAdmin'))
-const DashboardCashier = React.lazy(() => import('./views/dashboard/DashboardCashier'))
+const DashboardCashier = React.lazy(() => import('./views/pages/transaksi/Transaksi'))
 const DashboardSuperadmin = React.lazy(() => import('./views/dashboard/DashboardSuperadmin'))
 const DataBarang = React.lazy(() => import('./views/pages/barang/DataBarang'))
 const Brand = React.lazy(() => import('./views/pages/barang/Brand'))
@@ -24,6 +24,7 @@ const Stok = React.lazy(() => import('./views/pages/barang/Stok'))
 const CustomersList = React.lazy(() => import('./views/pages/customers/CustomersList'))
 const Customers = React.lazy(() => import('./views/pages/customers/Customers'))
 const LaporanPenjualan = React.lazy(() => import('./views/pages/laporan/LaporanPenjualan'))
+const DataPenjualan = React.lazy(() => import('./views/pages/laporan/DataPenjualan'))
 const LaporanPenjualanCashier = React.lazy(() => import('./views/pages/laporan/LaporanPenjualanCashier'))
 const DataPenjualanCashier = React.lazy(() => import('./views/pages/laporan/DataPenjualanCashier'))
 const Transaksi = React.lazy(() => import('./views/pages/transaksi/Transaksi'))
@@ -59,18 +60,25 @@ const App = () => {
 
   // useEffect(() => {
   //   // Panggil refreshAccessToken 5 menit sebelum token kedaluwarsa
-  //   if (timeLeft <= 300) { // 5 menit dalam detik
+  //   if (timeLeft <= 600) { // 5 menit dalam detik
   //     refreshAccessToken();
   //   }
   // }, [timeLeft]);
 
+  // useEffect(() => {
+  //   // Panggil refreshAccessToken 5 menit sebelum token kedaluwarsa
+  //   if (timeLeft <= 600) { // 5 menit dalam detik
+  //     refreshAccessToken();
+  //   }
+  // }, [timeLeft]);
 
   // const refreshAccessToken = async () => {
   //   try {
   //     const refreshToken = localStorage.getItem('token');
   //     const response = await axios.post('http://localhost:3000/api/refresh-token', { refreshToken });
   //     setTimeLeft(3600); // Reset waktu ke 1 jam lagi
-  //     localStorage.setItem('token', response.data.token)
+  //     localStorage.removeItem('token'); // Misal token disimpan di localStorage
+  //     localStorage.setItem('token', response.data.token);
   //     console.log('Token berhasil diperbarui:', response.data.token);
   //   } catch (error) {
   //     console.error('Gagal memperbarui token:', error);
@@ -84,7 +92,7 @@ const App = () => {
   //   const secs = seconds % 60;
   //   return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   // };
-
+  
   // const handleLogout = () => {
   //   // Proses logout (misalnya, hapus token dari localStorage)
   //   localStorage.removeItem('token'); // Misal token disimpan di localStorage
@@ -151,16 +159,12 @@ const App = () => {
                 <Route exact path="/customers" element={<Customers />} />
                 <Route exact path="/transaksi" element={<Transaksi />} />
                 <Route exact path="/laporan-penjualan" element={<LaporanPenjualan />} />
+                <Route exact path="/data-penjualan" element={<DataPenjualan />} />
                 <Route exact path="/laporan-penjualan-cashier" element={<LaporanPenjualanCashier />} />
                 <Route exact path="/data-penjualan-cashier" element={<DataPenjualanCashier />} />
                 <Route exact path="/data-user" element={<DataUser />} />
                 <Route exact path="/app-log" element={<LogAktivitas />} />
-
-
-              {/* <Route exact path="/customers" name="Customers List" element={<Customers />} /> */}
-              {/* <Route exact path="/customers-cashier" name="Customers Cashier" element={<CustomersCashier />} /> */}
-              {/* <Route exact path="/laporanPenjualan" name="Laporan Penjualan" element={<LaporanPenjualan />} /> */}
-              {/* <Route exact path="/transaksi" name="Transaksi" element={<Transaksi />} />   */}
+                
             </Route>
             </>
           ) : (

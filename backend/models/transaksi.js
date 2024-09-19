@@ -47,9 +47,9 @@ const Transaksi = sequelize.define('Transaksi', {
         allowNull: false,
     },
     payment_method: {
-        type: DataTypes.ENUM('debit', 'cash'),
+        type: DataTypes.ENUM('debit', 'cash', 'gopay', 'ovo', 'dana'),
         allowNull: false,
-    },
+    },  
     debit: {
         type: DataTypes.STRING(50),
         allowNull: true,
@@ -57,6 +57,8 @@ const Transaksi = sequelize.define('Transaksi', {
 }, {
     tableName: 'transaksi',
     timestamps: false,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
     hooks: {
         // Hook beforeCreate untuk mengenerate transaction_code
         beforeCreate: async (transaction) => {

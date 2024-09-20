@@ -207,6 +207,7 @@
             name: user.name,
             telepon: user.telepon,
             photo:user.photo,
+            email:user.email,
             token: token,
             refreshToken: refreshToken
           },
@@ -441,7 +442,7 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
   // Rute untuk menambahkan produk baru
   app.post('/api/admin/products/add', upload.single('image'), authenticateToken, async (req, res) => {
     console.log(req.file); 
-    const { product_code, product_name, id_brand, type, price, stock } = req.body;
+    const { product_code, product_name, id_brand, type, color, price, stock } = req.body;
     const image = req.file ? `uploads/${req.file.filename}`: null;
 
      // Validasi input
@@ -465,7 +466,7 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
        }
 
         // Tambah produk ke database
-        const product = await admin.addProduct({ product_code, product_name, id_brand, type, price, stock, image});
+        const product = await admin.addProduct({ product_code, product_name, id_brand, type, price, stock, color, image});
         res.status(201).json({ 
           message: 'Product added successfully',
           product,
@@ -495,7 +496,7 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
   // Rute untuk mengupdate produk berdasarkan id
   app.put('/api/admin/products/:id', upload.single('image'), authenticateToken, async (req, res) => {
     const { id } = req.params;
-    const { product_name, id_brand, type, price, stock, } = req.body;
+    const { product_name, id_brand, type, color, price, stock, } = req.body;
     
     const image = req.file ? `uploads/${req.file.filename}` : null;
     console.log('Image:', image); // Cek apakah image tidak null
@@ -505,6 +506,7 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
           product_name,
           id_brand,
           type,
+          color,
           price,
           stock,
           image

@@ -20,6 +20,13 @@ import {
   CSmartTable,
   CAlert
 } from '@coreui/react-pro';
+import {
+  cilCheckCircle,
+  cilWarning,
+  cilInfo,
+  cilXCircle,
+} from '@coreui/icons';
+import CIcon from '@coreui/icons-react';
 import '../../../scss/_custom.scss';
 
 const Brand = () => {
@@ -35,6 +42,33 @@ const Brand = () => {
     brand_name: '',
   });
   const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
+
+  const showAlert = (message, color) => {
+    setAlert({
+      visible: true,
+      message,
+      color
+    });
+    setTimeout(() => {
+      setAlert(prev => ({ ...prev, visible: false }));
+    }, 3000);
+  };
+
+    // untuk memilih ikon alert sesuai warna
+    const getIcon = (color) => {
+      switch (color) {
+        case 'success':
+          return <CIcon icon={cilCheckCircle} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'danger':
+          return <CIcon icon={cilXCircle} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'warning':
+          return <CIcon icon={cilWarning} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'info':
+          return <CIcon icon={cilInfo} className="flex-shrink-0 me-2" width={24} height={24} />;
+        default:
+          return null;
+      }
+    };
 
   useEffect(() => {
     fetchBrands();
@@ -61,16 +95,7 @@ const Brand = () => {
     }
   };
 
-  const showAlert = (message, color) => {
-    setAlert({
-      visible: true,
-      message,
-      color
-    });
-    setTimeout(() => {
-      setAlert(prev => ({ ...prev, visible: false }));
-    }, 3000);
-  };
+ 
 
   const handleAdd = () => {
     setFormValues({
@@ -107,8 +132,9 @@ const Brand = () => {
 
       setBrands([...brands, response.data]);
 
-      showAlert('Brand successfully added!', 'light');
+      showAlert('Brand successfully added!', 'success');
       setAddVisible(false);
+      setValidated(false);
       setFormValues({
         brand_name: '',
       });
@@ -169,7 +195,7 @@ const Brand = () => {
       setBrands(updatedBrands);
   
 
-      showAlert('Brand successfully updated!', 'light');
+      showAlert('Brand successfully updated!', 'success');
       // fetchBrands();
       setEditVisible(false);
       setSelectedBrand(null);
@@ -240,16 +266,21 @@ const Brand = () => {
     <CRow>
       <CCol>
         <div className="mb-3">
-          {alert.visible && (
-            <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
-              {alert.message}
-            </CAlert>
-          )}
+        {alert.visible && (
+              <CAlert
+                color={alert.color}
+                onClose={() => setAlert({ ...alert, visible: false })}
+                className="w-500 d-flex align-items-center"
+              >
+                {getIcon(alert.color)}
+                <div>{alert.message}</div>
+              </CAlert>
+            )}
           <div className="d-flex justify-content-between align-items-center">
             <CButton
               color="primary"
               size="sm"
-              shape="rounded-pill"
+              // shape="rounded-pill"
               className="me-2"
               onClick={handleAdd}
             >
@@ -282,7 +313,7 @@ const Brand = () => {
                     <CButton
                       color="warning"
                       size="sm"
-                      shape="rounded-pill"
+                      // shape="rounded-pill"
                       onClick={() => handleEdit(item)}
                     >
                       Edit
@@ -290,7 +321,7 @@ const Brand = () => {
                     <CButton
                       color="danger"
                       size="sm"
-                      shape="rounded-pill"
+                      // shape="rounded-pill"
                       onClick={() => handleDelete(item)}
                     >
                       Delete

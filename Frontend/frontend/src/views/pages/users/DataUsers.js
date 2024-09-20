@@ -22,6 +22,14 @@ import {
   CFormFeedback,
   CFormSelect,
 } from '@coreui/react-pro';
+import {
+  cilCheckCircle,
+  cilWarning,
+  cilInfo,
+  cilXCircle,
+} from '@coreui/icons';
+import CIcon from '@coreui/icons-react';
+
 
 import '../../../scss/_custom.scss';
 
@@ -47,8 +55,34 @@ const Users = () => {
     status: '',
     photo : null,
   });
-  const token = localStorage.getItem("token");
 
+  const showAlert = (message, color) => {
+    setAlert({
+      visible: true,
+      message,
+      color
+    });
+    setTimeout(() => {
+      setAlert(prev => ({ ...prev, visible: false }));
+    }, 3000);
+  };
+    // untuk memilih ikon alert sesuai warna
+    const getIcon = (color) => {
+      switch (color) {
+        case 'success':
+          return <CIcon icon={cilCheckCircle} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'danger':
+          return <CIcon icon={cilXCircle} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'warning':
+          return <CIcon icon={cilWarning} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'info':
+          return <CIcon icon={cilInfo} className="flex-shrink-0 me-2" width={24} height={24} />;
+        default:
+          return null;
+      }
+    };
+
+  const token = localStorage.getItem("token");
 
   const fetchData = async () => {
     try {
@@ -130,16 +164,19 @@ const Users = () => {
         },
         withCredentials: true
       });
+
+      showAlert('User successfully Added!', 'success');
+
       
-      Swal.fire(
-        'Added!',
-        'User details have been added.',
-        'success',
-        {
-          background: '#343a40',
-          color: '#fff',
-        }
-      );
+      // Swal.fire(
+      //   'Added!',
+      //   'User details have been added.',
+      //   'success',
+      //   {
+      //     background: '#343a40',
+      //     color: '#fff',
+      //   }
+      // );
 
       setAddVisible(false);
       fetchData();
@@ -148,13 +185,16 @@ const Users = () => {
     } catch (error) {
       console.error('Error menambah data pengguna:', error.response ? error.response.data : error.message);
       const errorMessage = error.response?.data?.message || 'An error occurred';
-      Swal.fire({
-        title: 'Failed!',
-        text: errorMessage,
-        icon: 'error',
-        background: '#343a40',
-        color: '#fff',
-    });
+
+      showAlert('Failed to add user!', 'danger');
+
+    //   Swal.fire({
+    //     title: 'Failed!',
+    //     text: errorMessage,
+    //     icon: 'error',
+    //     background: '#343a40',
+    //     color: '#fff',
+    // });
     }
   };
 
@@ -232,30 +272,36 @@ const Users = () => {
 
       setEditVisible(false);
 
-      Swal
-      .fire(
-        'Updated!',
-        'User details have been updated.',
-        'success',
-        {
-          background: '#343a40',
-          color: '#fff',
-        }
-      );
+      showAlert('User successfully updated!', 'success');
+
+      // Swal
+      // .fire(
+      //   'Updated!',
+      //   'User details have been updated.',
+      //   'success',
+      //   {
+      //     background: '#343a40',
+      //     color: '#fff',
+      //   }
+      // );
 
       fetchData();
 
     } catch (error) {
       console.error('Error updating user data:', error.response ? error.response.data : error.message);
-      Swal.fire(
-        'Failed!',
-        'There was an error updating the user.',
-        'error',
-        {
-          background: '#343a40',
-          color: '#fff',
-        }
-      );
+
+      showAlert(error.message, 'danger');
+      showAlert('Failed to update user!', 'danger');
+
+      // Swal.fire(
+      //   'Failed!',
+      //   'There was an error updating the user.',
+      //   'error',
+      //   {
+      //     background: '#343a40',
+      //     color: '#fff',
+      //   }
+      // );
     }
   };
 
@@ -298,17 +344,6 @@ const Users = () => {
     }
   };
 
-  const showAlert = (message, color) => {
-    setAlert({
-      visible: true,
-      message,
-      color
-    });
-    setTimeout(() => {
-      setAlert(prev => ({ ...prev, visible: false }));
-    }, 3000);
-  };
-
   const columns = [
     { key: 'username', label: 'Username' },
     { key: 'name', label: 'Name' },
@@ -330,10 +365,15 @@ const Users = () => {
     const newStatus = item.status === 'active' ? 'inactive' : 'active';
 
     try {
-      const response = await axios.put(`/api/user/${item.id}/status`, {
+      const token = localStorage.getItem('token');
+
+      const response = await axios.put(`/api/user/${item.id}/status`,
+      {
+        status: newStatus,
+      },
+       {
         headers: { Authorization: `${token}` },
         withCredentials: true,
-        status: newStatus,
       });
 
       console.log('Status updated:', response.data);
@@ -368,23 +408,24 @@ const Users = () => {
 
   return (
     <CRow>
-        {alert.visible && (
-          <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
-            {alert.message}
-          </CAlert>
-        )}
+     
       <CCol>
         <div className="mb-3">
-          {alert.visible && (
-            <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
-              {alert.message}
-            </CAlert>
-          )}
+           {alert.visible && (
+              <CAlert
+                color={alert.color}
+                onClose={() => setAlert({ ...alert, visible: false })}
+                className="w-500 d-flex align-items-center"
+              >
+                {getIcon(alert.color)}
+                <div>{alert.message}</div>
+              </CAlert>
+            )}
           <div className="d-flex justify-content-between align-items-center">
             <CButton
               color="primary"
               size="sm"
-              shape="rounded-pill"
+              // shape="rounded-pill"
               className="float-end"
               onClick={handleAdd}
             >
@@ -421,36 +462,36 @@ const Users = () => {
                 actions: (item) => (
                   <td className="text-center">
                     {item.role !== 'superadmin' && (
-                    <>
-                    <CButton
-                      color="info"
-                      size="sm"
-                      shape="rounded-pill"
-                      onClick={() => handleStatus(item)}
-                    >
-                      Status
-                    </CButton>{' '}
-                    <CButton
-                      color="warning"
-                      size="sm"
-                      shape="rounded-pill"
-                      onClick={() => handleEdit(item)}
-                      disabled={item.role === 'superadmin'}
-                    >
-                      Edit
-                    </CButton>{' '}
-                    <CButton
-                      color="danger"
-                      size="sm"
-                      shape="rounded-pill"
-                      onClick={() => handleDelete(item)}
-                    >
-                      Delete
-                    </CButton>
-                    </>
+                      <div className="d-flex justify-content-center gap-2">
+                        <CButton
+                          color="info"
+                          size="sm"
+                          // shape="rounded-pill"
+                          onClick={() => handleStatus(item)}
+                        >
+                          Status
+                        </CButton>
+                        <CButton
+                          color="warning"
+                          size="sm"
+                          // shape="rounded-pill"
+                          onClick={() => handleEdit(item)}
+                          disabled={item.role === 'superadmin'}
+                        >
+                          Edit
+                        </CButton>
+                        <CButton
+                          color="danger"
+                          size="sm"
+                          // shape="rounded-pill"
+                          onClick={() => handleDelete(item)}
+                        >
+                          Delete
+                        </CButton>
+                      </div>
                     )}
                   </td>
-                ),
+                ),                
               }}
             />
           </CCardBody>
@@ -490,7 +531,7 @@ const Users = () => {
                   id="password"
                   value={formValues.password}
                   onChange={(e) => setFormValues({ ...formValues, password: e.target.value })}
-                  // placeholder="Leave blank to keep current password"
+                  placeholder="Edit Password"
                 />
               </CCol>
             </CRow>

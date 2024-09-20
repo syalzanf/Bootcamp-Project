@@ -76,7 +76,7 @@ async function loginUser(username, password) {
     console.log('User:', user); 
     
     if (!user) {
-      throw new Error('User tidak ada');
+      throw new Error('User is not exist');
     }
 
     if (user.status !== 'active') {
@@ -120,6 +120,7 @@ async function loginUser(username, password) {
         role: user.role,
         telepon: user.telepon,
         photo: user.photo,
+        email: user.email
       }
     };
   } catch (error) {
@@ -163,6 +164,7 @@ async function verifyToken(token) {
         telepon: user.telepon,
         role: user.role,
         photo: user.photo,
+        email: user.email,
       }
     };
   } catch (error) {

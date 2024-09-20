@@ -121,7 +121,7 @@ const TransactionReport = () => {
       <CCol>
         <CCard>
           <CCardHeader className="">
-            <p>Transaction Report</p>
+            <p>Transaction History</p>
           </CCardHeader>
 
           <CCardBody>

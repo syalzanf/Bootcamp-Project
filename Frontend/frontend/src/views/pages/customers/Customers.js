@@ -19,6 +19,14 @@ import {
   CFormLabel,
   CFormInput
 } from '@coreui/react-pro';
+import {
+  cilCheckCircle,
+  cilWarning,
+  cilInfo,
+  cilXCircle,
+} from '@coreui/icons';
+import CIcon from '@coreui/icons-react';
+
 import '../../../scss/_custom.scss';
 
 const CustomerList = () => {
@@ -29,14 +37,41 @@ const CustomerList = () => {
   const [addVisible, setAddVisible] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
-
   const [formValues, setFormValues] = useState({
     kode_member: '',
     nama: '',
     telepon: '',
     alamat: '',
   });
+  const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
+
+
+  const showAlert = (message, color) => {
+    setAlert({
+      visible: true,
+      message,
+      color
+    });
+    setTimeout(() => {
+      setAlert(prev => ({ ...prev, visible: false }));
+    }, 3000);
+  };
+    // untuk memilih ikon alert sesuai warna
+    const getIcon = (color) => {
+      switch (color) {
+        case 'success':
+          return <CIcon icon={cilCheckCircle} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'danger':
+          return <CIcon icon={cilXCircle} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'warning':
+          return <CIcon icon={cilWarning} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'info':
+          return <CIcon icon={cilInfo} className="flex-shrink-0 me-2" width={24} height={24} />;
+        default:
+          return null;
+      }
+    };
+
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -88,15 +123,8 @@ const CustomerList = () => {
         withCredentials: true
       });
 
-      Swal.fire(
-        'Added!',
-        'Customer success added.',
-        'success',
-        {
-          background: '#343a40',
-          color: '#fff',
-        }
-      );
+      showAlert('Customer successfully Added!', 'success');
+
 
       console.log('Pelanggan berhasil ditambahkan:', response.data);
 
@@ -106,13 +134,15 @@ const CustomerList = () => {
 
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'An error occurred';
-      Swal.fire({
-        title: 'Error!',
-        text: errorMessage,
-        icon: 'error',
-        background: '#343a40',
-        color: '#fff',
-    });
+      showAlert(errorMessage, 'danger');
+
+    //   Swal.fire({
+    //     title: 'Error!',
+    //     text: errorMessage,
+    //     icon: 'error',
+    //     background: '#343a40',
+    //     color: '#fff',
+    // });
       console.error('Terjadi kesalahan:', error);
     }
   };
@@ -135,6 +165,19 @@ const CustomerList = () => {
       console.error("No selectedCustomer or ID missing");
       return;
     }
+
+
+    //   // Memeriksa apakah ada perubahan pada data
+    //   const hasChanges = 
+    //   formValues.nama !== selectedCustomer.nama ||
+    //   formValues.telepon !== selectedCustomer.telepon ||
+    //   formValues.alamat !== selectedCustomer.alamat;
+
+    // if (!hasChanges) {
+    //   console.log("No changes detected. Skipping update.");
+    //   showAlert('No changes made to customer data.', 'info');
+    //   return;
+    // }
   
     try {
       const updatedCustomer = {
@@ -158,30 +201,23 @@ const CustomerList = () => {
       );
   
       setEditVisible(false);
-  
-      Swal.fire(
-        'Updated!',
-        'Customer details have been updated.',
-        'success',
-        {
-          background: '#343a40',
-          color: '#fff',
-        }
-      );
+      showAlert('Customer successfully Updated!', 'success');
+
+     
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'An error occurred';
       console.error('Error updating customer data:', error.response ? error.response.data : error.message);
-      Swal.fire({
-        title: 'Error!',
-        text: errorMessage,
-        icon: 'error',
-        background: '#343a40',
-        color: '#fff',
-    });
+      showAlert(errorMessage, 'danger');
+
+    //   Swal.fire({
+    //     title: 'Error!',
+    //     text: errorMessage,
+    //     icon: 'error',
+    //     background: '#343a40',
+    //     color: '#fff',
+    // });
     }
   };
-
-
 
 
   const handleDelete = async (customer) => {
@@ -224,19 +260,6 @@ const CustomerList = () => {
   };
 
 
-  const showAlert = (message, color) => {
-    setAlert({
-      visible: true,
-      message,
-      color
-    });
-    setTimeout(() => {
-      setAlert(prev => ({ ...prev, visible: false }));
-    }, 3000);
-  };
-
-
-
   const columns = [
     { key: 'kode_member', label: 'Customer Code' },
     { key: 'nama', label: 'Customer Name' },
@@ -263,16 +286,21 @@ const CustomerList = () => {
     <CRow>
       <CCol>
         <div className="mb-3">
-          {alert.visible && (
-            <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
-              {alert.message}
-            </CAlert>
-          )}
+        {alert.visible && (
+              <CAlert
+                color={alert.color}
+                onClose={() => setAlert({ ...alert, visible: false })}
+                className="w-500 d-flex align-items-center"
+              >
+                {getIcon(alert.color)}
+                <div>{alert.message}</div>
+              </CAlert>
+            )}
           <div className="d-flex justify-content-between align-items-center">
             <CButton
               color="primary"
               size="sm"
-              shape="rounded-pill"
+              // shape="rounded-pill"
               className="float-end"
               onClick={handleAdd}
             >
@@ -306,7 +334,7 @@ const CustomerList = () => {
                     <CButton
                       color="warning"
                       size="sm"
-                      shape="rounded-pill"
+                      // shape="rounded-pill"
                       onClick={() => handleEdit(item)}
                     >
                       Edit
@@ -314,7 +342,7 @@ const CustomerList = () => {
                     <CButton
                       color="danger"
                       size="sm"
-                      shape="rounded-pill"
+                      // shape="rounded-pill"
                       onClick={() => handleDelete(item)}
                     >
                       Delete

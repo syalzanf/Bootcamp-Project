@@ -21,6 +21,13 @@ import {
   CSmartTable,
   CAlert
 } from '@coreui/react-pro';
+import {
+  cilCheckCircle,
+  cilWarning,
+  cilInfo,
+  cilXCircle,
+} from '@coreui/icons';
+import CIcon from '@coreui/icons-react';
 import '../../../scss/_custom.scss';
 
 
@@ -38,6 +45,7 @@ const DataBarang = () => {
     product_name: '',
     id_brand: '',
     type: '',
+    color: '',
     stock: '',
     price: '',
     image: null,
@@ -47,6 +55,32 @@ const DataBarang = () => {
   const [showFeedback, setShowFeedback] = useState(false)
   const [brands, setBrands] = useState([]);
   const navigate = useNavigate();
+
+  const showAlert = (message, color) => {
+    setAlert({
+      visible: true,
+      message,
+      color
+    });
+    setTimeout(() => {
+      setAlert(prev => ({ ...prev, visible: false }));
+    }, 3000);
+  };
+    // untuk memilih ikon alert sesuai warna
+    const getIcon = (color) => {
+      switch (color) {
+        case 'success':
+          return <CIcon icon={cilCheckCircle} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'danger':
+          return <CIcon icon={cilXCircle} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'warning':
+          return <CIcon icon={cilWarning} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'info':
+          return <CIcon icon={cilInfo} className="flex-shrink-0 me-2" width={24} height={24} />;
+        default:
+          return null;
+      }
+    };
 
 
   useEffect(() => {
@@ -137,6 +171,7 @@ const DataBarang = () => {
       product_name: barang.product_name || '',
       id_brand: idBrand,  // set id_brand
       type: barang.type || '',
+      color: barang.color || '',
       stock: barang.stock || '',
       price: barang.price || '',
       image: barang.image || null,
@@ -146,6 +181,7 @@ const DataBarang = () => {
       product_name: barang.product_name || '',
       id_brand: idBrand,
       type: barang.type || '',
+      color: barang.color || '',
       stock: barang.stock || '',
       price: barang.price || '',
       image: barang.image || null,
@@ -162,6 +198,7 @@ const DataBarang = () => {
       product_name: '',
       id_brand: '',
       type: '',
+      color: '',
       stock: '',
       price: '',
       image: null,
@@ -223,7 +260,7 @@ const DataBarang = () => {
       return;
     }
 
-    if (!formValues.product_name || !formValues.id_brand || !formValues.type || !formValues.stock || !formValues.price) {
+    if (!formValues.product_name || !formValues.id_brand || !formValues.type ||  !formValues.color || !formValues.stock || !formValues.price) {
       setValidated(true);
       return;
     }
@@ -233,6 +270,7 @@ const DataBarang = () => {
       formData.append('product_name', formValues.product_name);
       formData.append('id_brand', formValues.id_brand);
       formData.append('type', formValues.type);
+      formData.append('color', formValues.color);
       formData.append('stock', formValues.stock);
       formData.append('price', formValues.price);
       if (formValues.image) {
@@ -252,7 +290,7 @@ const DataBarang = () => {
         }
       );
 
-      showAlert('Product successfully updated!', 'light');
+      showAlert('Product successfully updated!', 'success');
       fetchData();
       setEditVisible(false);
       setSelectedBarang(null);
@@ -280,6 +318,7 @@ const DataBarang = () => {
       formData.append('product_name', formValues.product_name);
       formData.append('id_brand', formValues.id_brand);
       formData.append('type', formValues.type);
+      formData.append('color', formValues.color);
       formData.append('stock', formValues.stock);
       formData.append('price', formValues.price);
       if (formValues.image) {
@@ -292,14 +331,16 @@ const DataBarang = () => {
         withCredentials: true
       });
 
-      showAlert('Product successfully Added!', 'light');
+      showAlert('Product successfully Added!', 'success');
       fetchData();
       setAddVisible(false);
+      setValidated(false);
 
       setFormValues({
         product_name: '',
         id_brand: '',
         type: '',
+        color: '',
         stock: '',
         price: '',
         image: null,
@@ -312,21 +353,10 @@ const DataBarang = () => {
         showAlert('Failed to add product!', 'danger');
       }
       setAddVisible(true);
+      setValidated(false);
       console.error('Error adding data:', error.response ? error.response.data : error.message);
     }
   };
-
-  const showAlert = (message, color) => {
-    setAlert({
-      visible: true,
-      message,
-      color
-    });
-    setTimeout(() => {
-      setAlert(prev => ({ ...prev, visible: false }));
-    }, 3000);
-  };
-
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -425,21 +455,24 @@ const DataBarang = () => {
 
   return (
     <>
-     {alert.visible && (
-          <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
-            {alert.message}
-          </CAlert>
-        )}
     <CRow>
       <CCol>
       <div className="mb-3">
-
-       
+      {alert.visible && (
+              <CAlert
+                color={alert.color}
+                onClose={() => setAlert({ ...alert, visible: false })}
+                className="w-500 d-flex align-items-center"
+              >
+                {getIcon(alert.color)}
+                <div>{alert.message}</div>
+              </CAlert>
+            )}
         <div className="d-flex justify-content-between align-items-center">
           <CButton
             color="primary"
             size="sm"
-            shape="rounded-pill"
+            // shape="rounded-pill"
             // className="float-end"
             className="me-2"
             onClick={handleAdd}
@@ -483,7 +516,7 @@ const DataBarang = () => {
                     <CButton
                       color="info"
                       size="sm"
-                      shape="rounded-pill"
+                      // shape="rounded-pill"
                       onClick={() => handleShowDetail(item)}
                     >
                       Details
@@ -491,7 +524,7 @@ const DataBarang = () => {
                     <CButton
                       color="warning"
                       size="sm"
-                      shape="rounded-pill"
+                      // shape="rounded-pill"
                       onClick={() => handleEdit(item)}
                     >
                       Edit
@@ -499,7 +532,7 @@ const DataBarang = () => {
                     <CButton
                       color="danger"
                       size="sm"
-                      shape="rounded-pill"
+                      // shape="rounded-pill"
                       onClick={() => handleDelete(item)}
                     >
                       Delete
@@ -585,12 +618,29 @@ const DataBarang = () => {
               <CCol sm={9}>
                 <CFormInput
                   id="type"
-                  placeholder="Tipe"
+                  placeholder="Type"
                   value={formValues.type}
                   onChange={(e) => setFormValues({ ...formValues, type: e.target.value })}
                   required
                 />
                 <CFormFeedback invalid>Type is required.</CFormFeedback>
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="color" className="col-form-label">
+                  Color
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="color"
+                  placeholder="Color"
+                  value={formValues.color}
+                  onChange={(e) => setFormValues({ ...formValues, color: e.target.value })}
+                  required
+                />
+                <CFormFeedback invalid>Color is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -759,6 +809,24 @@ const DataBarang = () => {
                 </CRow>
                 <CRow className="mb-3">
                   <CCol sm={3}>
+                    <CFormLabel htmlFor="color" className="col-form-label">
+                      Color
+                    </CFormLabel>
+                  </CCol>
+                  <CCol sm={9}>
+                  <div className="d-flex align-items-center">
+                    <span className="me-2">:</span>
+                    <CFormInput
+                      id="color"
+                      value={selectedBarang.color}
+                      readOnly
+                      plainText
+                    />
+                  </div>
+                  </CCol>
+                </CRow>
+                <CRow className="mb-3">
+                  <CCol sm={3}>
                     <CFormLabel htmlFor="stock" className="col-form-label">
                       Stock
                     </CFormLabel>
@@ -857,12 +925,29 @@ const DataBarang = () => {
               <CCol sm={9}>
                 <CFormInput
                   id="type"
-                  placeholder="Tipe"
+                  placeholder="Type"
                   value={formValues.type}
                   onChange={(e) => setFormValues({ ...formValues, type: e.target.value })}
                   required
                 />
                 <CFormFeedback invalid>Type is required.</CFormFeedback>
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="color" className="col-form-label">
+                  Color
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="color"
+                  placeholder="Color"
+                  value={formValues.color}
+                  onChange={(e) => setFormValues({ ...formValues, color: e.target.value })}
+                  required
+                />
+                <CFormFeedback invalid>Color is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">

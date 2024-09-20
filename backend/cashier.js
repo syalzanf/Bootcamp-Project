@@ -136,13 +136,12 @@ async function getListCustomers() {
 // Fungsi untuk mengupdate customer
 async function updateCustomer(id, { nama, telepon, alamat }) {
     try {
+        if (!validator.isMobilePhone(telepon, 'id-ID')) {
+            throw new Error('Invalid phone number format!');
+        }
 
         if (!nama || !telepon || !alamat) {
             throw new Error('All fields are required');
-        }
-      
-        if (!validator.isMobilePhone(telepon, 'id-ID')) {
-            throw new Error('Invalid phone number format!');
         }
         
         const existingMemberResult = await pool.query(
@@ -371,7 +370,10 @@ async function getTransactionReportByCashier(cashierName) {
 
         // memeriksa apakah transaksi ditemukan
         if (transactions.length === 0) {
-            return { message: 'No transactions found for this cashier' };
+            return {          
+                transactions: transactions([]),
+                totalSales: formatRupiah(0) 
+             };
         }
 
         // untuk memformat angka dalam bentuk rupiah

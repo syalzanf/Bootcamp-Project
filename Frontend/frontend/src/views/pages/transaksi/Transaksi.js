@@ -30,6 +30,13 @@ import {
 } from '@coreui/react-pro';
 import Select from 'react-select';
 import debounce from 'lodash/debounce';
+import {
+  cilCheckCircle,
+  cilWarning,
+  cilInfo,
+  cilXCircle,
+} from '@coreui/icons';
+import CIcon from '@coreui/icons-react';
 
 
 
@@ -74,6 +81,34 @@ const TransactionPage = () => {
   });
   const [isNameVisible, setIsNameVisible] = useState(false);
   const [memberOptions, setMemberOptions] = useState([]);
+
+  const showAlert = (message, color) => {
+    setAlert({
+      visible: true,
+      message,
+      color
+    });
+    setTimeout(() => {
+      setAlert(prev => ({ ...prev, visible: false }));
+    }, 3000);
+  };
+    // untuk memilih ikon alert sesuai warna
+    const getIcon = (color) => {
+      switch (color) {
+        case 'success':
+          return <CIcon icon={cilCheckCircle} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'danger':
+          return <CIcon icon={cilXCircle} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'warning':
+          return <CIcon icon={cilWarning} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'info':
+          return <CIcon icon={cilInfo} className="flex-shrink-0 me-2" width={24} height={24} />;
+        default:
+          return null;
+      }
+    };
+
+
   const token = localStorage.getItem("token");
 
 
@@ -110,7 +145,6 @@ const TransactionPage = () => {
     })
       .then(response => {
         setProducts(response.data);
-        console.log('PRODUCT', response.data)
       })
       .catch(error => {
         console.error('Error fetching products:', error);
@@ -150,16 +184,6 @@ const TransactionPage = () => {
     setTransactionDate(formattedDate);
   }, []);
 
-  const showAlert = (message, color) => {
-    setAlert({
-      visible: true,
-      message,
-      color
-    });
-    setTimeout(() => {
-      setAlert(prev => ({ ...prev, visible: false }));
-    }, 3000);
-  };
 
   const handleProductSelect = (selectedCode) => {
     console.log('Selected Code:', selectedCode);
@@ -551,21 +575,25 @@ const paymentOptions = [
 ];
 
 
-
   return (
     <div>
-      <CRow>
+    <CRow className="d-flex">
       <div className="mb-3">
       {alert.visible && (
-          <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
-            {alert.message}
-          </CAlert>
+              <CAlert
+                color={alert.color}
+                onClose={() => setAlert({ ...alert, visible: false })}
+                className="w-500 d-flex align-items-center"
+              >
+                {getIcon(alert.color)}
+                <div>{alert.message}</div>
+              </CAlert>
         )}
        <div className="d-flex justify-content-between align-items-center">
             <CButton
               color="primary"
               size="sm"
-              shape="rounded-pill"
+              // shape="rounded-pill"
               className="float-end"
               onClick={handleAdd}
             >
@@ -573,10 +601,11 @@ const paymentOptions = [
             </CButton>
           </div>
         </div>
-      <CCol md={6}>
-      <CCard>
+      <CCol md={6} className="d-flex flex-column">
+      <CCard className="flex-grow-1">
         <CCardHeader>
-          <CCardTitle>Transaction Form</CCardTitle>
+        <h6>Tansaction Form</h6>
+          {/* <CCardTitle>Transaction Form</CCardTitle> */}
         </CCardHeader>
         <CCardBody>
           <CForm>
@@ -687,7 +716,7 @@ const paymentOptions = [
                 />
               </CCol>
             </CRow>
-            <CButton color="info" onClick={addItemToCart}>
+            <CButton  size="sm" color="info" onClick={addItemToCart}>
               Add to Cart
             </CButton>
             </CForm>
@@ -696,12 +725,14 @@ const paymentOptions = [
           </CCol>
 
 
-          <CCol md={6}>
-            <CCard>
+          <CCol md={6} className="d-flex flex-column">
+            <CCard className="flex-grow-1">
             <CCardHeader>
-              <CCardTitle>Cart Items</CCardTitle>
+              <h6>Cart Items</h6>
+              {/* <CCardTitle>Cart Items</CCardTitle> */}
             </CCardHeader>
-            <CCardBody>
+            <CCardBody className="d-flex flex-column justify-content-between" style={{ height: '100%' }}>
+            <div className="mb-3">
               <CTable>
                 <CTableHead>
                   <CTableRow>
@@ -726,7 +757,7 @@ const paymentOptions = [
                       <CTableDataCell>{item.qty}</CTableDataCell>
                       <CTableDataCell>{item.price * item.qty}</CTableDataCell>
                       <CTableDataCell>
-                        <CButton color="danger" onClick={() => removeItemFromCart(index)}>
+                        <CButton size="sm" color="danger" onClick={() => removeItemFromCart(index)}>
                           Remove
                         </CButton>
                       </CTableDataCell>
@@ -734,9 +765,10 @@ const paymentOptions = [
                   ))}
                 </CTableBody>
               </CTable>
+              </div>
 
-            <CForm>
-            <CRow className="mb-3">
+              <CForm className="mt-auto">
+               <CRow className="mb-3"> 
               <CCol sm={3}>
                 <CFormLabel htmlFor="total">Total</CFormLabel>
               </CCol>
@@ -850,7 +882,7 @@ const paymentOptions = [
                 />
               </CCol>
             </CRow>
-            <CButton color="success" onClick={handleSubmitTransaction}>
+            <CButton size="sm" color="success" onClick={handleSubmitTransaction}>
               Submit
             </CButton>
           </CForm>

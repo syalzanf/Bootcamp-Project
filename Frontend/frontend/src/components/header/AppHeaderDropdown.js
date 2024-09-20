@@ -38,7 +38,7 @@ import {
 } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 
-import avatar8 from './../../assets/images/avatars/test.jpg';
+import avatar8 from './../../assets/brand/logo-jam.png';
 
 const AppHeaderDropdown = () => {
   const [profile, setProfile] = useState({
@@ -46,7 +46,8 @@ const AppHeaderDropdown = () => {
     name: '',
     telepon: '',
     photo: '',
-    role: ''
+    role: '',
+    email: '',
   });
 
   const [previewImage, setPreviewImage] = useState(null);
@@ -57,10 +58,11 @@ const AppHeaderDropdown = () => {
     telepon: '',
     password:'',
     photo: null,
+    email:'',
   });
   const [alert, setAlert] = useState({ visible: false, message: '', color: '' });
 
-  
+
   const showAlert = (message, color) => {
     setAlert({
       visible: true,
@@ -94,12 +96,13 @@ const AppHeaderDropdown = () => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:3000/api/profile', {
+        const response = await axios.get('/api/profile', {
           headers: { Authorization: `${token}` },
-          withCredentials: true  
+          withCredentials: true
         });
 
         const profileData = response.data.user;
+        console.log('PROFIL', response.data.user)
 
         setProfile({
           username: profileData.username,
@@ -107,6 +110,7 @@ const AppHeaderDropdown = () => {
           telepon: profileData.telepon,
           photo: profileData.photo,
           role: profileData.role,
+          email: profileData.email,
         });
 
         setEditProfile({
@@ -114,6 +118,7 @@ const AppHeaderDropdown = () => {
           telepon: profileData.telepon,
           password: '',
           photo: profileData.photo ? `http://localhost:3000/${profileData.photo}` : null,
+          email: profileData.email,
         });
       } catch (error) {
         console.error('Failed to fetch profile:', error);
@@ -134,7 +139,7 @@ const AppHeaderDropdown = () => {
   };
 
   const handleSaveEdit = async () => {
-    if (!editProfile.name || !editProfile.telepon) {
+    if (!editProfile.name || !editProfile.telepon || !editProfile.email) {
       showAlert('Please fill in all required fields.', 'warning');
       return;
     }
@@ -142,13 +147,15 @@ const AppHeaderDropdown = () => {
     const formData = new FormData();
     formData.append('name', editProfile.name);
     formData.append('telepon', editProfile.telepon);
+    formData.append('email', editProfile.email);
+
 
     if (editProfile.photo) {
       formData.append('photo', editProfile.photo);
     }
 
 
-    if (editProfile.password) { 
+    if (editProfile.password) {
       formData.append('password', editProfile.password);
     }
 
@@ -164,14 +171,16 @@ const AppHeaderDropdown = () => {
         },
         withCredentials: true,
       });
- 
+
       setProfile({
         ...profile,
         name: response.data.name,
         telepon: response.data.telepon,
         photo: response.data.photo,
+        email: response.data.email,
+
       });
-      
+
 
       setShowVisible(false);
       showAlert('Profile updated successfully!', 'success');
@@ -213,7 +222,7 @@ const AppHeaderDropdown = () => {
         </CAlert>
         )} */}
 
-{alert.visible && (
+      {alert.visible && (
         <CAlert
           color={alert.color}
           onClose={() => setAlert({ ...alert, visible: false })}
@@ -258,23 +267,23 @@ const AppHeaderDropdown = () => {
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
-                <CAvatar
+                {/* <CAvatar
                   style={{ width: '250px', height: '250px',  borderRadius: '0' }}
                   src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'}
                   alt="user-profile"
-                />
-                {/* <img
+                /> */}
+                <img
                   style={{ width: '250px', height: '250px', objectFit: 'cover', borderRadius: '0' }}
                   src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'}
                   alt="user-profile"
-                /> */}
+                />
 
                   {/* <img
                     style={{
                       width: '250px',
                       height: '250px',
                       objectFit: 'cover',
-                      borderRadius: '0', 
+                      borderRadius: '0',
                     }}
                     src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'}
                     alt="user-profile"
@@ -343,11 +352,27 @@ const AppHeaderDropdown = () => {
                 />
               </CCol>
             </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="email" className="col-form-label">
+                  Email
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="email"
+                  placeholder="Email"
+                  value={profile.email}
+                  readOnly
+                  plainText
+                />
+              </CCol>
+            </CRow>
           </CForm>
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setShowVisible(false)}>Close</CButton>
-          <CButton color="primary" onClick={handleEditProfile}>Edit Akun</CButton>
+          <CButton color="primary" onClick={handleEditProfile}>Edit Profile</CButton>
         </CModalFooter>
       </CModal>
 
@@ -357,8 +382,31 @@ const AppHeaderDropdown = () => {
         </CModalHeader>
         <CModalBody>
           <CForm>
-          <CRow className="mb-3">
+            <CRow className="mb-3">
               <CCol sm={3}>
+                <CFormLabel htmlFor="photo" className="col-form-label">
+                {previewImage && (
+                  <CAvatar
+                    src={previewImage}
+                    alt="Preview"
+                    size="xl"
+                    style={{ width: '60%', height: '60px' }}
+                  />
+                )}
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  type="file"
+                  id="photo"
+                  accept="image/png, image/jpeg"
+                  onChange={handleFileChange}
+                />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
+
                 <CFormLabel htmlFor="username" className="col-form-label">
                   Username
                 </CFormLabel>
@@ -372,30 +420,6 @@ const AppHeaderDropdown = () => {
                 />
               </CCol>
             </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="photo" className="col-form-label">
-                  Photo
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                {/* {previewImage && ( */}
-                  {/* <CAvatar */}
-                    {/* src={previewImage} */}
-                    {/* alt="Preview" */}
-                    {/* size="xl" */}
-                    {/* style={{ width: '250%', height: '250px' }} */}
-                  {/* /> */}
-                {/* )} */}
-                <CFormInput
-                  type="file"
-                  id="photo"
-                  accept="image/png, image/jpeg"
-                  onChange={handleFileChange}
-                />
-              </CCol>
-            </CRow>
-           
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="name" className="col-form-label">
@@ -426,6 +450,20 @@ const AppHeaderDropdown = () => {
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
+                <CFormLabel htmlFor="email" className="col-form-label">
+                  Email
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="email"
+                  value={editProfile.email}
+                  onChange={(e) => setEditProfile((prev) => ({ ...prev, email: e.target.value }))}
+                />
+              </CCol>
+            </CRow>
+            <CRow className="mb-3">
+              <CCol sm={3}>
                 <CFormLabel htmlFor="password" className="col-form-label">
                   Password
                 </CFormLabel>
@@ -435,7 +473,7 @@ const AppHeaderDropdown = () => {
                   type="password"
                   id="password"
                   value={editProfile.password}
-                  onChange={(e) => setEditProfile((prev) => ({ ...prev, password: e.target.value }))} 
+                  onChange={(e) => setEditProfile((prev) => ({ ...prev, password: e.target.value }))}
                   placeholder="Password"
                 />
               </CCol>

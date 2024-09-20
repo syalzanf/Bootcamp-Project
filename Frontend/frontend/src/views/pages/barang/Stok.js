@@ -20,6 +20,13 @@ import {
   CAlert
 } from '@coreui/react-pro'
 import { CSmartTable } from '@coreui/react-pro'
+import {
+  cilCheckCircle,
+  cilWarning,
+  cilInfo,
+  cilXCircle,
+} from '@coreui/icons';
+import CIcon from '@coreui/icons-react';
 
 
 const Stok = () => {
@@ -37,11 +44,36 @@ const Stok = () => {
     stock: 0,
   })
   const [validated, setValidated] = useState(false)
-  const [alert, setAlert] = useState({ visible: false, message: '', color: '' })
   const [brands, setBrands] = useState([])
   const [totalStock, setTotalStock] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
+  const [alert, setAlert] = useState({ visible: false, message: '', color: '' })
 
+  const showAlert = (message, color) => {
+    setAlert({
+      visible: true,
+      message,
+      color
+    });
+    setTimeout(() => {
+      setAlert(prev => ({ ...prev, visible: false }));
+    }, 3000);
+  };
+    // untuk memilih ikon alert sesuai warna
+    const getIcon = (color) => {
+      switch (color) {
+        case 'success':
+          return <CIcon icon={cilCheckCircle} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'danger':
+          return <CIcon icon={cilXCircle} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'warning':
+          return <CIcon icon={cilWarning} className="flex-shrink-0 me-2" width={24} height={24} />;
+        case 'info':
+          return <CIcon icon={cilInfo} className="flex-shrink-0 me-2" width={24} height={24} />;
+        default:
+          return null;
+      }
+    };
 
   // Fetch data from the API
   const fetchData = async () => {
@@ -197,7 +229,7 @@ const Stok = () => {
         withCredentials: true,
       });
   
-      showAlert('Product successfully Added!', 'light');
+      showAlert('Stock successfully Added!', 'success');
   
       setModalVisible(false);
       fetchData();
@@ -207,18 +239,6 @@ const Stok = () => {
       console.error('Error adding stock:', error.response ? error.response.data : error.message);
     }
   };
-  
-
-  const showAlert = (message, color) => {
-    setAlert({
-      visible: true,
-      message,
-      color
-    })
-    setTimeout(() => {
-      setAlert(prev => ({ ...prev, visible: false }))
-    }, 3000)
-  }
 
   // Reset form values
   const resetForm = () => {
@@ -242,14 +262,15 @@ const Stok = () => {
 
   const options = data.map((item) => ({
     value: item.product_code,
-    label: `${item.product_code} - ${item.product_name}`,
+    label: `${item.product_code} - ${item.product_name  }`,
   }))
 
   const columns = [
     { key: 'product_code', label: 'Product Code', _style: { width: '20%' } },
     { key: 'product_name', label: 'Product Name', _style: { width: '30%' } },
     { key: 'brand_name', label: 'Brand', _style: { width: '20%' } }, // Tampilkan nama merk
-    { key: 'type', label: 'Type', _style: { width: '20%' } },
+    // { key: 'type', label: 'Type', _style: { width: '20%' } },
+    { key: 'price', label: 'Price', _style: { width: '20%' } },
     { key: 'stock', label: 'Stock', _style: { width: '10%' } },
   ]
 
@@ -265,17 +286,22 @@ const Stok = () => {
     <CRow>
       <CCol xs={12}>
         <div className="mb-3">
-          {alert.visible && (
-            <CAlert color={alert.color} onClose={() => setAlert({ ...alert, visible: false })} className="w-100">
-              {alert.message}
-            </CAlert>
-          )}
+        {alert.visible && (
+              <CAlert
+                color={alert.color}
+                onClose={() => setAlert({ ...alert, visible: false })}
+                className="w-500 d-flex align-items-center"
+              >
+                {getIcon(alert.color)}
+                <div>{alert.message}</div>
+              </CAlert>
+            )}
           {/* <p>Product Stock Table</p> */}
           <div className="d-flex justify-content-between align-items-center mb-3">
             <CButton
               color="primary"
               size="sm"
-              shape="rounded-pill"
+              // shape="rounded-pill"
               onClick={() => setModalVisible(true)}
             >
               Add Stock
@@ -338,23 +364,6 @@ const Stok = () => {
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
-                <CFormLabel htmlFor="brand" className="col-form-label">
-                  Brand
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="brand"
-                  name="brand"
-                  value={formValues.brand_name}  
-                  readOnly
-                  required
-                />
-                <CFormFeedback invalid>Brand is required.</CFormFeedback>
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
                 <CFormLabel htmlFor="product_name" className="col-form-label">
                   Product Name
                 </CFormLabel>
@@ -372,6 +381,23 @@ const Stok = () => {
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
+                <CFormLabel htmlFor="brand" className="col-form-label">
+                  Brand
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="brand"
+                  name="brand"
+                  value={formValues.brand_name}  
+                  readOnly
+                  required
+                />
+                <CFormFeedback invalid>Brand is required.</CFormFeedback>
+              </CCol>
+            </CRow>
+            {/* <CRow className="mb-3">
+              <CCol sm={3}>
                 <CFormLabel htmlFor="type" className="col-form-label">
                   Type
                 </CFormLabel>
@@ -385,6 +411,24 @@ const Stok = () => {
                   required
                 />
                 <CFormFeedback invalid>Type is required.</CFormFeedback>
+              </CCol>
+            </CRow> */}
+            <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="price" className="col-form-label">
+                  Price
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
+                <CFormInput
+                  id="price"
+                  name="price"
+                  type="number"
+                  value={formValues.price}
+                  readOnly
+                  required
+                />
+                <CFormFeedback invalid>Price is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CRow className="mb-3">
@@ -403,24 +447,6 @@ const Stok = () => {
                   required
                 />
                 <CFormFeedback invalid>Stock is required.</CFormFeedback>
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="price" className="col-form-label">
-                  Price
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="price"
-                  name="price"
-                  type="number"
-                  value={formValues.price}
-                  readOnly
-                  required
-                />
-                <CFormFeedback invalid>Price is required.</CFormFeedback>
               </CCol>
             </CRow>
             <CModalFooter>

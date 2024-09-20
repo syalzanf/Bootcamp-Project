@@ -18,6 +18,7 @@ import {
 } from '@coreui/react-pro';
 import CIcon from '@coreui/icons-react';
 import { cilLockLocked, cilUser } from '@coreui/icons';
+import gambarBg from '../../../assets/images/bgee.jpg';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -84,16 +85,24 @@ const Login = () => {
   };
 
   return (
-    <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
-      <CContainer>
-        <CRow className="justify-content-center">
-          <CCol md={8}>
+    <div
+      className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center justify-content-center"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundImage: `url(${gambarBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        // filter: 'brightness(0.5)',
+      }}
+    >
+      <CContainer className="d-flex align-items-center justify-content-center h-100">
+        <CRow className="justify-content-center w-100">
+          <CCol md={5}>
             <CCardGroup>
-              <CCard className="p-4">
-                <CCardBody>
+              <CCard className="p-3" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CCardBody className="flex-grow-1 d-flex flex-column">
                   <CForm onSubmit={handleLogin}>
-                    <h1>Login</h1>
-                    <p className="text-body-secondary">Sign In to your account</p>
+                    <h5 className="text-center">Sign In to your account</h5>
                     {error && <p className="text-danger">{error}</p>}
                     <CInputGroup className="mb-3">
                       <CInputGroupText>
@@ -118,21 +127,16 @@ const Login = () => {
                         onChange={(e) => setPassword(e.target.value)}
                       />
                     </CInputGroup>
-                    <CRow>
-                      <CCol xs={6}>
-                        <CButton color="primary" className="px-4" type="submit">
+                    <CRow className="mt-auto">
+                      <CCol xs={12}>
+                        <CButton color="primary" className="w-100 mb-3" type="submit">
                           Login
                         </CButton>
                       </CCol>
-                      <CCol xs={6} className="text-right">
-                        <CButton color="link" className="px-0">
+                      <CCol xs={12} className="text-center">
+                        <CButton color="link" className="px-0" style={{ textDecoration: 'none' }}>
                           Forgot password?
                         </CButton>
-                      </CCol>
-                      <CCol xs={6} className="text-right">
-                        {/* <CButton color="link" className="px-0">
-                          Forgot password?
-                        </CButton> */}
                       </CCol>
                     </CRow>
                   </CForm>
@@ -143,7 +147,7 @@ const Login = () => {
         </CRow>
       </CContainer>
     </div>
-  );
+  );  
 };
 
 export default Login;

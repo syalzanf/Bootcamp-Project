@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
@@ -9,9 +8,8 @@ import {
   CButton,
   CRow,
   CCol,
-
-
 } from '@coreui/react-pro';
+
 const TransactionReport = () => {
     const [transactions, setTransactions] = useState([]);
     const [totalSales, setTotalSales] = useState(null);
@@ -26,18 +24,21 @@ const TransactionReport = () => {
 
                 if (!cashierName) {
                   throw new Error('cashierName is not available in localStorage');
-              }
+                }
 
                 const response = await axios.get(`/api/cashier/laporanTransaksi/${cashierName}`, {
                   headers: { Authorization: `${token}` },
-                    withCredentials: true,
+                  withCredentials: true,
                 });
-                setTotalSales(response.data.totalSales);
-                setTransactions(response.data.transactions);
-                
-                console.log('TRANSAKSI', response.data)
-                console.log('TESTTT', response.items)
 
+                // Menghandle jika transaksi kosong
+                if (response.data.transactions && response.data.transactions.length === 0) {
+                  setTransactions([]); // Set transactions ke array kosong
+                  setTotalSales(0); // Set total sales ke 0 jika tidak ada transaksi
+                } else {
+                  setTransactions(response.data.transactions);
+                  setTotalSales(response.data.totalSales);
+                }
             } catch (err) {
                 setError('Error fetching transactions');
             } finally {
@@ -56,12 +57,12 @@ const TransactionReport = () => {
         return <div>{error}</div>;
     }
 
+    // Mengubah transaksi menjadi format yang dapat ditampilkan
     const formattedTransactions = transactions.flatMap(transaction => {
       return transaction.items.map(item => ({
         transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
         transaction_code: transaction.transaction_code,
         member: transaction.member,
-        // member: transaction.member ? transaction.member.nama : 'Guest',  // Jika member tidak ada, gunakan 'Guest'
         cashier: transaction.cashier,
         product_code: item.product_code,
         product_name: item.product_name,
@@ -70,11 +71,11 @@ const TransactionReport = () => {
         qty: item.qty,
         price: item.price,
         totalItems: item.totalItems
-    }));
-  })
+      }));
+    });
 
     const columns = [
-        { key: 'transaction_date', label: 'Date',  _render: (item) => new Date(item.date).toDateString() },
+        { key: 'transaction_date', label: 'Date' },
         { key: 'transaction_code', label: 'Transaction Code' },
         { key: 'cashier', label: 'Cashier' },
         { key: 'member', label: 'Customer' },
@@ -85,14 +86,13 @@ const TransactionReport = () => {
         { key: 'totalItems', label: 'Total' },
     ];
 
-
     return (
       <CRow>
-      <CCol>
-        <CCard>
-          <CCardHeader className="d-flex justify-content-between align-items-center">
-              <p className="mb-0">Transaction Report</p>
-              {totalSales && <p className="mb-0">Total Sales: {totalSales}</p>}
+        <CCol>
+          <CCard>
+            <CCardHeader className="d-flex justify-content-between align-items-center">
+                <p className="mb-0">Transaction Report</p>
+                {totalSales !== null && <p className="mb-0">Total Sales: {totalSales}</p>}
             </CCardHeader>
             <CCardBody>
                 <CSmartTable
@@ -102,7 +102,6 @@ const TransactionReport = () => {
                       hover: true,
                     }}
                     activePage={1}
-                    // footer
                     items={formattedTransactions}
                     columns={columns}
                     columnFilter
@@ -112,13 +111,10 @@ const TransactionReport = () => {
                     itemsPerPage={5}
                     columnSorter
                     pagination
-                    scopedColumns={{
-                    }}
                 />
             </CCardBody>
-        </CCard>
-
-      </CCol>
+          </CCard>
+        </CCol>
       </CRow>
     );
 };

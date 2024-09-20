@@ -106,7 +106,7 @@ const TransactionReport = () => {
       <CCol>
         <CCard>
             <CCardHeader>
-                <p>Transactions Date</p>
+                <p>Transactions History</p>
             </CCardHeader>
             <CCardBody>
               {/* <div>

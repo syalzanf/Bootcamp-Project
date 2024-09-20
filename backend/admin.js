@@ -47,9 +47,11 @@ async function getListStockProducts() {
         p.product_code, 
         p.product_name, 
         b.brand_name,  -- Mengambil nama brand dari tabel brands
-        p.type, 
+        p.type,
+        p.color, 
         p.stock, 
         p.minimum_stock,
+        p.price,
         CASE
             WHEN p.stock <= p.minimum_stock THEN true
             ELSE false
@@ -62,6 +64,10 @@ async function getListStockProducts() {
             p.updated_at DESC;
         
         `);
+
+        result.rows.forEach(product => {
+            product.price = formatNumber(product.price); // Memanggil fungsi formatNumber untuk harga
+        });
         return result.rows;
     } catch (error) {
         throw new Error('Error fetching products: ' + error.message);
@@ -147,7 +153,7 @@ async function checkProductExists(product_code, product_name) {
 }
 
 // Fungsi untuk menambahkan produk
-async function addProduct({ product_code, product_name, id_brand, type, price, stock, image }) {
+async function addProduct({ product_code, product_name, id_brand, type, color, price, stock, image }) {
     try {
 
         if (validator.isEmpty(product_name)) {
@@ -169,8 +175,8 @@ async function addProduct({ product_code, product_name, id_brand, type, price, s
 
         // Query untuk memasukkan data produk ke database
         const result = await pool.query(
-            'INSERT INTO products (product_code, product_name, id_brand, type, price, stock, image) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-            [product_code, product_name, id_brand, type, price, stock, image]
+            'INSERT INTO products (product_code, product_name, id_brand, type, color, price, stock, image) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+            [product_code, product_name, id_brand, type, color, price, stock, image]
         );        
         return result.rows[0];
     } catch (error) {
@@ -203,25 +209,23 @@ async function checkBrandExists(brandName) {
 
 async function addBrand(brandName) {
     try {
-      const brandExists = await checkBrandExists(brandName);
-  
-      if (brandExists) {
-        throw new Error('Brand already exists');
-      }
-        const result = await pool.query(
-        'INSERT INTO brands (brand_name) VALUES ($1) RETURNING *',
-        [brandName]
-      );
-  
-      return result.rows[0];
-    } catch (error) {
-        if (error.message === 'Brand already exists') {
+        const brandExists = await checkBrandExists(brandName);
+
+        if (brandExists) {
             throw new Error('Brand already exists');
-        } else {
-            throw new Error('Failed to add brand');
         }
+
+        const result = await pool.query(
+            'INSERT INTO brands (brand_name) VALUES ($1) RETURNING *',
+            [brandName]
+        );
+
+        return result.rows[0];
+    } catch (error) {
+        throw new Error(error.message || 'Failed to add brand');
     }
-  }
+}
+
   
 
 // async function updateBrand(brandId, brand_name) {
@@ -274,6 +278,7 @@ async function getListProducts() {
             p.product_name, 
             p.price, 
             p.type,
+            p.color,
             p.stock,
             p.image,
             p.minimum_stock,
@@ -281,18 +286,17 @@ async function getListProducts() {
             p.id_brand, 
             b.brand_name  -- Mengambil nama brand dari tabel brands
         FROM 
-            products p
+            products p 
         JOIN 
             brands b ON p.id_brand = b.id_brand  -- Menggabungkan tabel products dengan brands
         ORDER BY 
             p.updated_at DESC
     `);
-        // const formattedProducts = result.rows.map(product => ({
-        //     ...product,
-        //     price: formatNumber(product.price)  // Format harga
-        // }));    
 
-        // return formattedProducts;
+        result.rows.forEach(product => {
+            product.price = formatNumber(product.price); // Memanggil fungsi formatNumber untuk harga
+        });
+
         return result.rows;
     } catch (error) {
         throw new Error('Error fetching products: ' + error.message);
@@ -302,7 +306,7 @@ async function getListProducts() {
 // Fungsi untuk mendapatkan produk berdasarkan ID
 async function getProductById(id) {
     try {
-        const result = await pool.query('SELECT product_code, id_brand, type, price, stock, image FROM products WHERE id_products = $1', [id]);
+        const result = await pool.query('SELECT product_code, id_brand, type, color, price, stock, image FROM products WHERE id_products = $1', [id]);
         if (result.rows.length === 0) {
             throw new Error('Product not found');
         }
@@ -313,7 +317,7 @@ async function getProductById(id) {
 }
 
 // Fungsi untuk memperbarui produk
-async function updateProduct(id, { product_name, id_brand, type, price, stock, image }) {
+async function updateProduct(id, { product_name, id_brand, type, color, price, stock, image }) {
     try {
         // Validasi input
         if (!validator.isNumeric(price.toString()) || price <= 0) {
@@ -342,19 +346,19 @@ async function updateProduct(id, { product_name, id_brand, type, price, stock, i
         if (image === undefined || image === null) {
             query = `
                 UPDATE products 
-                SET product_name = $1, id_brand = $2, type = $3, price = $4, stock = $5
-                WHERE id_product = $6
-                RETURNING *;
-            `;
-            values = [product_name, id_brand, type, price, stock, id];
-        } else {
-            query = `
-                UPDATE products 
-                SET product_name = $1, id_brand = $2, type = $3, price = $4, stock = $5, image = $6
+                SET product_name = $1, id_brand = $2, type = $3, price = $4, stock = $5, color = $6,
                 WHERE id_product = $7
                 RETURNING *;
             `;
-            values = [product_name, id_brand, type, price, stock, image, id];
+            values = [product_name, id_brand, type, price, stock, color, id];
+        } else {
+            query = `
+                UPDATE products 
+                SET product_name = $1, id_brand = $2, type = $3, price = $4, stock = $5, color = $6, image = $7
+                WHERE id_product = $8
+                RETURNING *;
+            `;
+            values = [product_name, id_brand, type, price, stock, color, image, id];
         }
 
         // Execute the query

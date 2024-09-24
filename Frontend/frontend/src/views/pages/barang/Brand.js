@@ -95,8 +95,6 @@ const Brand = () => {
     }
   };
 
- 
-
   const handleAdd = () => {
     setFormValues({
       brand_name: '',
@@ -130,9 +128,10 @@ const Brand = () => {
         withCredentials: true
       });
 
-      setBrands([...brands, response.data]);
+      // setBrands([...brands, response.data]);
 
       showAlert('Brand successfully added!', 'success');
+      fetchBrands();
       setAddVisible(false);
       setValidated(false);
       setFormValues({
@@ -160,7 +159,7 @@ const Brand = () => {
   const handleSaveEdit = async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
-    
+
     if (!selectedBrand || !selectedBrand.id_brand) {
       console.error("Brand atau ID tidak ditemukan");
       return;
@@ -188,60 +187,111 @@ const Brand = () => {
           withCredentials: true
         }
       );
-      
-      const updatedBrands = brands.map(brand =>
-        brand.id_brand === selectedBrand.id_brand ? { ...brand, brand_name: formValues.brand_name } : brand
-      );
-      setBrands(updatedBrands);
-  
+
+      // const updatedBrands = brands.map(brand =>
+      //   brand.id_brand === selectedBrand.id_brand ? { ...brand, brand_name: formValues.brand_name } : brand
+      // );
+      // setBrands(updatedBrands);
+
 
       showAlert('Brand successfully updated!', 'success');
-      // fetchBrands();
+      fetchBrands();
       setEditVisible(false);
       setSelectedBrand(null);
+
     } catch (error) {
       showAlert('Failed to update brand!', 'danger');
       console.error('Error updating data:', error.response ? error.response.data : error.message);
     }
   };
 
+  // const handleDelete = async (brand) => {
+  //   try {
+  //     const result = await Swal.fire({
+  //       title: 'Are you sure?',
+  //       text: "You won't be able to revert this!",
+  //       icon: 'warning',
+  //       showCancelButton: true,
+  //       confirmButtonColor: '#3085d6',
+  //       cancelButtonColor: '#d33',
+  //       confirmButtonText: 'Yes, delete it!',
+  //       background: '#343a40',
+  //       color: '#fff',
+  //     });
+
+  //     if (result.isConfirmed) {
+  //       const token = localStorage.getItem('token');
+
+  //       await axios.put(`/api/brands/delete/${brand.id_brand}`, {
+  //         headers: { Authorization: `${token}` },
+  //         withCredentials: true
+  //       });
+  //       fetchBrands();
+
+  //       Swal.fire(
+  //         'Deleted!',
+  //         'The brand has been deleted.',
+  //         'success',
+  //         {
+  //           background: '#343a40',
+  //           color: '#fff',
+  //         }
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.error('Error deleting data:', error.response ? error.response.data : error.message);
+  //   }
+  // };
   const handleDelete = async (brand) => {
     try {
-      const result = await Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, delete it!',
-        background: '#343a40',
-        color: '#fff',
-      });
-
-      if (result.isConfirmed) {
-        const token = localStorage.getItem('token');
-
-        await axios.delete(`/api/brands/delete/${brand.id_brand}`, {
-          headers: { Authorization: `${token}` },
-          withCredentials: true
-        });
-        fetchBrands();
-
-        Swal.fire(
-          'Deleted!',
-          'The brand has been deleted.',
-          'success',
-          {
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!',
             background: '#343a40',
             color: '#fff',
-          }
-        );
-      }
+        });
+
+        if (result.isConfirmed) {
+            const token = localStorage.getItem('token');
+
+            // Melakukan permintaan PUT untuk soft delete
+            await axios.put(`/api/brands/delete/${brand.id_brand}`, null, {
+                headers: { Authorization: `${token}` },
+                withCredentials: true
+            });
+
+            // Memperbarui data brand setelah penghapusan
+            fetchBrands();
+
+            Swal.fire(
+                'Deleted!',
+                'The brand has been deleted.',
+                'success',
+                {
+                    background: '#343a40',
+                    color: '#fff',
+                }
+            );
+        }
     } catch (error) {
-      console.error('Error deleting data:', error.response ? error.response.data : error.message);
+        console.error('Error deleting data:', error.response ? error.response.data : error.message);
+        Swal.fire(
+            'Error!',
+            'Failed to delete the brand. Please try again.',
+            'error',
+            {
+                background: '#343a40',
+                color: '#fff',
+            }
+        );
     }
-  };
+};
+
 
   const columns = [
     { key: 'brand_name', label: 'Brand Name' },
@@ -343,7 +393,7 @@ const Brand = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="brand_name" className="col-form-label">
-                  Brand Name
+                  Brand Name <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -378,7 +428,7 @@ const Brand = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="brand_name" className="col-form-label">
-                  Brand Name
+                  Brand Name <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>

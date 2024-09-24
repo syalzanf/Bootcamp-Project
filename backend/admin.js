@@ -6,7 +6,61 @@ const pool = require('./connection');
 const sequelize = require('./configdb');
 const {Transaksi, Member} = require('./models/transaksi');
 const Brand = require('./models/brand')
+const Product = require('./models/product')
+const { fn, col } = require('sequelize');
 
+// Fungsi async untuk mendapatkan trafik penjualan
+async function getSalesTraffic() {
+    try {
+        // Mendapatkan data penjualan per bulan
+        const salesData = await Transaksi.findAll({
+            attributes: [
+                [sequelize.fn('date_trunc', 'month', sequelize.col('transaction_date')), 'month'],
+                [sequelize.fn('SUM', sequelize.col('total')), 'total_revenue'],
+                [sequelize.fn('COUNT', sequelize.col('id')), 'total_sales']
+            ],
+            group: ['month'],
+            order: [['month', 'ASC']]
+        });
+
+
+        const topSellingProducts = await Transaksi.sequelize.query(`
+        SELECT 
+            (item->>'product_code') AS product_code, 
+            SUM(CAST(item->>'qty' AS INTEGER)) AS total_sold
+        FROM 
+            (SELECT jsonb_array_elements(items) AS item FROM transaksi) AS subquery
+        GROUP BY 
+            product_code
+        ORDER BY 
+            total_sold DESC
+        LIMIT 5;
+    `, {
+        type: sequelize.QueryTypes.SELECT,
+    });
+
+        return {
+            salesPerMonth: salesData,
+            topSellingProducts: topSellingProducts,
+        };
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+
+
+// untuk memformat angka dalam bentuk rupiah
+const formatNumber = (number) => {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        // maximumFractionDigits: 0,
+        // useGrouping: true
+    }).format(number);
+};
 
 
 // Fungsi untuk login admin
@@ -65,9 +119,6 @@ async function getListStockProducts() {
         
         `);
 
-        result.rows.forEach(product => {
-            product.price = formatNumber(product.price); // Memanggil fungsi formatNumber untuk harga
-        });
         return result.rows;
     } catch (error) {
         throw new Error('Error fetching products: ' + error.message);
@@ -186,7 +237,10 @@ async function addProduct({ product_code, product_name, id_brand, type, color, p
 
 async function getListBrand() {
     try {
-        const result = await pool.query('SELECT * FROM brands');
+        const result = await pool.query(
+            'SELECT * FROM brands WHERE status = $1 ORDER BY updated_at DESC',
+            ['active']
+        );
         return result.rows;
     } catch (error) {
         console.error('Error fetching brand list:', error);
@@ -254,9 +308,25 @@ async function updateBrand(id, brand_name) {
   }
  
 
+// async function deleteBrand(brandId) {
+//     try {
+//         const result = await pool.query('DELETE FROM brands WHERE id_brand = $1 RETURNING *', [brandId]);
+//         if (result.rowCount === 0) {
+//             throw new Error('Brand not found');
+//         }
+//         return result.rows[0];
+//     } catch (error) {
+//         console.error('Error deleting brand:', error);
+//         throw new Error('Failed to delete brand');
+//     }
+// }
+
 async function deleteBrand(brandId) {
     try {
-        const result = await pool.query('DELETE FROM brands WHERE id_brand = $1 RETURNING *', [brandId]);
+        const result = await pool.query(
+            'UPDATE brands SET status = $1 WHERE id_brand = $2 RETURNING *',
+            ['inactive', brandId]
+        );
         if (result.rowCount === 0) {
             throw new Error('Brand not found');
         }
@@ -266,6 +336,7 @@ async function deleteBrand(brandId) {
         throw new Error('Failed to delete brand');
     }
 }
+
 
 // Fungsi untuk mendapatkan semua produk
 async function getListProducts() {
@@ -293,9 +364,9 @@ async function getListProducts() {
             p.updated_at DESC
     `);
 
-        result.rows.forEach(product => {
-            product.price = formatNumber(product.price); // Memanggil fungsi formatNumber untuk harga
-        });
+        // result.rows.forEach(product => {
+        //     product.price = formatNumber(product.price); // Memanggil fungsi formatNumber untuk harga
+        // });
 
         return result.rows;
     } catch (error) {
@@ -317,26 +388,23 @@ async function getProductById(id) {
 }
 
 // Fungsi untuk memperbarui produk
-async function updateProduct(id, { product_name, id_brand, type, color, price, stock, image }) {
+async function updateProduct(id, { product_name, id_brand, type, color, price, image }) {
     try {
         // Validasi input
         if (!validator.isNumeric(price.toString()) || price <= 0) {
             return { status: 400, message: 'Invalid price' };
         }
-        if (!validator.isInt(stock.toString(), { min: 0 })) {
-            return { status: 400, message: 'Invalid stock' };
-        }
 
-        // Cek apakah ada produk dengan nama atau tipe yang sama di database
+        // Cek apakah ada produk dengan nama yang sama di database
         const queryCheck = `
             SELECT * FROM products 
-            WHERE (product_name = $1 OR type = $2) AND id_product <> $3;
+            WHERE product_name = $1 AND id_product <> $2;
         `;
-        const valuesCheck = [product_name, type, id ];
+        const valuesCheck = [product_name, id ];
         const resultCheck = await pool.query(queryCheck, valuesCheck);
 
         if (resultCheck.rows.length > 0) {
-            return { status: 400, message: 'Product name or type already exists' };
+            return { status: 400, message: 'Product name already exists' };
         }
 
         // Define the query and parameters based on whether the image is provided or not
@@ -346,19 +414,19 @@ async function updateProduct(id, { product_name, id_brand, type, color, price, s
         if (image === undefined || image === null) {
             query = `
                 UPDATE products 
-                SET product_name = $1, id_brand = $2, type = $3, price = $4, stock = $5, color = $6,
-                WHERE id_product = $7
+                SET product_name = $1, id_brand = $2, type = $3, price = $4, color = $5
+                WHERE id_product = $6
                 RETURNING *;
             `;
-            values = [product_name, id_brand, type, price, stock, color, id];
+            values = [product_name, id_brand, type, price, color, id];
         } else {
             query = `
                 UPDATE products 
-                SET product_name = $1, id_brand = $2, type = $3, price = $4, stock = $5, color = $6, image = $7
-                WHERE id_product = $8
+                SET product_name = $1, id_brand = $2, type = $3, price = $4, color = $5, image = $6
+                WHERE id_product = $7
                 RETURNING *;
             `;
-            values = [product_name, id_brand, type, price, stock, color, image, id];
+            values = [product_name, id_brand, type, price, color, image, id];
         }
 
         // Execute the query
@@ -401,21 +469,12 @@ async function deleteProduct(id) {
 // Fungsi untuk mendapatkan semua data customer
 async function getListCustomers() {
     try {
-        const result = await pool.query('SELECT * FROM members');
+        const result = await pool.query('SELECT * FROM members ORDER BY updated_at DESC');
         return result.rows;
     } catch (error) {
         throw new Error('Error fetching products: ' + error.message);
     }
 }
-
-// untuk memformat angka dalam bentuk rupiah
- const formatNumber = (number) => {
-    return new Intl.NumberFormat('id-ID', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-        useGrouping: true
-    }).format(number);
-};
 
 async function getAllTransactions() {
     try {
@@ -429,14 +488,13 @@ async function getAllTransactions() {
         });
 
 
-
-        const formatRupiah = (number) => {
-            return new Intl.NumberFormat('id-ID', {
-              style: 'currency',
-              currency: 'IDR',
-              minimumFractionDigits: 0
-            }).format(number);
-          };
+        // const formatRupiah = (number) => {
+        //     return new Intl.NumberFormat('id-ID', {
+        //       style: 'currency',
+        //       currency: 'IDR',
+        //       minimumFractionDigits: 0
+        //     }).format(number);
+        //   };
 
         // hitung total penjualan
         const totalSales = transactions.reduce((sum, transaction) => sum + transaction.total, 0);
@@ -460,7 +518,7 @@ async function getAllTransactions() {
 
         return {
             transactions: transactionsData,
-            totalSales: formatRupiah(totalSales) 
+            totalSales: formatNumber(totalSales) 
         };
     } catch (error) {
         throw new Error('Error retrieving transactions: ' + error.message);
@@ -597,21 +655,58 @@ async function getLatestSales() {
       const result = await pool.query(query);
       const totalStockValue = result.rows[0].total_stock_value;
   
-      // Format angka ke format Rupiah
-      const formattedValue = new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(totalStockValue);
-  
-      return formattedValue;
+      return totalStockValue;
     } catch (error) {
       console.error('Error fetching total stock value:', error);
       throw error;
     }
   }
-  
+
+//   const getMonthlyTransactions = async () => {
+//     const query = `
+//       SELECT 
+//         DATE_TRUNC('month', created_at) AS month,
+//         SUM(total) AS total_transactions
+//       FROM 
+//         transaksi
+//       GROUP BY 
+//         month
+//       ORDER BY 
+//         month DESC;
+//     `;
+    
+//     const result = await pool.query(query);
+//     return result.rows;
+//   };
+
+const getMonthlyTransactions = async () => {
+    const months = `
+        SELECT 
+            generate_series(1, 12) AS month
+    `;
+
+    const query = `
+        SELECT 
+            m.month,
+            COALESCE(COUNT(t.id), 0) AS total_transactions,
+            COALESCE(SUM((item->>'qty')::int), 0) AS total_products_sold
+        FROM 
+            (${months}) AS m
+        LEFT JOIN 
+            transaksi AS t 
+            ON EXTRACT(MONTH FROM t.created_at) = m.month
+        LEFT JOIN 
+            LATERAL jsonb_array_elements(t.items) AS item ON TRUE
+        GROUP BY 
+            m.month
+        ORDER BY 
+            m.month;    
+    `;
+    
+    const result = await pool.query(query);
+    return result.rows;
+};
+
 module.exports ={
     // loginUser,
     adminLogin,
@@ -639,6 +734,8 @@ module.exports ={
     addBrand,
     updateBrand,
     deleteBrand,
+    getSalesTraffic,
+    getMonthlyTransactions,
 
 
 

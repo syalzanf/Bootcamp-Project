@@ -24,6 +24,7 @@ const WidgetsDropdown = (props) => {
     minimumStock: 0,
     latestIncomingItems: 0,
     latestSales: 0,
+    getTotalUsers: 0,
     itemsChartData: { labels: [], data: [] },
     stockChartData: { labels: [], data: [] },
     incomingItemsChartData: { labels: [], data: [] },
@@ -65,6 +66,96 @@ const WidgetsDropdown = (props) => {
 
   return (
     <CRow className={props.className} xs={{ gutter: 4 }}>
+      <CCol sm={6} xl={4} xxl={3}>
+        <CWidgetStatsA
+          color="primary-gradient"
+          value={
+            <>
+              {dashboardData.getTotalUsers}{' '}
+              <span className="fs-6 fw-normal">
+                {/* Adjust the percentage and arrow based on your data */}
+                (20% <CIcon icon={cilArrowTop} />)
+              </span>
+            </>
+          }
+          title={t('Jumlah User')}
+          action={
+            <CDropdown alignment="end">
+              <CDropdownToggle color="transparent" caret={false} className="text-white p-0">
+                <CIcon icon={cilOptions} />
+              </CDropdownToggle>
+              <CDropdownMenu>
+                <CDropdownItem>{t('Lihat Detail')}</CDropdownItem>
+                <CDropdownItem>{t('Tambah Barang')}</CDropdownItem>
+              </CDropdownMenu>
+            </CDropdown>
+          }
+          chart={
+            dashboardData.itemsChartData?.labels?.length > 0 && dashboardData.itemsChartData?.data?.length > 0 ? (
+              <CChartLine
+                ref={widgetChartRef1}
+                className="mt-3 mx-3"
+                style={{ height: '70px' }}
+                data={{
+                  labels: dashboardData.itemsChartData?.labels || [],
+                  datasets: [
+                    {
+                      label: 'User',
+                      backgroundColor: 'transparent',
+                      borderColor: 'rgba(255,255,255,.55)',
+                      pointBackgroundColor: getStyle('--cui-primary'),
+                      data: dashboardData.itemsChartData?.data || [],
+                    },
+                  ],
+                }}
+                options={{
+                  plugins: {
+                    legend: {
+                      display: false,
+                    },
+                  },
+                  maintainAspectRatio: false,
+                  scales: {
+                    x: {
+                      border: {
+                        display: false,
+                      },
+                      grid: {
+                        display: false,
+                      },
+                      ticks: {
+                        display: false,
+                      },
+                    },
+                    y: {
+                      min: 0,
+                      max: 150,
+                      display: false,
+                      grid: {
+                        display: false,
+                      },
+                      ticks: {
+                        display: false,
+                      },
+                    },
+                  },
+                  elements: {
+                    line: {
+                      borderWidth: 1,
+                      tension: 0.4,
+                    },
+                    point: {
+                      radius: 4,
+                      hitRadius: 10,
+                      hoverRadius: 4,
+                    },
+                  },
+                }}
+              />
+            ) : null
+          }
+        />
+      </CCol>
       <CCol sm={6} xl={4} xxl={3}>
         <CWidgetStatsA
           color="primary-gradient"

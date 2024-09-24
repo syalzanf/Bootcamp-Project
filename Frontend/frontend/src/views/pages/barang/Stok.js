@@ -86,7 +86,7 @@ const Stok = () => {
       })
 
       setData(response.data)
-      
+
       console.log('setttt', response.data)
     } catch (error) {
       setError(error)
@@ -94,6 +94,14 @@ const Stok = () => {
       setLoading(false)
     }
   }
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0, // Set to 0 if you don't want decimals
+    }).format(value);
+  };
 
   useEffect(() => {
     fetchData()
@@ -113,7 +121,7 @@ const Stok = () => {
       console.error('Error fetching total stock:', error);
     }
   };
-  
+
   useEffect(() => {
     fetchTotalStock();
   }, []);
@@ -149,7 +157,7 @@ const Stok = () => {
   const handleProductCodeChange = async (selectedItems) => {
     const selectedCode = selectedItems[0]?.value || '';
     setFormValues({ ...formValues, product_code: selectedCode });
-  
+
     if (selectedCode) {
       try {
         const token = localStorage.getItem('token');
@@ -157,19 +165,19 @@ const Stok = () => {
           headers: { Authorization: `${token}` },
           withCredentials: true,
         });
-  
+
         const product = response.data;
-  
+
         // Pastikan brands sudah terisi
         if (brands.length === 0) {
           console.error('Data brands masih kosong. Pastikan data sudah diambil.');
           return;
         }
-  
+
         // Cari brand berdasarkan id_brand produk
         const selectedBrand = brands.find(brand => brand.id_brand === product.id_brand);
         const brandName = selectedBrand ? selectedBrand.brand_name : 'Merk tidak ditemukan';
-  
+
         setFormValues({
           ...formValues,
           product_code: product.product_code,
@@ -180,47 +188,47 @@ const Stok = () => {
           stock: product.stock >= 0 ? product.stock : 0,
           price: product.price,
         });
-  
+
         console.log('Product id_brand:', product.id_brand);
         console.log('Brands:', brands);
         console.log('Selected brand:', selectedBrand);
-  
+
       } catch (error) {
         console.error('Error fetching product details:', error);
       }
     }
   };
-  
+
 
   // Handle form submission to add stock
   const handleSubmit = async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
-  
+
     if (form.checkValidity() === false) {
       event.stopPropagation();
       setValidated(true);
       return;
     }
-  
+
     // Pastikan ada data pada form
     if (!formValues.product_code || !formValues.product_name || !formValues.id_brand || !formValues.type || !formValues.stock || !formValues.price) {
       setValidated(true);
       return;
     }
-  
+
     const newStock = Number(formValues.stock);
     if (isNaN(newStock) || newStock <= 0) {
       console.error('Invalid stock value');
       return;
     }
-  
+
     setValidated(true);
-  
+
     try {
       const token = localStorage.getItem('token');
       const productCode = formValues.product_code;
-  
+
       await axios.post(`/api/admin/products/stock/${productCode}`, {
         formValues,
         stock: newStock,
@@ -228,9 +236,9 @@ const Stok = () => {
         headers: { Authorization: `${token}` },
         withCredentials: true,
       });
-  
+
       showAlert('Stock successfully Added!', 'success');
-  
+
       setModalVisible(false);
       fetchData();
       fetchTotalStock();
@@ -312,7 +320,7 @@ const Stok = () => {
         <CCardHeader>
           <span>Stock: {totalStock}</span>
           <span style={{ margin: '0 10px' }}>||</span>
-          <span>Amount: {totalAmount}</span>
+          <span>Amount: {formatCurrency(totalAmount)}</span>
         </CCardHeader>
           <CCardBody>
             <CSmartTable
@@ -332,6 +340,11 @@ const Stok = () => {
               itemsPerPage={5}
               columnSorter
               pagination
+              scopedColumns={{
+                price: (item) => (
+                  <td>{formatCurrency(item.price)}</td>
+                ),
+              }}
             />
           </CCardBody>
         </CCard>
@@ -347,7 +360,7 @@ const Stok = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="product_code" className="col-form-label">
-                  Product Name
+                  Product Code <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -389,7 +402,7 @@ const Stok = () => {
                 <CFormInput
                   id="brand"
                   name="brand"
-                  value={formValues.brand_name}  
+                  value={formValues.brand_name}
                   readOnly
                   required
                 />
@@ -416,7 +429,7 @@ const Stok = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="price" className="col-form-label">
-                  Price
+                  Price 
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -434,7 +447,7 @@ const Stok = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="stock" className="col-form-label">
-                  Stock
+                  Stock <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>

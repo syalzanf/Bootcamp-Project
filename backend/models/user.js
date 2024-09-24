@@ -43,17 +43,22 @@ const User = sequelize.define('users', {
     type: DataTypes.STRING,
     allowNull: false
   },
-  // createdAt: {
-  //   type: DataTypes.DATE,
-  //   defaultValue: DataTypes.NOW,
-  // },
-  // updatedAt: {
-  //   type: DataTypes.DATE,
-  //   defaultValue: DataTypes.NOW,
-  // },
+  created_at: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+  updated_at: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+  is_deleted: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
 }, {
   tableName: 'users',
   timestamps: true,
+  underscored: true,  // Menggunakan snake_case untuk kolom database
 });
 
 

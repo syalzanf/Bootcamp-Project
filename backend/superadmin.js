@@ -1,6 +1,8 @@
 const fs = require('fs');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
+const generatePassword = require('generate-password');
 const jwt = require('jsonwebtoken');
 const pool = require('./connection');
 const User = require('./models/user');
@@ -8,65 +10,21 @@ const sequelize = require('./configdb');
 const validator = require('validator');
 require('dotenv').config();
 
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'totabags111@gmail.com',
+    pass: 'azvz jpnr sxsc sulm',
+  },
+});
+
 // const secretKey = 'secret_key'; 
 const jwtSecret = process.env.ACCESS_TOKEN_SECRET;
 const jwtRefreshSecret = process.env.JWT_REFRESH_TOKEN_SECRET;
 
 console.log('Access Token Secret:', jwtSecret);
 console.log('Refresh Token Secret:', jwtRefreshSecret);
-
-// async function loginUser(username, password) {
-//   try {
-//     // Mengambil user dari database
-//     const user = await User.findOne({ where: { username } });
-//     console.log('User:', user); 
-    
-//     if (!user) {
-//       throw new Error('User tidak ada');
-//     }
-
-//     if (user.status !== 'active') {
-//       throw new Error('Account is not active')  ;
-//     }
-
-//     // Memeriksa apakah password cocok
-//     const isMatch = await bcrypt.compare(password, user.password);
-//     console.log('Password match:', isMatch); 
-
-//     if (!isMatch) {
-//       throw new Error('Invalid username or password');
-//     }
-
-//     // Menghasilkan token JWT
-//     const token = jwt.sign(
-//       { username: user.username, role: user.role },
-//       jwtSecret,
-//       { expiresIn: '1h' }
-//     );
-//     console.log('Generated Token:', token);
-
-//     // Mengembalikan hasil login
-//     return {
-//       message: 'Login successful',
-//       token,
-//       user: {
-//         id: user.id,
-//         username: user.username,
-//         name: user.name, 
-//         role: user.role,
-//         telepon: user.telepon,
-//         photo: user.photo,
-//       }
-//     };
-//   } catch (error) {
-//     console.error('Login error:', error.message); 
-//     // return {
-//     //   status: 400,
-//     //   message: error.message
-//     // };
-//     throw error;
-//   }
-// }
 
 
 async function loginUser(username, password) {
@@ -173,7 +131,7 @@ async function verifyToken(token) {
   }
 }
 
-async function addUser(username, name, telepon, email, role, password, photo) {
+async function addUser(username, name, telepon, email, role, photo) {
   try {
 
     // if (!username || !name || !telepon  || !email || !role || !password || !photo) {
@@ -208,15 +166,21 @@ async function addUser(username, name, telepon, email, role, password, photo) {
       throw new Error('Phone number already exists');
     }
 
-    // Cek apakah email sudah ada di database
-    const existingEmail = await User.findOne({ where: { email } });
+    // // Cek apakah email sudah ada di database
+    // const existingEmail = await User.findOne({ where: { email } });
 
-    if (existingEmail) {
-      throw new Error('Email already exists');
-    }
+    // if (existingEmail) {
+    //   throw new Error('Email already exists');
+    // }
 
-    // Hash password sebelum menyimpannya ke database
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // generate password secara otomatis
+    const generatedPassword = generatePassword.generate({
+      length: 8, 
+      numbers: true, // pakai angka
+    });
+
+    // hash password sebelum menyimpannya ke database
+    const hashedPassword = await bcrypt.hash(generatedPassword, 10);
 
     // Insert user ke database
     const newUser = await User.create({
@@ -230,6 +194,16 @@ async function addUser(username, name, telepon, email, role, password, photo) {
       status: 'active'
     });
 
+    // Kirim email ke pengguna dengan password
+    await sendPasswordByEmail(email, 'Your New Account Password', `Hi ${name}, your password is: ${generatedPassword}`);
+
+    // await sendPasswordByEmail ({
+    //   to: email,
+    //   subject: 'Your New Account Password',
+    //   text: `Hi ${name}, your password is: ${generatedPassword}`
+    // });
+
+
     return {
       message: 'User created successfully',
       user: newUser
@@ -238,6 +212,24 @@ async function addUser(username, name, telepon, email, role, password, photo) {
     throw new Error(error.message);
   }
 }
+
+// Fungsi untuk mengirim email
+async function sendPasswordByEmail(to, subject, text) {
+  const mailOptions = {
+    from: 'totabags111@gmail.com',
+    to,                    
+    subject,
+    text,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully to:', to);
+  } catch (error) {
+    console.error('Error sending email:', error.message);
+  }
+}
+
 
 async function superadminLogin(username, password) {
     try {
@@ -318,7 +310,8 @@ async function superadminLogin(username, password) {
   async function getAllUsers() {
     try {
       const users = await User.findAll({
-        order: [['createdAt', 'DESC']],
+        where: { is_deleted: false },
+        order: [['updated_at', 'DESC']],
       });
       console.log(users);  
       return users; 
@@ -472,7 +465,6 @@ async function updatePassword(id, newPassword) {
   }
 }
 
-
   async function deleteUser(id) {
     try {
       const result = await pool.query(
@@ -493,6 +485,44 @@ async function updatePassword(id, newPassword) {
     }
   }
 
+//   async function deleteUser(id) {
+//     if (!id || typeof id !== 'string') {
+//         throw new Error('Expected a string but received a ' + typeof id);
+//     }
+
+//     // Lakukan soft delete dengan mengatur is_deleted menjadi true
+//     const result = await pool.query(
+//         `UPDATE users SET is_deleted = true WHERE id = $1 RETURNING *`,
+//         [id]
+//     );
+
+//     if (result.rowCount === 0) {
+//         throw new Error('User not found');
+//     }
+
+//     return {
+//         message: 'User deleted successfully',
+//         user: result.rows[0],
+//     };
+// }
+
+  async function getTotalUsers() {
+    try {
+      const users = await User.findAll({
+        order: [['updatedAt', 'DESC']],
+      });
+  
+      const totalUsers = users.length;
+  
+      console.log(`Total Users: ${totalUsers}`);
+      return totalUsers;
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw error;
+    }
+  }
+  
+
   module.exports = { 
     loginUser,
     verifyToken,
@@ -504,5 +534,6 @@ async function updatePassword(id, newPassword) {
     updateUser,
     deleteUser,
     updatePassword,
-    updateUserRole
+    updateUserRole,
+    getTotalUsers,
  };

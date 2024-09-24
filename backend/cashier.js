@@ -144,14 +144,39 @@ async function updateCustomer(id, { nama, telepon, alamat }) {
             throw new Error('All fields are required');
         }
         
+        // const existingMemberResult = await pool.query(
+        //     'SELECT * FROM members WHERE telepon = $1',
+        //     [telepon]
+        // );
+
+        // if (existingMemberResult.rows.length > 0) {
+        //     throw new Error('Member already exists!');
+        // }
+         // Ambil data member yang ada berdasarkan ID
+
         const existingMemberResult = await pool.query(
-            'SELECT * FROM members WHERE telepon = $1',
-            [telepon]
+            'SELECT * FROM members WHERE member_id = $1',
+            [id]
         );
 
-        if (existingMemberResult.rows.length > 0) {
-            throw new Error('Member already exists!');
+        if (existingMemberResult.rows.length === 0) {
+            throw new Error('Member not found!');
         }
+
+        const existingMember = existingMemberResult.rows[0];
+
+        // Jika telepon diubah, periksa apakah telepon sudah digunakan oleh member lain
+        if (existingMember.telepon !== telepon) {
+            const duplicateMemberResult = await pool.query(
+                'SELECT * FROM members WHERE telepon = $1',
+                [telepon]
+            );
+
+            if (duplicateMemberResult.rows.length > 0) {
+                throw new Error('Member with this phone number already exists!');
+            }
+        }
+
         const result = await pool.query(
             'UPDATE members SET nama = $1, telepon = $2, alamat = $3 WHERE member_id = $4 RETURNING *',
             [nama, telepon, alamat, id]
@@ -401,13 +426,13 @@ async function getTransactionReportByCashier(cashierName) {
             member: transaction.Member ? transaction.Member.nama : 'Guest',
             cashier: transaction.cashier,
             transaction_date: new Date(transaction.transaction_date).toLocaleDateString(),
-            total: formatNumber(transaction.total),   
-            payment: formatNumber(transaction.payment), 
-            change: formatNumber(transaction.change),  
+            total: formatRupiah(transaction.total),   
+            payment: formatRupiah(transaction.payment), 
+            change: formatRupiah(transaction.change),  
             items: transaction.items.map(item => ({
                 ...item,
-                price: formatNumber(item.price),
-                totalItems: formatNumber (item.qty * item.price) // Menghitung totalItems
+                price: formatRupiah(item.price),
+                totalItems: formatRupiah (item.qty * item.price) // Menghitung totalItems
             }))
         }));
 

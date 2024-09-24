@@ -16,10 +16,6 @@ const Product = sequelize.define('Product', {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    // brand: {
-    //     type: DataTypes.STRING,
-    //     allowNull: false,
-    // },
     id_brand: {
         type: DataTypes.INTEGER,
         references: {

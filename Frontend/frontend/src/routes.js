@@ -102,9 +102,11 @@ const DashboardAdmin = React.lazy(() => import('./views/dashboard/DashboardAdmin
 const DashboardCashier = React.lazy(() => import('./views/pages/transaksi/Transaksi'))
 const DashboardSuperadmin = React.lazy(() => import('./views/dashboard/DashboardSuperadmin'))
 const DataBarang = React.lazy(() => import('./views/pages/barang/DataBarang'))
-const Brand = React.lazy(() => import('./views/pages/barang/Brand'))
 const Barang = React.lazy(() => import('./views/pages/barang/BarangList'))
+const BrandList = React.lazy(() => import('./views/pages/barang/BrandList'))
+const Brand = React.lazy(() => import('./views/pages/barang/Brand'))
 const Stok = React.lazy(() => import('./views/pages/barang/Stok'))
+const StockList = React.lazy(() => import('./views/pages/barang/StockList'))
 const CustomersList = React.lazy(() => import('./views/pages/customers/CustomersList'))
 const Customers = React.lazy(() => import('./views/pages/customers/Customers'))
 const LaporanPenjualan = React.lazy(() => import('./views/pages/laporan/LaporanPenjualan'))
@@ -168,6 +170,12 @@ const adminRoutes = [
     element: LaporanPenjualan,
     exact: true,
 
+  },
+  {
+    path: '/data-penjualan',
+    name: <Translation>{(t) => t('Transaction History')}</Translation>,
+    element: DataPenjualan,
+    exact: true,
   },
   {
     path: '/data-penjualan',
@@ -246,28 +254,28 @@ const superadminRoutes = [
     exact: true,
   },
   {
-    path: '/data-barang',
-    name: <Translation>{(t) => t('Data Barang')}</Translation>,
-    element: DataBarang,
+    path: '/product-list',
+    name: <Translation>{(t) => t('Product Data')}</Translation>,
+    element: Barang,
     exact: true,
   },
   {
-    path: '/data-brand',
-    name: <Translation>{(t) => t('Brand')}</Translation>,
-    element: Brand,
+    path: '/brand-list',
+    name: <Translation>{(t) => t('Brand Data')}</Translation>,
+    element: BrandList,
     exact: true,
   },
   {
-    path: '/stok',
-    name: <Translation>{(t) => t('Stok')}</Translation>,
-    element: Stok,
+    path: '/stock-list',
+    name: <Translation>{(t) => t('Stock Data')}</Translation>,
+    element: StockList,
     exact: true,
 
   },
   {
-    path: '/customers',
+    path: '/customer-list',
     name: <Translation>{(t) => t('Customers')}</Translation>,
-    element: Customers,
+    element: CustomersList,
     exact: true,
 
   },

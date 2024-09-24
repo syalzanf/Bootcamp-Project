@@ -26,7 +26,7 @@ const Breadcrumbs = () => {
               to add separators, because they automatically added in CSS through{' '}
               <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/::before">
                 {' '}
-                <code>::before</code>
+                {/* <code>::before</code> */}
               </a>{' '}
               and{' '}
               <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/content">

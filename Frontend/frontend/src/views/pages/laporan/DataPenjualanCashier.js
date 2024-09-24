@@ -203,11 +203,11 @@ const TransactionReport = () => {
             </CTableBody>
           </CTable>
         </CModalBody>
-        <CModalFooter>
+        {/* <CModalFooter>
           <CButton color="secondary" onClick={() => setModalVisible(false)}>
             Close
           </CButton>
-        </CModalFooter>
+        </CModalFooter> */}
       </CModal>
 
       </CCol>   

@@ -132,11 +132,12 @@ const DataBarang = () => {
   }, []);
 
 
-  const formatNumber = (value) => {
-    return value.toLocaleString('id-ID', {
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
-    });
+      minimumFractionDigits: 0,
+    }).format(value);
   };
 
   const handleShowDetail = (barang) => {
@@ -431,10 +432,7 @@ const DataBarang = () => {
     {
       key: 'price',
       label: 'Price',
-      // fungsi format harga
-      sorter: false,
-      filter: false,
-      render: (item) => formatNumber( item.price)
+      _cellProps: (item) => ({ children: formatCurrency(item.price) }),
      },
     {
       key: 'actions',
@@ -511,6 +509,9 @@ const DataBarang = () => {
               columnSorter
               pagination
               scopedColumns={{
+                price: (item) => (
+                  <td>{formatCurrency(item.price)}</td>
+                ),
                 actions: (item) => (
                   <td className="text-center">
                     <CButton
@@ -571,7 +572,7 @@ const DataBarang = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="product_name" className="col-form-label">
-                  Product Name
+                  Product Name <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -587,7 +588,7 @@ const DataBarang = () => {
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
-                  Brand
+                  Brand <span style={{ color: 'red' }}>*</span>
                 <CFormLabel htmlFor="id_brand" className="col-form-label">
                 </CFormLabel>
               </CCol>
@@ -612,7 +613,7 @@ const DataBarang = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="type" className="col-form-label">
-                  Type
+                  Type <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -629,7 +630,7 @@ const DataBarang = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="color" className="col-form-label">
-                  Color
+                  Color <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -646,7 +647,7 @@ const DataBarang = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="stock" className="col-form-label">
-                  Stock
+                  Stock <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -664,15 +665,16 @@ const DataBarang = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="price" className="col-form-label">
-                  Price
+                  Price <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput
                   id="price"
                   placeholder="Price"
-                  type="number"
+                  type="text"
                   value={formValues.price}
+                  // onChange={handlePriceChange}
                   onChange={(e) => setFormValues({ ...formValues, price: e.target.value })}
                   required
                 />
@@ -682,7 +684,7 @@ const DataBarang = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="image" className="col-form-label">
-                  Image
+                  Image <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -854,7 +856,8 @@ const DataBarang = () => {
                     <span className="me-2">:</span>
                     <CFormInput
                       id="price"
-                      value={selectedBarang.price}
+                      
+                      value={formatCurrency(selectedBarang.price)}
                       readOnly
                       plainText
                     />
@@ -878,7 +881,7 @@ const DataBarang = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="product_name" className="col-form-label">
-                  Product Name
+                  Product Name <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -894,7 +897,7 @@ const DataBarang = () => {
             </CRow>
             <CRow className="mb-3">
               <CCol sm={3}>
-                  Brand
+                  Brand <span style={{ color: 'red' }}>*</span>
                 <CFormLabel htmlFor="id_brand" className="col-form-label">
                 </CFormLabel>
               </CCol>
@@ -919,7 +922,7 @@ const DataBarang = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="type" className="col-form-label">
-                  Type
+                  Type <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -936,7 +939,7 @@ const DataBarang = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="color" className="col-form-label">
-                  Color
+                  Color <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -953,7 +956,7 @@ const DataBarang = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="stock" className="col-form-label">
-                  Stock
+                  Stock <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -971,7 +974,7 @@ const DataBarang = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="price" className="col-form-label">
-                  Price
+                  Price <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -989,7 +992,7 @@ const DataBarang = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="image" className="col-form-label">
-                  Image
+                  Image <span style={{ color: 'red' }}>*</span> 
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>

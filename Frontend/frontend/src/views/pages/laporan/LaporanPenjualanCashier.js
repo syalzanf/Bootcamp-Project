@@ -95,6 +95,11 @@ const TransactionReport = () => {
                 {totalSales !== null && <p className="mb-0">Total Sales: {totalSales}</p>}
             </CCardHeader>
             <CCardBody>
+                <CRow className="row">
+                  <CCol lg={5}>
+                    <CDateRangePicker locale="en-US" size="sm" />
+                  </CCol>
+                </CRow>
                 <CSmartTable
                     clickableRows
                     tableProps={{

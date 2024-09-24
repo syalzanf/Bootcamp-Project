@@ -167,17 +167,6 @@ const Users = () => {
 
       showAlert('User successfully Added!', 'success');
 
-      
-      // Swal.fire(
-      //   'Added!',
-      //   'User details have been added.',
-      //   'success',
-      //   {
-      //     background: '#343a40',
-      //     color: '#fff',
-      //   }
-      // );
-
       setAddVisible(false);
       fetchData();
       // setUserData((prevUsers) => [...prevUsers, response.data]);
@@ -187,14 +176,6 @@ const Users = () => {
       const errorMessage = error.response?.data?.message || 'An error occurred';
 
       showAlert('Failed to add user!', 'danger');
-
-    //   Swal.fire({
-    //     title: 'Failed!',
-    //     text: errorMessage,
-    //     icon: 'error',
-    //     background: '#343a40',
-    //     color: '#fff',
-    // });
     }
   };
 
@@ -456,21 +437,27 @@ const Users = () => {
               scopedColumns={{
                 status: (item) => (
                   <td>
-                    <CBadge color={getBadge(item.status)}>{item.status}</CBadge>
+                    <CBadge 
+                      color={getBadge(item.status)}
+                      onClick={() => handleStatus(item)} 
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {item.status}
+                    </CBadge>
                   </td>
                 ),
                 actions: (item) => (
                   <td className="text-center">
                     {item.role !== 'superadmin' && (
                       <div className="d-flex justify-content-center gap-2">
-                        <CButton
+                        {/* <CButton
                           color="info"
                           size="sm"
                           // shape="rounded-pill"
                           onClick={() => handleStatus(item)}
                         >
                           Status
-                        </CButton>
+                        </CButton> */}
                         <CButton
                           color="warning"
                           size="sm"
@@ -584,13 +571,32 @@ const Users = () => {
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
+                <CFormSelect
+                  id="role"
+                  value={formValues.role}
+                  onChange={(e) => setFormValues({ ...formValues, role: e.target.value })}
+                  required
+                >
+                  <option value="admin">Admin</option>
+                  <option value="cashier">Cashier</option>
+                  {/* <option value="superadmin">Superadmin</option> */}
+                </CFormSelect>
+              </CCol>
+            </CRow>
+            {/* <CRow className="mb-3">
+              <CCol sm={3}>
+                <CFormLabel htmlFor="role" className="col-form-label">
+                  Role
+                </CFormLabel>
+              </CCol>
+              <CCol sm={9}>
                 <CFormInput
                   id="role"
                   value={formValues.role}
                   onChange={(e) => setFormValues({ ...formValues, role: e.target.value })}
                 />
               </CCol>
-            </CRow>
+            </CRow> */}
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="photo" className="col-form-label">
@@ -635,7 +641,7 @@ const Users = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="addUsername" className="col-form-label">
-                  Username
+                  Username <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -651,7 +657,7 @@ const Users = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="addName" className="col-form-label">
-                  Name
+                  Name <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -667,7 +673,7 @@ const Users = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="addTelepon" className="col-form-label">
-                  Phone
+                  Phone <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -683,7 +689,7 @@ const Users = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="email" className="col-form-label">
-                  Email
+                  Email <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -696,7 +702,7 @@ const Users = () => {
                 <CFormFeedback invalid>Email is required.</CFormFeedback>
               </CCol>
             </CRow>
-            <CRow className="mb-3">
+            {/* <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="password" className="col-form-label">
                   Password
@@ -711,11 +717,11 @@ const Users = () => {
                 />
                 <CFormFeedback invalid>Password is required.</CFormFeedback>
               </CCol>
-            </CRow>
+            </CRow> */}
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="addRole" className="col-form-label">
-                  Role
+                  Role <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -736,7 +742,7 @@ const Users = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="photo" className="col-form-label">
-                  Image
+                  Image <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>

@@ -335,18 +335,24 @@ app.get('/api/dashboard-admin', async (req, res) => {
     const minimumStock = await admin.getMinimumStock(); // Fungsi untuk mendapatkan stok minimum
     const latestIncomingItems = await admin.getLatestIncomingItems(); // Fungsi untuk mendapatkan barang masuk terbaru
     const latestSales = await admin.getLatestSales(); // Fungsi untuk mendapatkan penjualan terbaru
+    const salesTraffic = await admin.getSalesTraffic();
+    const getMonthlyTransactions = await admin.getMonthlyTransactions();// fungsi untuk mendapatkan total transaksi 
+    const getTotalUsers = await superadmin.getTotalUsers();// fungsi untuk mendapatkan total user
+
 
     res.json({
       itemsCounter,
       minimumStock,
       latestIncomingItems,
-      latestSales
+      latestSales,
+      salesTraffic,
+      getMonthlyTransactions,
+      getTotalUsers,
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching data' });
   }
 });
-
 
 app.get('/api/stock/total',authenticateToken, async (req, res) => {
   try {
@@ -496,7 +502,7 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
   // Rute untuk mengupdate produk berdasarkan id
   app.put('/api/admin/products/:id', upload.single('image'), authenticateToken, async (req, res) => {
     const { id } = req.params;
-    const { product_name, id_brand, type, color, price, stock, } = req.body;
+    const { product_name, id_brand, type, color, price } = req.body;
     
     const image = req.file ? `uploads/${req.file.filename}` : null;
     console.log('Image:', image); // Cek apakah image tidak null
@@ -508,7 +514,6 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
           type,
           color,
           price,
-          stock,
           image
         });
 
@@ -518,7 +523,7 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
           image_url: image ? `http://localhost:3000/${updatedProduct.image}` : null
         });
     } catch (error) { 
-        console.error('Error updating product:', error);
+        console.log('Error updating product:', error);
         res.status(500).json({ message: error.message });
     }
   });
@@ -647,12 +652,12 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
     }
   });
 
-  app.delete('/api/brands/delete/:id', authenticateToken, async (req, res) => {
+  app.put('/api/brands/delete/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
 
     try {
         const deletedBrand = await admin.deleteBrand(id);
-        res.status(200).json({ message: 'Brand deleted successfully', deletedBrand });
+        res.status(200).json({ message: 'Brand deleted successfully (soft delete)', deletedBrand });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -1081,12 +1086,12 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
 
   // Rute untuk menambahkan user baru
   app.post('/api/superadmin/users/add', authenticateToken, upload.single('photo'), async (req, res) => { 
-    const { username, name, telepon, email, role, password} = req.body;
+    const { username, name, telepon, email, role} = req.body;
 
     const photo = req.file ?  `/uploads/${req.file.filename}` : null;
 
     try {
-      const result = await superadmin.addUser(username,name, telepon, email, role, password, photo);
+      const result = await superadmin.addUser(username,name, telepon, email, role, photo);
       res.status(201).json({
         message: result.message,
         user: result.user
@@ -1164,8 +1169,6 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
     }
   });
 
-
-
   // Rute untuk menghapus user
   app.delete('/api/superadmin/users/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
@@ -1178,6 +1181,20 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
       res.status(500).json({ message: error.message });
     }
   });
+
+    // // Rute untuk menghapus user
+    // app.put('/api/superadmin/users/:id', authenticateToken, async (req, res) => {
+    //   const { id } = req.params;
+  
+    //   console.log("Received ID:", id); 
+    //   try {
+    //     const result = await superadmin.deleteUser(id);
+    //     res.status(200).json(result);
+    //   } catch (error) {
+    //     console.error(error);
+    //     res.status(500).json({ message: error.message });
+    //   }
+    // });
 
 app.put('/api/user/:id/status', authenticateToken, async (req, res) => {
   const { id } = req.params;

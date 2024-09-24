@@ -79,23 +79,6 @@ const Transaksi = sequelize.define('Transaksi', {
             }
 
             transaction.transaction_code = nextTransactionCode;
-
-
-            // if (transaction.items && Array.isArray(transaction.items)) {
-            //     for (let item of transaction.items) {
-            //         const product = await Product.findByPk(item.id_product);
-            //         if (product) {
-            //             if (product.stock >= item.qty) {
-            //                 product.stock -= item.qty;
-            //                 await product.save();  // Pastikan save() dipanggil untuk menyimpan perubahan
-            //             } else {
-            //                 throw new Error(`Not enough stock for product ${product.product_name}`);
-            //             }
-            //         } else {
-            //             throw new Error(`Product with ID ${item.id_product} not found`);
-            //         }
-            //     }
-            // }
         }
     }
 });

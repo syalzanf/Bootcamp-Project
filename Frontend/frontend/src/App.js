@@ -19,8 +19,10 @@ const DashboardCashier = React.lazy(() => import('./views/pages/transaksi/Transa
 const DashboardSuperadmin = React.lazy(() => import('./views/dashboard/DashboardSuperadmin'))
 const DataBarang = React.lazy(() => import('./views/pages/barang/DataBarang'))
 const Brand = React.lazy(() => import('./views/pages/barang/Brand'))
+const BrandList = React.lazy(() => import('./views/pages/barang/BrandList'))
 const Barang = React.lazy(() => import('./views/pages/barang/BarangList'))
 const Stok = React.lazy(() => import('./views/pages/barang/Stok'))
+const StockList = React.lazy(() => import('./views/pages/barang/StockList'))
 const CustomersList = React.lazy(() => import('./views/pages/customers/CustomersList'))
 const Customers = React.lazy(() => import('./views/pages/customers/Customers'))
 const LaporanPenjualan = React.lazy(() => import('./views/pages/laporan/LaporanPenjualan'))
@@ -152,9 +154,11 @@ const App = () => {
 
 
                 <Route exact path="/data-barang" element={<DataBarang />} />
-                <Route exact path="/barang" element={<Barang />} />
+                <Route exact path="/product-list" element={<Barang />} />
                 <Route exact path="/data-brand" element={<Brand />} />
+                <Route exact path="/brand-list" element={<BrandList />} />
                 <Route exact path="/stok"element={<Stok />} />
+                <Route exact path="/stock-list"element={<StockList />} />
                 <Route exact path="/customer-list" element={<CustomersList />} />
                 <Route exact path="/customers" element={<Customers />} />
                 <Route exact path="/transaksi" element={<Transaksi />} />

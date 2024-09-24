@@ -76,11 +76,11 @@ const AppSidebar = () => {
           {/* <CIcon customClassName="sidebar-brand-full" icon={logo} height={32} />
           <CIcon customClassName="sidebar-brand-narrow" icon={sygnet} height={32} /> */}
           <div style={{ display: 'flex', alignItems: 'center' }}>
-          <img 
-            src={logo} 
-            alt="Logo" 
-            className="sidebar-brand-full" 
-            height={50} 
+          <img
+            src={logo}
+            alt="Logo"
+            className="sidebar-brand-full"
+            height={50}
           />
         <span style={{ marginLeft: '10px', fontSize: '20px', fontWeight: 'bold',  fontFamily: 'Dancing Script, cursive'}}>
           MyBrand
@@ -94,11 +94,11 @@ const AppSidebar = () => {
         />
       </CSidebarHeader>
       <AppSidebarNav items={navigation} />
-      <CSidebarFooter className="border-top d-none d-lg-flex">
-        <CSidebarToggler
+      {/* <CSidebarFooter className="border-top d-none d-lg-flex">
+        {/* <CSidebarToggler
           onClick={() => dispatch({ type: 'set', sidebarUnfoldable: !unfoldable })}
         />
-      </CSidebarFooter>
+      </CSidebarFooter> */}
     </CSidebar>
   );
 };

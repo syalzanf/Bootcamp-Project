@@ -77,12 +77,23 @@ const DataBarang = () => {
     setVisible(true);
   };
 
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(value);
+  };
+
   const columns =[
-    { key: 'product_code', label: 'Kode Barang' },
-    { key: 'product_name', label: 'Nama Barang' },
-    { key: 'stock', label: 'Stok' },
-    { key: 'price', label: 'Harga' },
+    { key: 'product_code', label: 'Product Code' },
+    { key: 'product_name', label: 'Product Name' },
+    { key: 'stock', label: 'Stock' },
     {
+      key: 'price',
+      label: 'Price',
+      _cellProps: (item) => ({ children: formatCurrency(item.price) }),
+     },    {
       key: 'actions',
       label: 'Actions',
       _props: { className: 'text-center' },
@@ -103,7 +114,7 @@ const DataBarang = () => {
     <CRow>
       <CCol>
         <CCard>
-          <CCardHeader>Data Barang</CCardHeader>
+          <CCardHeader>Product Data</CCardHeader>
           <CCardBody>
           <CSmartTable
               clickableRows
@@ -123,6 +134,9 @@ const DataBarang = () => {
               columnSorter
               pagination
               scopedColumns={{
+                price: (item) => (
+                  <td>{formatCurrency(item.price)}</td>
+                ),
                 actions: (item) => (
                   <td className="text-center">
                     <CButton
@@ -131,7 +145,7 @@ const DataBarang = () => {
                       shape="rounded-pill"
                       onClick={() => handleShowDetail(item)}
                     >
-                      Detail
+                      Details
                     </CButton>{' '}
                   </td>
                 ),
@@ -146,7 +160,7 @@ const DataBarang = () => {
         {selectedBarang && (
           <CModal alignment="center" visible={visible} onClose={() => setVisible(false)}>
             <CModalHeader>
-              <CModalTitle>Detail Barang</CModalTitle>
+              <CModalTitle>Product Details</CModalTitle>
             </CModalHeader>
             <CModalBody>
               <CForm>
@@ -164,7 +178,7 @@ const DataBarang = () => {
                 <CRow className="mb-3">
                   <CCol sm={3}>
                     <CFormLabel htmlFor="product_code" className="col-form-label">
-                      Kode Barang
+                      Product Code
                     </CFormLabel>
                   </CCol>
                   <CCol sm={9}>
@@ -182,7 +196,7 @@ const DataBarang = () => {
                 <CRow className="mb-3">
                   <CCol sm={3}>
                     <CFormLabel htmlFor="product_name" className="col-form-label">
-                      Nama Barang
+                      Product Name
                     </CFormLabel>
                   </CCol>
                   <CCol sm={9}>
@@ -200,7 +214,7 @@ const DataBarang = () => {
                 <CRow className="mb-3">
                   <CCol sm={3}>
                     <CFormLabel htmlFor="brand" className="col-form-label">
-                      Merk
+                      Brand
                     </CFormLabel>
                   </CCol>
                   <CCol sm={9}>
@@ -218,7 +232,7 @@ const DataBarang = () => {
                 <CRow className="mb-3">
                   <CCol sm={3}>
                     <CFormLabel htmlFor="type" className="col-form-label">
-                      Tipe
+                      Type
                     </CFormLabel>
                   </CCol>
                   <CCol sm={9}>
@@ -236,7 +250,7 @@ const DataBarang = () => {
                 <CRow className="mb-3">
                   <CCol sm={3}>
                     <CFormLabel htmlFor="stock" className="col-form-label">
-                      Stok
+                      Stock
                     </CFormLabel>
                   </CCol>
                   <CCol sm={9}>
@@ -254,7 +268,7 @@ const DataBarang = () => {
                 <CRow className="mb-3">
                   <CCol sm={3}>
                     <CFormLabel htmlFor="price" className="col-form-label">
-                      Harga
+                      Price
                     </CFormLabel>
                   </CCol>
                   <CCol sm={9}>
@@ -262,7 +276,7 @@ const DataBarang = () => {
                     <span className="me-2">:</span>
                     <CFormInput
                       id="price"
-                      value={selectedBarang.price}
+                      value={formatCurrency(selectedBarang.price)}
                       readOnly
                       plainText
                     />

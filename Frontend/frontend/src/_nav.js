@@ -32,7 +32,7 @@ const _navAdmin = [
   },
   {
     component: CNavItem,
-    name: <Translation>{(t) => t('Master Data')}</Translation>,
+    name: <Translation>{(t) => t('Master Product')}</Translation>,
     to: '/data-barang',
     icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
   },
@@ -52,6 +52,12 @@ const _navAdmin = [
     component: CNavItem,
     name: <Translation>{(t) => t('Customers')}</Translation>,
     to: '/customer-list',
+    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: <Translation>{(t) => t('Transaction History')}</Translation>,
+    to: '/data-penjualan',
     icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
   },
   {
@@ -122,26 +128,26 @@ const _navSuperadmin = [
   // },
   {
     component: CNavItem,
-    name: <Translation>{(t) => t('Master Product')}</Translation>,
-    to: '/data-barang',
+    name: <Translation>{(t) => t('Product Data')}</Translation>,
+    to: '/product-list',
     icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
-    name: <Translation>{(t) => t('Master Brand')}</Translation>,
-    to: '/data-brand',
+    name: <Translation>{(t) => t('Brand Data')}</Translation>,
+    to: '/brand-list',
     icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
-    name: <Translation>{(t) => t('Stock Inventory')}</Translation>,
-    to: '/stok',
+    name: <Translation>{(t) => t('Stock Data')}</Translation>,
+    to: '/stock-list',
     icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Customers')}</Translation>,
-    to: '/customers',
+    to: '/customer-list',
     icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
   },
   {

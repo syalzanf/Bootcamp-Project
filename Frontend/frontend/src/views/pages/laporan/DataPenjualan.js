@@ -211,12 +211,12 @@ const TransactionReport = () => {
               <CTable>
                 <CTableHead>
                   <CTableRow>
-                    <CTableHeaderCell>Kode Produk</CTableHeaderCell>
-                    <CTableHeaderCell>Nama Produk</CTableHeaderCell>
+                    <CTableHeaderCell>Product Code</CTableHeaderCell>
+                    <CTableHeaderCell>Product Name</CTableHeaderCell>
                     <CTableHeaderCell>Brand</CTableHeaderCell>
-                    <CTableHeaderCell>Tipe</CTableHeaderCell>
+                    <CTableHeaderCell>Type</CTableHeaderCell>
                     <CTableHeaderCell>Qty</CTableHeaderCell>
-                    <CTableHeaderCell>Harga</CTableHeaderCell>
+                    <CTableHeaderCell>Price</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
@@ -234,11 +234,11 @@ const TransactionReport = () => {
               </CTable>
             )}
           </CModalBody>
-          <CModalFooter>
+          {/* <CModalFooter>
             <CButton color="secondary" onClick={() => setModalVisible(false)}>
               Close
             </CButton>
-          </CModalFooter>
+          </CModalFooter> */}
         </CModal>
       </CCol>
     </CRow>

@@ -75,30 +75,30 @@ const CustomerList = () => {
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    console.log('Customers component rendered');
-
-    const fetchData = async () => {
-      try {
-        const response = await axios.get('/api/cashier/customers',  {
-          headers: { Authorization: `${token}` },
-          withCredentials: true
-        });
-        if (Array.isArray(response.data)) {
-          setCustomerData(response.data);
-        } else {
-          console.error('Data format is not an array:', response.data);
-          setCustomerData([]);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error.response ? error.response.data : error.message);
-        setError(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const response = await axios.get('/api/cashier/customers',  {
+        headers: { Authorization: `${token}` },
+        withCredentials: true
+      });
+      if (Array.isArray(response.data)) {
+        setCustomerData(response.data);
+      } else {
+        console.error('Data format is not an array:', response.data);
+        setCustomerData([]);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error.response ? error.response.data : error.message);
+      setError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   const handleAdd = () => {
@@ -130,19 +130,15 @@ const CustomerList = () => {
 
       setAddVisible(false);
 
-      setCustomerData((prevCustomers) => [...prevCustomers, response.data]);
+      // setCustomerData((prevCustomers) => [...prevCustomers, response.data]);
+
+      fetchData();
+
 
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'An error occurred';
       showAlert(errorMessage, 'danger');
 
-    //   Swal.fire({
-    //     title: 'Error!',
-    //     text: errorMessage,
-    //     icon: 'error',
-    //     background: '#343a40',
-    //     color: '#fff',
-    // });
       console.error('Terjadi kesalahan:', error);
     }
   };
@@ -193,12 +189,13 @@ const CustomerList = () => {
   
       console.log('Pelanggan berhasil diperbarui:', response.data);
   
-      // Perbarui state customerData dengan data pelanggan yang diperbarui
-      setCustomerData((prevCustomers) =>
-        prevCustomers.map((customer) =>
-          customer.member_id === selectedCustomer.member_id ? response.data : customer
-        )
-      );
+      // // Perbarui state customerData dengan data pelanggan yang diperbarui
+      // setCustomerData((prevCustomers) =>
+      //   prevCustomers.map((customer) =>
+      //     customer.member_id === selectedCustomer.member_id ? response.data : customer
+      //   )
+      // );
+      fetchData();
   
       setEditVisible(false);
       showAlert('Customer successfully Updated!', 'success');
@@ -208,14 +205,6 @@ const CustomerList = () => {
       const errorMessage = error.response?.data?.message || 'An error occurred';
       console.error('Error updating customer data:', error.response ? error.response.data : error.message);
       showAlert(errorMessage, 'danger');
-
-    //   Swal.fire({
-    //     title: 'Error!',
-    //     text: errorMessage,
-    //     icon: 'error',
-    //     background: '#343a40',
-    //     color: '#fff',
-    // });
     }
   };
 
@@ -380,7 +369,7 @@ const CustomerList = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="nama" className="col-form-label">
-                  Customer Name
+                  Customer Name <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -395,7 +384,7 @@ const CustomerList = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="telepon" className="col-form-label">
-                  Phone
+                  Phone <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -410,7 +399,7 @@ const CustomerList = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="alamat" className="col-form-label">
-                  Address
+                  Address <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -456,7 +445,7 @@ const CustomerList = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="nama" className="col-form-label">
-                  Customer Name
+                  Customer Name <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -471,7 +460,7 @@ const CustomerList = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="telepon" className="col-form-label">
-                  Phone
+                  Phone <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -486,7 +475,7 @@ const CustomerList = () => {
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="alamat" className="col-form-label">
-                  Address
+                  Address <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>

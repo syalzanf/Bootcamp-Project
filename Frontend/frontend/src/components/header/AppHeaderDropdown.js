@@ -255,126 +255,111 @@ const AppHeaderDropdown = () => {
         </CDropdownMenu>
       </CDropdown>
 
-      <CModal alignment="center" visible={showVisible} onClose={() => setShowVisible(false)}>
+      {/* <CModal alignment="center" visible={showVisible} onClose={() => setShowVisible(false)}>
         <CModalHeader>
           <CModalTitle>Profile</CModalTitle>
         </CModalHeader>
         <CModalBody>
-          <CForm>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="photo" className="col-form-label">
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                {/* <CAvatar
-                  style={{ width: '250px', height: '250px',  borderRadius: '0' }}
-                  src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'}
-                  alt="user-profile"
-                /> */}
-                <img
-                  style={{ width: '250px', height: '250px', objectFit: 'cover', borderRadius: '0' }}
-                  src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'}
-                  alt="user-profile"
-                />
 
-                  {/* <img
-                    style={{
-                      width: '250px',
-                      height: '250px',
-                      objectFit: 'cover',
-                      borderRadius: '0',
-                    }}
-                    src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'}
-                    alt="user-profile"
-                  /> */}
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="username" className="col-form-label">
-                  Username
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="username"
-                  type="text"
-                  value={profile.username}
-                  readOnly
-                  plainText
-                />
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="name" className="col-form-label">
-                  Nama
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="name"
-                  value={profile.name}
-                  readOnly
-                  plainText
-                />
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="role" className="col-form-label">
-                  Role
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="role"
-                  value={profile.role}
-                  readOnly
-                  plainText
-                />
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="telepon" className="col-form-label">
-                  Telepon
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="telepon"
-                  placeholder="Telepon"
-                  value={profile.telepon}
-                  readOnly
-                  plainText
-                />
-              </CCol>
-            </CRow>
-            <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="email" className="col-form-label">
-                  Email
-                </CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="email"
-                  placeholder="Email"
-                  value={profile.email}
-                  readOnly
-                  plainText
-                />
-              </CCol>
-            </CRow>
-          </CForm>
+
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setShowVisible(false)}>Close</CButton>
           <CButton color="primary" onClick={handleEditProfile}>Edit Profile</CButton>
         </CModalFooter>
+      </CModal> */}
+      <CModal alignment="center"  size="lg" visible={showVisible} onClose={() => setShowVisible(false)}>
+        <CModalHeader>
+          <CModalTitle>Profile</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <CForm>
+            <CRow className="g-3">
+              {/* Kolom untuk gambar di sebelah kiri */}
+              <CCol xs="auto" className="d-flex align-items-center">
+                <img
+                  style={{ width: '250px', height: '250px', objectFit: 'cover', borderRadius: '0' }}
+                  src={profile.photo ? `http://localhost:3000/${profile.photo}` : 'default-photo.png'}
+                  alt="user-profile"
+                />
+              </CCol>
+
+              {/* Kolom untuk form di sebelah kanan */}
+              <CCol>
+                <CRow className="mb-3">
+                  <CCol sm={3}>
+                    <CFormLabel htmlFor="username">Username</CFormLabel>
+                  </CCol>
+                  <CCol sm={9}>
+                    <CFormInput
+                      id="username"
+                      type="text"
+                      value={profile.username}
+                      readOnly
+                    />
+                  </CCol>
+                </CRow>
+                <CRow className="mb-3">
+                  <CCol sm={3}>
+                    <CFormLabel htmlFor="name">Nama</CFormLabel>
+                  </CCol>
+                  <CCol sm={9}>
+                    <CFormInput
+                      id="name"
+                      value={profile.name}
+                      readOnly
+                    />
+                  </CCol>
+                </CRow>
+                <CRow className="mb-3">
+                  <CCol sm={3}>
+                    <CFormLabel htmlFor="role">Role</CFormLabel>
+                  </CCol>
+                  <CCol sm={9}>
+                    <CFormInput
+                      id="role"
+                      value={profile.role}
+                      readOnly
+                    />
+                  </CCol>
+                </CRow>
+                <CRow className="mb-3">
+                  <CCol sm={3}>
+                    <CFormLabel htmlFor="telepon">Telepon</CFormLabel>
+                  </CCol>
+                  <CCol sm={9}>
+                    <CFormInput
+                      id="telepon"
+                      placeholder="Telepon"
+                      value={profile.telepon}
+                      readOnly
+                      
+                    />
+                  </CCol>
+                </CRow>
+                <CRow className="mb-3">
+                  <CCol sm={3}>
+                    <CFormLabel htmlFor="email">Email</CFormLabel>
+                  </CCol>
+                  <CCol sm={9}>
+                    <CFormInput
+                      id="email"
+                      placeholder="Email"
+                      value={profile.email}
+                      readOnly
+                    />
+                  </CCol>
+                </CRow>
+              </CCol>
+            </CRow>
+          </CForm>
+          <CModalFooter>
+          <CButton color="secondary" onClick={() => setShowVisible(false)}>Close</CButton>
+          <CButton color="primary" onClick={handleEditProfile}>Edit Profile</CButton>
+        </CModalFooter>
+        </CModalBody>
       </CModal>
+
 
       <CModal alignment="center" visible={editVisible} onClose={() => setEditVisible(false)}>
         <CModalHeader>

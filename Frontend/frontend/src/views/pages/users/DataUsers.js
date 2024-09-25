@@ -132,7 +132,7 @@ const Users = () => {
     if (form.checkValidity() === false) {
       event.stopPropagation();
       setValidated(true);
-      return;
+      return; 
     }
 
 
@@ -175,7 +175,7 @@ const Users = () => {
       console.error('Error menambah data pengguna:', error.response ? error.response.data : error.message);
       const errorMessage = error.response?.data?.message || 'An error occurred';
 
-      showAlert('Failed to add user!', 'danger');
+      showAlert(error.message, 'danger');
     }
   };
 
@@ -437,13 +437,14 @@ const Users = () => {
               scopedColumns={{
                 status: (item) => (
                   <td>
-                    <CBadge 
-                      color={getBadge(item.status)}
-                      onClick={() => handleStatus(item)} 
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {item.status}
-                    </CBadge>
+                      <CBadge 
+                        color={getBadge(item.status)}
+                        onClick={item.role !== 'superadmin' ? () => handleStatus(item) : null} 
+                        style={{ cursor: item.role !== 'superadmin' ? 'pointer' : 'not-allowed' }} 
+                        title={item.role === 'superadmin' ? "Action not allowed for superadmin" : undefined}
+                      >
+                        {item.status}
+                      </CBadge>
                   </td>
                 ),
                 actions: (item) => (
@@ -463,7 +464,7 @@ const Users = () => {
                           size="sm"
                           // shape="rounded-pill"
                           onClick={() => handleEdit(item)}
-                          disabled={item.role === 'superadmin'}
+                          // disabled={item.role === 'superadmin'}
                         >
                           Edit
                         </CButton>

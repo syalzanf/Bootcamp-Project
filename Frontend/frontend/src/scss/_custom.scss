@@ -22,3 +22,31 @@
   background-color: #0c0c14;
 }
 
+/* Dark mode styles for the DatePicker */
+.react-datepicker {
+  background-color: rgb(19, 24, 36); /* Dark background */
+  color: #fff;            /* Light text */
+  border: none;          /* Remove border */
+}
+
+.react-datepicker__header {
+  background-color: #444; /* Header background */
+  color: #fff;            /* Header text color */
+}
+
+.react-datepicker__current-month {
+  color: #fff;            /* Current month text color */
+}
+
+.react-datepicker__day {
+  color: #fff;            /* Day text color */
+}
+
+.react-datepicker__day--selected {
+  background-color: #007bff; /* Selected day background */
+  color: #fff;            /* Selected day text */
+}
+
+.react-datepicker__day--hovered {
+  background-color: rgba(255, 255, 255, 0.1); /* Hovered day background */
+}

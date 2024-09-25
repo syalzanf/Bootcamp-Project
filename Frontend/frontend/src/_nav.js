@@ -17,6 +17,12 @@ import {
   cilSpeedometer,
   cilSpreadsheet,
   cilStar,
+  cilMoney,
+  cilUserPlus,
+  cilFolderOpen,
+  cilCart,
+  cilUserFemale,
+  cilHistory,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react-pro'
 import { Translation } from 'react-i18next'
@@ -34,37 +40,37 @@ const _navAdmin = [
     component: CNavItem,
     name: <Translation>{(t) => t('Master Product')}</Translation>,
     to: '/data-barang',
-    icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Master Brand')}</Translation>,
     to: '/data-brand',
-    icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Stock Inventory')}</Translation>,
     to: '/stok',
-    icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilCart} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Customers')}</Translation>,
     to: '/customer-list',
-    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilUserFemale} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Transaction History')}</Translation>,
     to: '/data-penjualan',
-    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilHistory} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Transaction Report')}</Translation>,
     to: '/laporan-penjualan',
-    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
   }
 ]
 
@@ -79,7 +85,7 @@ const _navCashier = [
     component: CNavItem,
     name: <Translation>{(t) => t('Transaction')}</Translation>,
     to: '/transaksi',
-    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilMoney} customClassName="nav-icon" />,
   },
   // {
   //   component: CNavItem,
@@ -91,19 +97,19 @@ const _navCashier = [
     component: CNavItem,
     name: <Translation>{(t) => t('Customers')}</Translation>,
     to: '/customers',
-    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilUserPlus} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Transaction History')}</Translation>,
     to: '/data-penjualan-cashier',
-    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilHistory} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Transaction Report')}</Translation>,
     to: '/laporan-penjualan-cashier',
-    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
   }
 ]
 
@@ -118,7 +124,7 @@ const _navSuperadmin = [
     component: CNavItem,
     name: <Translation>{(t) => t('Master User')}</Translation>,
     to: '/data-user',
-    icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilUserPlus} customClassName="nav-icon" />,
   },
   // {
   //   component: CNavItem,
@@ -130,19 +136,19 @@ const _navSuperadmin = [
     component: CNavItem,
     name: <Translation>{(t) => t('Product Data')}</Translation>,
     to: '/product-list',
-    icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Brand Data')}</Translation>,
     to: '/brand-list',
-    icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Stock Data')}</Translation>,
     to: '/stock-list',
-    icon: <CIcon icon={cilPencil} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
@@ -154,13 +160,13 @@ const _navSuperadmin = [
     component: CNavItem,
     name: <Translation>{(t) => t('Transaction History')}</Translation>,
     to: '/data-penjualan',
-    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilHistory} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: <Translation>{(t) => t('Transaction Report')}</Translation>,
     to: '/laporan-penjualan',
-    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
   }
 ]
 

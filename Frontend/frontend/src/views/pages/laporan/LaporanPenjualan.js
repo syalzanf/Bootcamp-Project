@@ -10,6 +10,7 @@ import {
   CRow,
   CCol,
 } from '@coreui/react-pro';
+import '../../../scss/_custom.scss';
 
 const TransactionReport = () => {
     const today = new Date(); 

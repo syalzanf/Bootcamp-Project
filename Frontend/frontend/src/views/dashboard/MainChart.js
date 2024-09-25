@@ -45,7 +45,7 @@ const MainChart = ({ selectedYear }) => {
           labels,
           datasets: [
             { 
-              label: 'Monthly Transactions',
+              label: 'Transactions',
               backgroundColor: `rgba(${getStyle('--cui-warning-rgb')}, .1)`,
               borderColor: getStyle('--cui-warning'),
               pointHoverBackgroundColor: getStyle('--cui-warning'),
@@ -54,7 +54,7 @@ const MainChart = ({ selectedYear }) => {
               fill: true,
             },
             {
-              label: 'Product Transactions',
+              label: 'Product Sold',
               backgroundColor: `rgba(${getStyle('--cui-info-rgb')}, .1)`,
               borderColor: getStyle('--cui-info'),
               pointHoverBackgroundColor: getStyle('--cui-info'),
@@ -117,7 +117,7 @@ const MainChart = ({ selectedYear }) => {
               grid: {
                 color: getStyle('--cui-border-color-translucent'),
               },
-              max: 1000,
+              max: 150,
               ticks: {
                 color: getStyle('--cui-body-color'),
                 maxTicksLimit: 5,

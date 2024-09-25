@@ -111,32 +111,6 @@ const TransactionPage = () => {
 
   const token = localStorage.getItem("token");
 
-
-  // const [brands, setBrands] = useState([]);
-
-
-  // useEffect(() => {
-  //   const fetchBrands = async () => {
-  //     try {
-  //       const token = localStorage.getItem('token');
-  //       const response = await axios.get('http://localhost:3000/api/cashier/brands', {
-  //         headers: { Authorization: `${token}` },
-  //         withCredentials: true
-  //       });
-  //       if (Array.isArray(response.data)) {
-  //         setBrands(response.data);
-  //       } else {
-  //         console.error('Data format is not an array:', response.data);
-  //         setBrands([]);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching brands:', error.response ? error.response.data : error.message);
-  //     }
-  //   };
-
-  //   fetchBrands();
-  // }, []);
-
   useEffect(() => {
     const token = localStorage.getItem("token");
     axios.get('/api/cashier/products',  {
@@ -215,6 +189,8 @@ const TransactionPage = () => {
 
    } else {
 
+      // const formattedPrice = formatCurrency(selectedProduct.price); 
+
       setFormValues({
         ...formValues,
         product_code: selectedProduct.product_code,
@@ -223,6 +199,7 @@ const TransactionPage = () => {
         brand_name: selectedProduct.brand_name, // Tampilkan brand_name di frontend
         type: selectedProduct.type,
         price: selectedProduct.price,
+        // price: formattedPrice,
         stock: selectedProduct.stock,
         qty: '',
       });
@@ -374,26 +351,6 @@ const TransactionPage = () => {
     setChange(payment >= total ? payment - total : 0);
   }, [payment, total]);
 
-
-  // const handlePaymentMethodChange = (selectedOptions) => {
-  //   if (selectedOptions.length > 0) {
-  //     const method = selectedOptions[0].value; // Hanya satu pilihan yang diizinkan
-  //     setPaymentMethod([method]);
-  
-  //     if (method !== 'cash') {
-  //       // Jika metode pembayaran bukan 'cash', otomatis set payment dengan total
-  //       setPayment(total);
-  //     } else {
-  //       // Jika metode pembayaran adalah 'cash', kosongkan payment
-  //       setPayment('');
-  //     }
-  //   } else {
-  //     // Jika tidak ada pilihan
-  //     setPaymentMethod([]);
-  //     setPayment('');
-  //   }
-  // };
-
   const handlePaymentMethodChange = (e) => {
     const method = e.target.value;
     setPaymentMethod(method);
@@ -484,7 +441,7 @@ const TransactionPage = () => {
             price: '',
             qty: '',
           });
-          
+
           setSelectedMember(null);
           // setMemberSearchInput('');
           // setMembers('');
@@ -557,14 +514,13 @@ const TransactionPage = () => {
       }
     };
 
-
-  const formatRupiah = (number) => {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0
-  }).format(number);
-};
+    const formatCurrency = (value) => {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+      }).format(value);
+    };
 
 const paymentOptions = [
   { value: 'cash', label: 'Cash' },
@@ -609,19 +565,6 @@ const paymentOptions = [
         </CCardHeader>
         <CCardBody>
           <CForm>
-            {/* <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="transaction_code">Kode Transaksi</CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CFormInput
-                  id="transaction_code"
-                  value={transactionCode}
-                  readOnly
-                  plainText
-                />
-              </CCol>
-            </CRow> */}
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="transaction_date">Date</CFormLabel>
@@ -736,7 +679,6 @@ const paymentOptions = [
               <CTable>
                 <CTableHead>
                   <CTableRow>
-                    <CTableHeaderCell>Product Code</CTableHeaderCell>
                     <CTableHeaderCell>Name</CTableHeaderCell>
                     <CTableHeaderCell>Brand</CTableHeaderCell>
                     <CTableHeaderCell>Type</CTableHeaderCell>
@@ -749,7 +691,6 @@ const paymentOptions = [
                 <CTableBody>
                   {cartItems.map((item, index) => (
                     <CTableRow key={index}>
-                      <CTableDataCell>{item.product_code}</CTableDataCell>
                       <CTableDataCell>{item.product_name}</CTableDataCell>
                       <CTableDataCell>{item.brand_name}</CTableDataCell>
                       <CTableDataCell>{item.type}</CTableDataCell>
@@ -768,14 +709,14 @@ const paymentOptions = [
               </div>
 
               <CForm className="mt-auto">
-               <CRow className="mb-3"> 
+               <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="total">Total</CFormLabel>
               </CCol>
               <CCol sm={9}>
                 <CFormInput
                   id="total"
-                  value={formatRupiah(total)}
+                  value={formatCurrency(total)}
                   readOnly
                 />
               </CCol>
@@ -791,8 +732,7 @@ const paymentOptions = [
                   value={memberSearchInput}
                   onChange={handleInputChange}
                   placeholder="Masukkan nomor telepon"
-                  // onChange={(e) => setMemberSearchInput(e.target.value)}
-                  // onBlur={() => handleMemberSearch(memberSearchInput)}
+                  
                   />
                 {isNameVisible && (
                   <Select
@@ -807,20 +747,7 @@ const paymentOptions = [
                 )}
               </CCol>
             </CRow>
-            {/* <CRow className="mb-3">
-              <CCol sm={3}>
-                <CFormLabel htmlFor="payment_method">Payment Method</CFormLabel>
-              </CCol>
-              <CCol sm={9}>
-                <CMultiSelect
-                  options={paymentOptions}
-                  multiple={false}  // Hanya mengizinkan satu pilihan
-                  onChange={(selectedOptions) => handlePaymentMethodChange(selectedOptions)}
-                  value={paymentOptions.filter(option => paymentMethod.includes(option.value))}
-                />
-              </CCol>
-            </CRow> */}
-                        
+
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="payment">Payment Method</CFormLabel>
@@ -865,7 +792,7 @@ const paymentOptions = [
                 <CFormInput
                   id="payment"
                   type="text"
-                  value={formatRupiah(payment)}
+                  value={formatCurrency(payment)}
                   onChange={handlePaymentChange}
                 />
               </CCol>
@@ -877,7 +804,7 @@ const paymentOptions = [
               <CCol sm={9}>
                 <CFormInput
                   id="change"
-                  value={formatRupiah(change)}
+                  value={ formatCurrency(change)}
                   readOnly
                 />
               </CCol>
@@ -915,7 +842,7 @@ const paymentOptions = [
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="nama" className="col-form-label">
-                  Customer Name
+                  Customer Name <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -930,7 +857,7 @@ const paymentOptions = [
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="telepon" className="col-form-label">
-                  Phone
+                  Phone <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>
@@ -945,7 +872,7 @@ const paymentOptions = [
             <CRow className="mb-3">
               <CCol sm={3}>
                 <CFormLabel htmlFor="alamat" className="col-form-label">
-                  Address
+                  Address <span style={{ color: 'red' }}>*</span>
                 </CFormLabel>
               </CCol>
               <CCol sm={9}>

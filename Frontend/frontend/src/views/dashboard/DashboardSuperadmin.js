@@ -101,20 +101,19 @@ const Dashboard = () => {
               </h4>
               <div className="small text-body-secondary">
                 {t('date', {
-                  date: new Date(2024, 0, 1),
+                  date: new Date(2024, 0, 1), // Januari
                   formatParams: {
                     date: {
-                      month: 'long',
+                      month: 'long', // Menampilkan nama bulan saja
                     },
                   },
                 })}{' '}
                 -{' '}
                 {t('date', {
-                  date: new Date(2024, 6, 1),
+                  date: new Date(2024, 11, 1), // Desember
                   formatParams: {
                     date: {
-                      year: 'numeric',
-                      month: 'long',
+                      month: 'long', // Menampilkan nama bulan saja
                     },
                   },
                 })}

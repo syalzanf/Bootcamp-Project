@@ -88,32 +88,31 @@ const Dashboard = () => {
       <CCard className="mb-4">
         <CCardBody>
           <CRow>
-            <CCol sm={5}>
-              <h4 id="traffic" className="card-title mb-0">
-                {t('traffic')}
-              </h4>
-              <div className="small text-body-secondary">
-                {t('date', {
-                  // date: new Date(2023, 0, 1),
-                  date: new Date(selectedYear, 0, 1),
-                  formatParams: {
-                    date: {
-                      month: 'long',
-                    },
+          <CCol sm={5}>
+            <h4 id="traffic" className="card-title mb-0">
+              {t('Traffic Transaction')}
+            </h4>
+            <div className="small text-body-secondary">
+              {t('date', {
+                date: new Date(2024, 0, 1), // Januari
+                formatParams: {
+                  date: {
+                    month: 'long', // Menampilkan nama bulan saja
                   },
-                })}{' '}
-                -{' '}
-                {t('date', {
-                  date: new Date(2024, 11, 1),
-                  formatParams: {
-                    date: {
-                      year: 'numeric',
-                      month: 'long',
-                    },
+                },
+              })}{' '}
+              -{' '}
+              {t('date', {
+                date: new Date(2024, 11, 1), // Desember
+                formatParams: {
+                  date: {
+                    month: 'long', // Menampilkan nama bulan saja
                   },
-                })}
-              </div>
-            </CCol>
+                },
+              })}
+            </div>
+          </CCol>
+
 
             {/* <CCol sm={7} class  Name="d-none d-md-block">
               <CButtonGroup className="float-end me-3">

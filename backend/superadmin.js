@@ -14,8 +14,8 @@ require('dotenv').config();
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'totabags111@gmail.com',
-    pass: 'azvz jpnr sxsc sulm',
+    user: 'nfsyalza@gmail.com',
+    pass: 'atmp lfce lugq yjew',
   },
 });
 
@@ -86,8 +86,6 @@ async function loginUser(username, password) {
     throw error;
   }
 }
-
-
 
 // Fungsi untuk verifikasi token
 async function verifyToken(token) {
@@ -216,10 +214,10 @@ async function addUser(username, name, telepon, email, role, photo) {
 // Fungsi untuk mengirim email
 async function sendPasswordByEmail(to, subject, text) {
   const mailOptions = {
-    from: 'totabags111@gmail.com',
-    to,                    
-    subject,
-    text,
+    from: 'nfsyalza@gmail.com',
+    to:to,                    
+    subject: 'Password User',
+    text: text
   };
 
   try {
@@ -319,7 +317,6 @@ async function superadminLogin(username, password) {
       throw error;
     }
   }
-
   
 async function updateUserStatus(userId, newStatus) {
     try {

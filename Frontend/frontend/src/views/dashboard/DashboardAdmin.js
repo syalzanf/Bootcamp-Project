@@ -17,6 +17,9 @@ import {
   CDropdownMenu,
   CDropdownItem,
 } from '@coreui/react-pro';
+import {
+  CChartBar,
+} from '@coreui/react-chartjs'
 
 import WidgetsDropdownAdmin from '../widgets/WidgetsDropdownAdmin';
 import MainChart from './MainChart';
@@ -180,21 +183,24 @@ const Dashboard = () => {
         </CCardFooter> */}
       </CCard>
 
-      {/* Display Sales Traffic */}
-      {/* <CCard className="mb-4">
-        <CCardBody>
-          <h4 className="card-title">{t('Sales Traffic')}</h4>
-          <CRow>
-            {dashboardData.salesTraffic.salesPerMonth.map((traffic, index) => (
-              <CCol key={index} sm={6}>
-                <div>{t('Month')}: {new Date(traffic.month).toLocaleString('default', { month: 'long', year: 'numeric' })}</div>
-                <div>{t('Total Sales')}: {traffic.total_sales}</div>
-                <div>{t('Total Revenue')}: {traffic.total_revenue}</div>
-              </CCol>
-            ))}
-          </CRow>
-        </CCardBody>
-      </CCard> */}
+      <CCard className="mb-4">
+          {/* <CCardHeader>Bar Chart</CCardHeader> */}
+          <CCardBody>
+            <CChartBar
+              data={{
+                labels: ['Casio', 'Fossil', 'Vancos', 'Fusso', 'brand5'],
+                datasets: [
+                  {
+                    label: 'Brand Product',
+                    backgroundColor: '#36A2EB',
+                    data: [40, 20, 12, 39, 10, 40, 39, 80, 40],
+                  },
+                ],
+              }}
+              labels="months"
+            />
+          </CCardBody>
+        </CCard>
     </>
   );
 };

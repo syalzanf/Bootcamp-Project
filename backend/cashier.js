@@ -4,9 +4,26 @@ const {Transaksi, Member} = require('./models/transaksi');
 const sequelize = require('./configdb');
 const Product = require ('./models/product')
 const validator = require('validator');
+const { Op } = require('sequelize');
 
 // const Member = require ('./models/member')
 
+// untuk memformat angka dalam bentuk rupiah
+const formatNumber = (number) => {
+    return new Intl.NumberFormat('id-ID', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+        useGrouping: true
+        }).format(number);
+    };
+
+const formatRupiah = (number) => {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+        }).format(number);
+    };
 
 
 // Fungsi untuk login kasir
@@ -378,8 +395,23 @@ async function getAllMember() {
   }
 
 
-async function getTransactionReportByCashier(cashierName) {
+async function getTransactionReportByCashier(cashierName,  startDate, endDate) {
     try {
+
+        console.log('Cashier:', cashierName);
+        console.log('Start Date:', startDate);
+        console.log('End Date:', endDate);
+
+        const whereConditions = {
+            cashier: cashierName
+        };
+
+        // Tambahkan filter berdasarkan rentang tanggal jika ada
+        if (startDate && endDate) {
+            whereConditions.transaction_date = {
+                [Op.between]: [new Date(startDate), new Date(endDate)]
+            };
+        }
         const transactions = await Transaksi.findAll({
             
             include: [{
@@ -388,35 +420,17 @@ async function getTransactionReportByCashier(cashierName) {
                 required: false  // jika transaksi tanpa member(guest)
             }],
             order: [['transaction_date', 'DESC']],
-            where: {
-                cashier: cashierName
-            }
+            where: whereConditions         
         });
 
         // memeriksa apakah transaksi ditemukan
         if (transactions.length === 0) {
             return {          
-                transactions: transactions([]),
+                transactions: [],
                 totalSales: formatRupiah(0) 
              };
         }
 
-        // untuk memformat angka dalam bentuk rupiah
-        const formatNumber = (number) => {
-            return new Intl.NumberFormat('id-ID', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-                useGrouping: true
-            }).format(number);
-        };
-
-        const formatRupiah = (number) => {
-            return new Intl.NumberFormat('id-ID', {
-              style: 'currency',
-              currency: 'IDR',
-              minimumFractionDigits: 0
-            }).format(number);
-          };
 
         // Menghitung total penjualan
         const totalSales = transactions.reduce((sum, transaction) => sum + transaction.total, 0);

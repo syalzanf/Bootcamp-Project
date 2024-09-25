@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../configdb');
+
 // const Brand = require('./brand')
 
 

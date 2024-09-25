@@ -6,7 +6,7 @@ import axios from 'axios';
 
 
 
-const MainChart = () => {
+const MainChart = ({ selectedYear }) => {
   const { t } = useTranslation();
   const chartRef = useRef(null);
   const [chartData, setChartData] = useState({
@@ -23,13 +23,23 @@ const MainChart = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('/api/dashboard-admin'); // Your API endpoint
-        const { getMonthlyTransactions } = response.data; // Adjust based on your API structure
+        const response = await axios.get(`/api/dashboard-admin/transactions/${selectedYear}`);
+        const { transactions } = response.data; 
+        // const response = await axios.get('/api/dashboard-admin'); // Your API endpoint
+        //const { getMonthlyTransactions } = response.data; // Adjust based on your API structure
 
         // Assuming getMonthlyTransactions is structured correctly
-        const labels = getMonthlyTransactions.map(item => monthNames[item.month - 1]); // Assuming month is 1-indexed
-        const data = getMonthlyTransactions.map(item => item.total_transactions); // Assuming `total` is the value you want
-        const dataProduct = getMonthlyTransactions.map(item => item.total_products_sold); // Assuming `total` is the value you want
+        // if (!transactions) {
+          // throw new Error("No transactions found");
+        // }
+        
+        const labels = transactions.map(item => monthNames[item.month - 1]); // Assuming month is 1-indexed
+        const data = transactions.map(item => item.total_transactions); // Assuming `total_transactions` is the value you want
+        const dataProduct = transactions.map(item => item.total_products_sold); // Assuming `total_products_sold` is the value you want
+
+        //const labels = getMonthlyTransactions.map(item => monthNames[item.month - 1]); // Assuming month is 1-indexed
+        //const data = getMonthlyTransactions.map(item => item.total_transactions); // Assuming `total` is the value you want
+        //const dataProduct = getMonthlyTransactions.map(item => item.total_products_sold); // Assuming `total` is the value you want
 
         setChartData({
           labels,
@@ -74,7 +84,7 @@ const MainChart = () => {
         });
       }
     });
-  }, [chartRef]);
+  }, [chartRef,  selectedYear]);
 
   return (
     <>

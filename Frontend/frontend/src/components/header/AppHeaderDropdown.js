@@ -354,8 +354,8 @@ const AppHeaderDropdown = () => {
             </CRow>
           </CForm>
           <CModalFooter>
-          <CButton color="secondary" onClick={() => setShowVisible(false)}>Close</CButton>
-          <CButton color="primary" onClick={handleEditProfile}>Edit Profile</CButton>
+          {/* <CButton color="secondary" onClick={() => setShowVisible(false)}>Close</CButton> */}
+          <CButton color="primary" onClick={handleEditProfile}>Edit</CButton>
         </CModalFooter>
         </CModalBody>
       </CModal>

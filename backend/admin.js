@@ -8,6 +8,7 @@ const {Transaksi, Member} = require('./models/transaksi');
 const Brand = require('./models/brand')
 const Product = require('./models/product')
 const { fn, col } = require('sequelize');
+const { Op } = require('sequelize');
 
 // Fungsi async untuk mendapatkan trafik penjualan
 async function getSalesTraffic() {
@@ -476,29 +477,30 @@ async function getListCustomers() {
     }
 }
 
-async function getAllTransactions() {
+async function getAllTransactions(startDate, endDate) {
     try {
+
+        const whereConditions = {
+        };
+        if (startDate && endDate) {
+            whereConditions.transaction_date = {
+                [Op.between]: [new Date(startDate), new Date(endDate)]
+            };
+        }
         const transactions = await Transaksi.findAll({
             include: [{
                 model: Member,
                 attributes: ['nama'], // Ambil hanya nama dari tabel members
-                required: false // `false` memungkinkan untuk transaksi tanpa member (guest)
+                required: false // `false` memungkinkan transaksi tanpa member (guest)
             }],
-            order: [['transaction_date', 'DESC']] 
+            order: [['transaction_date', 'DESC']],
+            where: whereConditions
         });
 
-
-        // const formatRupiah = (number) => {
-        //     return new Intl.NumberFormat('id-ID', {
-        //       style: 'currency',
-        //       currency: 'IDR',
-        //       minimumFractionDigits: 0
-        //     }).format(number);
-        //   };
-
-        // hitung total penjualan
+        // Hitung total penjualan
         const totalSales = transactions.reduce((sum, transaction) => sum + transaction.total, 0);
 
+        // Map data transaksi
         const transactionsData = transactions.map(transaction => ({
             transaction_code: transaction.transaction_code,
             member: transaction.Member ? transaction.Member.nama : 'Guest',
@@ -512,13 +514,13 @@ async function getAllTransactions() {
             items: transaction.items.map(item => ({
                 ...item,
                 price: formatNumber(item.price),
-                totalItems: formatNumber (item.qty * item.price) 
+                totalItems: formatNumber(item.qty * item.price)
             }))
         }));
 
         return {
             transactions: transactionsData,
-            totalSales: formatNumber(totalSales) 
+            totalSales: formatNumber(totalSales)
         };
     } catch (error) {
         throw new Error('Error retrieving transactions: ' + error.message);
@@ -679,33 +681,68 @@ async function getLatestSales() {
 //     return result.rows;
 //   };
 
-const getMonthlyTransactions = async () => {
-    const months = `
-        SELECT 
-            generate_series(1, 12) AS month
-    `;
+// const getMonthlyTransactions = async () => {
+//     const months = `
+//         SELECT 
+//             generate_series(1, 12) AS month
+//     `;
 
-    const query = `
-        SELECT 
-            m.month,
-            COALESCE(COUNT(t.id), 0) AS total_transactions,
-            COALESCE(SUM((item->>'qty')::int), 0) AS total_products_sold
-        FROM 
-            (${months}) AS m
-        LEFT JOIN 
-            transaksi AS t 
-            ON EXTRACT(MONTH FROM t.created_at) = m.month
-        LEFT JOIN 
-            LATERAL jsonb_array_elements(t.items) AS item ON TRUE
-        GROUP BY 
-            m.month
-        ORDER BY 
-            m.month;    
-    `;
+//     const query = `
+//         SELECT 
+//             m.month,
+//             COALESCE(COUNT(t.id), 0) AS total_transactions,
+//             COALESCE(SUM((item->>'qty')::int), 0) AS total_products_sold
+//         FROM 
+//             (${months}) AS m
+//         LEFT JOIN 
+//             transaksi AS t 
+//             ON EXTRACT(MONTH FROM t.created_at) = m.month
+//         LEFT JOIN 
+//             LATERAL jsonb_array_elements(t.items) AS item ON TRUE
+//         GROUP BY 
+//             m.month
+//         ORDER BY 
+//             m.month;    
+//     `;
     
-    const result = await pool.query(query);
-    return result.rows;
-};
+//     const result = await pool.query(query);
+//     return result.rows;
+// };
+
+const getMonthlyTransactions = async (year) => {
+    const months = `
+      SELECT 
+        generate_series(1, 12) AS month
+    `;
+  
+    const query = `
+      SELECT 
+        m.month,
+        COALESCE(COUNT(t.id), 0) AS total_transactions,
+        COALESCE(SUM((item->>'qty')::int), 0) AS total_products_sold
+      FROM 
+        (${months}) AS m
+      LEFT JOIN 
+        transaksi AS t 
+        ON EXTRACT(MONTH FROM t.created_at) = m.month
+        AND EXTRACT(YEAR FROM t.created_at) = $1
+      LEFT JOIN 
+        LATERAL jsonb_array_elements(t.items) AS item ON TRUE
+      GROUP BY 
+        m.month
+      ORDER BY 
+        m.month;
+    `;
+  
+    try {
+      const result = await pool.query(query, [year]);  // Query dengan parameter tahun
+      return result.rows;  // Kembalikan data hasil query
+    } catch (err) {
+      console.error('Error fetching monthly transactions:', err);
+      throw err;
+    }
+  };
+  
 
 module.exports ={
     // loginUser,

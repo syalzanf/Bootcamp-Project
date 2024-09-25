@@ -53,6 +53,8 @@ const Dashboard = () => {
       });
   }, []);
 
+  
+
   const progressExample = [
     {
       title: t('Jumlah Barang'),

@@ -336,7 +336,7 @@ app.get('/api/dashboard-admin', async (req, res) => {
     const latestIncomingItems = await admin.getLatestIncomingItems(); // Fungsi untuk mendapatkan barang masuk terbaru
     const latestSales = await admin.getLatestSales(); // Fungsi untuk mendapatkan penjualan terbaru
     const salesTraffic = await admin.getSalesTraffic();
-    const getMonthlyTransactions = await admin.getMonthlyTransactions();// fungsi untuk mendapatkan total transaksi 
+    //const getMonthlyTransactions = await admin.getMonthlyTransactions(year);// fungsi untuk mendapatkan total transaksi 
     const getTotalUsers = await superadmin.getTotalUsers();// fungsi untuk mendapatkan total user
 
 
@@ -346,11 +346,21 @@ app.get('/api/dashboard-admin', async (req, res) => {
       latestIncomingItems,
       latestSales,
       salesTraffic,
-      getMonthlyTransactions,
+      //getMonthlyTransactions,
       getTotalUsers,
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching data' });
+  }
+});
+
+app.get('/api/dashboard-admin/transactions/:year', async (req, res) => {
+  const year = req.params.year; // Ambil tahun dari URL
+  try {
+    const transactions = await admin.getMonthlyTransactions(year); // Panggil fungsi dengan parameter tahun
+    res.json({transactions}); // Kembalikan hasil sebagai JSON
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch transactions data' });
   }
 });
 
@@ -568,7 +578,9 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
 
   app.get('/api/admin/reportTransactions', authenticateToken, async (req, res) => {
     try {
-        const transactions = await getAllTransactions();
+        const { startDate, endDate } = req.query; 
+
+        const transactions = await getAllTransactions(startDate, endDate);
         res.status(200).json(transactions);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -1036,7 +1048,9 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
   app.get('/api/cashier/laporanTransaksi/:cashierName',authenticateToken, async (req, res) => {
     try {
         const { cashierName } = req.params;
-        const report = await getTransactionReportByCashier(cashierName);
+        const { startDate, endDate } = req.query; // Ambil tanggal dari parameter query
+
+        const report = await getTransactionReportByCashier(cashierName, startDate, endDate);
         res.json(report);
     } catch (error) {
         res.status(500).json({ error: error.message });

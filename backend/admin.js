@@ -664,6 +664,8 @@ async function getLatestSales() {
     }
   }
 
+
+
 //   const getMonthlyTransactions = async () => {
 //     const query = `
 //       SELECT 
@@ -743,6 +745,72 @@ const getMonthlyTransactions = async (year) => {
     }
   };
   
+// Fungsi untuk mendapatkan total pendapatan per bulan
+async function getTotalIncomePerMonth() {
+    const query = `
+      SELECT SUM(total) AS total_perbulan
+      FROM public.transaksi
+      WHERE EXTRACT(MONTH FROM transaction_date) = EXTRACT(MONTH FROM CURRENT_DATE)
+        AND EXTRACT(YEAR FROM transaction_date) = EXTRACT(YEAR FROM CURRENT_DATE);`;
+    try {
+        const result = await pool.query(query);
+        const totalPerBulan = result.rows[0].total_perbulan || 0; // ambil total pendapatan per bulan
+        return formatNumber(totalPerBulan); // kembalikan total pendapatan yang telah diformat
+    } catch (error) {
+        console.error('Error fetching total income for current month:', error);
+        throw error;
+    }
+}
+
+
+// Fungsi untuk mendapatkan tahun terbaru dari transaksi
+async function getLatestTransactionYear() {
+    const query = `
+      SELECT EXTRACT(YEAR FROM MAX(transaction_date)) AS latest_year
+      FROM public.transaksi;`;
+    try {
+        const result = await pool.query(query);
+        return result.rows[0].latest_year || null; // Mengembalikan null jika tidak ada tahun
+    } catch (error) {
+        console.error('Error fetching latest transaction year:', error);
+        throw error;
+    }
+}
+
+// Fungsi untuk mendapatkan total pendapatan per tahun
+async function getTotalIncomePerYear(year) {
+    const query = `
+      SELECT SUM(total) AS total_pertahun
+      FROM public.transaksi
+      WHERE EXTRACT(YEAR FROM transaction_date) = $1;`;
+    try {
+        const result = await pool.query(query, [year]);
+        return result.rows[0].total_pertahun || 0;
+    } catch (error) {
+        console.error('Error fetching total income for year:', error);
+        throw error;
+    }
+}
+
+// Fungsi untuk mendapatkan total pendapatan untuk tahun terbaru
+async function getTotalIncomeForLatestYear() {
+    try {
+        const latestYear = await getLatestTransactionYear();
+        if (latestYear) {
+            const totalIncome = await getTotalIncomePerYear(latestYear);
+            const formattedIncome = formatNumber(totalIncome); // Memformat total pendapatan
+            console.log(`Total income for ${latestYear}:`, formattedIncome);
+            return formattedIncome; // Mengembalikan pendapatan yang telah diformat
+        } else {
+            console.log('No transactions found.');
+            return formatNumber(0); // Mengembalikan 0 dalam format rupiah
+        }
+    } catch (error) {
+        console.error('Error fetching total income for latest year:', error);
+    }
+}
+
+
 
 module.exports ={
     // loginUser,
@@ -773,7 +841,8 @@ module.exports ={
     deleteBrand,
     getSalesTraffic,
     getMonthlyTransactions,
-
+    getTotalIncomePerMonth,
+    getTotalIncomeForLatestYear,
 
 
 };

@@ -182,8 +182,8 @@ const Dashboard = () => {
         </CCardFooter> */}
       </CCard>
 
-      <CCard className="mb-4">
-          {/* <CCardHeader>Bar Chart</CCardHeader> */}
+      {/* <CCard className="mb-4">
+          <CCardHeader>Bar Chart</CCardHeader>
           <CCardBody>
             <CChartBar
               data={{
@@ -199,7 +199,7 @@ const Dashboard = () => {
               labels="months"
             />
           </CCardBody>
-        </CCard>
+        </CCard> */}
     </>
   );
 };

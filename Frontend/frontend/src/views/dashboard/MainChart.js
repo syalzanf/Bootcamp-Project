@@ -117,7 +117,7 @@ const MainChart = ({ selectedYear }) => {
               grid: {
                 color: getStyle('--cui-border-color-translucent'),
               },
-              max: 150,
+              max: 200,
               ticks: {
                 color: getStyle('--cui-body-color'),
                 maxTicksLimit: 5,
@@ -131,7 +131,7 @@ const MainChart = ({ selectedYear }) => {
             },
             point: {
               radius: 0,
-              hitRadius: 10,
+              hitRadius: 10,  
               hoverRadius: 4,
               hoverBorderWidth: 3,
             },

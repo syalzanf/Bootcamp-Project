@@ -16,7 +16,7 @@ import CIcon from '@coreui/icons-react';
 import { AppSidebarNav } from './AppSidebarNav';
 // import { logo } from 'src/assets/brand/logo';
 // import { sygnet } from 'src/assets/brand/sygnet';
-import logo from 'src/assets/brand/logo-jam.png';
+import logo from 'src/assets/brand/lg.png';
 
 
 // Import nav configurations
@@ -83,7 +83,7 @@ const AppSidebar = () => {
             height={50}
           />
         <span style={{ marginLeft: '10px', fontSize: '20px', fontWeight: 'bold',  fontFamily: 'Dancing Script, cursive'}}>
-          MyBrand
+          LuxTime
         </span>
 
         </div>

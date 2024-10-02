@@ -154,7 +154,7 @@ const _navSuperadmin = [
     component: CNavItem,
     name: <Translation>{(t) => t('Customers')}</Translation>,
     to: '/customer-list',
-    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+    icon: <CIcon  icon={cilUserFemale} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,

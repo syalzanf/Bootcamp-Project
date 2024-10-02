@@ -291,41 +291,41 @@ const TransactionReport = () => {
                     </CCardHeader>
                     <CCardBody>
                         <CRow className="row">
-                             <CCol lg={12}>
-                              <CRow>
-                                <CCol lg={6}>
-                                  <div className="mb-2">
-                                    <label>Start Date:</label>
-                                    <DatePicker
-                                      selected={startDate}
-                                      onChange={(date) => setStartDate(date)}
-                                      selectsStart
-                                      startDate={startDate}
-                                      endDate={endDate}
-                                      dateFormat="yyyy-MM-dd"
-                                      placeholderText="Select start date"
-                                      className="form-control"
-                                    />
+                        <CCol lg={12}>
+                          <CRow>
+                              <CCol lg={6}>
+                                  <div className="d-flex flex-column">
+                                      <label>Start Date:</label>
+                                      <DatePicker
+                                          selected={startDate}
+                                          onChange={(date) => setStartDate(date)}
+                                          selectsStart
+                                          startDate={startDate}
+                                          endDate={endDate}
+                                          dateFormat="yyyy-MM-dd"
+                                          placeholderText="Select start date"
+                                          className="form-control"
+                                      />
                                   </div>
-                                </CCol>
-                                <CCol lg={6}>
-                                  <div className="mb-2">
-                                    <label>End Date:</label>
-                                    <DatePicker
-                                      selected={endDate}
-                                      onChange={(date) => setEndDate(date)}
-                                      selectsEnd
-                                      startDate={startDate}
-                                      endDate={endDate}
-                                      minDate={startDate}
-                                      dateFormat="yyyy-MM-dd"
-                                      placeholderText="Select end date"
-                                      className="form-control"
-                                    />
+                              </CCol>
+                              <CCol lg={6}>
+                                  <div className="d-flex flex-column">
+                                      <label>End Date:</label>
+                                      <DatePicker
+                                          selected={endDate}
+                                          onChange={(date) => setEndDate(date)}
+                                          selectsEnd
+                                          startDate={startDate}
+                                          endDate={endDate}
+                                          minDate={startDate}
+                                          dateFormat="yyyy-MM-dd"
+                                          placeholderText="Select end date"
+                                          className="form-control"
+                                      />
                                   </div>
-                                </CCol>
-                              </CRow>
-                            </CCol>
+                              </CCol>
+                          </CRow>
+                      </CCol>
                         </CRow>
                         <CSmartTable
                             clickableRows

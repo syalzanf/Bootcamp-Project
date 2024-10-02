@@ -338,6 +338,9 @@ app.get('/api/dashboard-admin', async (req, res) => {
     const salesTraffic = await admin.getSalesTraffic();
     //const getMonthlyTransactions = await admin.getMonthlyTransactions(year);// fungsi untuk mendapatkan total transaksi 
     const getTotalUsers = await superadmin.getTotalUsers();// fungsi untuk mendapatkan total user
+    const totalIncomePerMonth = await admin.getTotalIncomePerMonth();
+    const totalIncomePerYear = await admin. getTotalIncomeForLatestYear();
+
 
 
     res.json({
@@ -348,6 +351,8 @@ app.get('/api/dashboard-admin', async (req, res) => {
       salesTraffic,
       //getMonthlyTransactions,
       getTotalUsers,
+      totalIncomePerMonth,
+      totalIncomePerYear,
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching data' });
@@ -898,137 +903,175 @@ app.get('/api/stock/total',authenticateToken, async (req, res) => {
 
   // Rute untuk menghasilkan PDF receipt berdasarkan id transaksi
   app.get('/api/generate-receipt/:id', authenticateToken, async (req, res) => {
-  try {
-    const transactionId = req.params.id;
-    const transaction = await cashier.getTransactionById(transactionId);
-
-    if (!transaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
-    }
-
-    const doc = new PDFDocument();
-      // const stream = doc.pipe(blobStream());
-
-
-    // res.setHeader('Content-Type', 'application/pdf');
-    // res.setHeader('Content-Disposition', `attachment; filename=receipt-${transaction.transaction_code}.pdf`);
-
-    // Output PDF langsung ke response
-    const chunks = [];
-    doc.on('data', chunk => chunks.push(chunk));
-    doc.on('end', () => {
-        // Combine all chunks into a single buffer
+    try {
+      const transactionId = req.params.id;
+      const transaction = await cashier.getTransactionById(transactionId);
+  
+      if (!transaction) {
+        return res.status(404).json({ message: 'Transaction not found' });
+      }
+  
+      const doc = new PDFDocument({ margin: 30, size: [300, 500] });
+  
+      const chunks = [];
+      doc.on('data', chunk => chunks.push(chunk));
+      doc.on('end', () => {
         const pdfBuffer = Buffer.concat(chunks);
-        
-        // Convert buffer to Base64
         const base64PDF = pdfBuffer.toString('base64');
-        
-        // Output the Base64 string
-        console.log(base64PDF);
-        
         res.json({ base64: base64PDF });
-
       });
-    
-    // doc.pipe(res);
-
-    // Konten PDF
-    doc.fontSize(20).text('Receipt', { align: 'center' });
-    doc.moveDown();
-    const formattedDate = new Date(transaction.transaction_date).toDateString();
-    doc.fontSize(14).text(`Transaction Date: ${formattedDate}`);
-    doc.fontSize(14).text(`Transaction Code: ${transaction.transaction_code}`);
-    // doc.text(`Member ID: ${transaction.member_id}`);
-    doc.text(`Cashier: ${transaction.cashier}`);
-    doc.text(`Total: Rp.${transaction.total}`);
-    doc.text(`Payment Method: ${transaction.payment_method}`);
-    if (transaction.debit_card_code) {
-      doc.text(`Debit Card Code: ${transaction.debit_card_code}`);
+  
+      // Header - Store Name and Address
+      doc.fontSize(12).font('Helvetica-Bold').text('LuxTime', { align: 'center' });
+      doc.fontSize(10).font('Helvetica').text('Jl.Raya Banjaran No.2, Bandung', { align: 'center' });
+      doc.moveDown();
+  
+      // Divider Line
+      doc.moveTo(10, doc.y).lineTo(290, doc.y).stroke();
+      doc.moveDown(0.5);
+  
+      // Transaction Details
+      const formattedDate = new Date(transaction.transaction_date).toLocaleDateString();
+      doc.fontSize(10).font('Helvetica')
+        .text(`Date: ${formattedDate}`, { align: 'left' })
+        .text(`Transaction Code: ${transaction.transaction_code}`, { align: 'left' })
+        .text(`Cashier: ${transaction.cashier}`, { align: 'left' });
+  
+      // Divider Line
+      doc.moveDown(0.5);
+      doc.moveTo(10, doc.y).lineTo(290, doc.y).stroke();
+      doc.moveDown(0.5);
+  
+      // Item Table Header
+      doc.fontSize(10).font('Helvetica-Bold')
+        .text('Item', 10, doc.y, { continued: true })
+        .text('Qty', 150, doc.y, { continued: true })
+        .text('Price', 200, doc.y);
+      doc.moveDown(0.5);
+  
+      // Item Table Divider Line
+      doc.moveTo(10, doc.y).lineTo(290, doc.y).stroke();
+      doc.moveDown(0.5);
+  
+      // Items List
+      transaction.items.forEach(item => {
+        doc.font('Helvetica').fontSize(9)
+          .text(`${item.product_name}`, 10, doc.y, { continued: true })
+          .text(`${item.qty}`, 150, doc.y, { continued: true })
+          .text(`Rp.${item.price}`, 200, doc.y);
+        doc.moveDown(0.5);
+      });
+  
+      // Divider Line
+      doc.moveTo(10, doc.y).lineTo(290, doc.y).stroke();
+      doc.moveDown(0.5);
+  
+      // Payment Total
+      doc.font('Helvetica-Bold').fontSize(10).text('Total', 10, doc.y, { continued: true });
+      doc.text(`Rp.${transaction.total}`, 200, doc.y, { align: 'right' });
+  
+      // Payment Method
+      doc.font('Helvetica').fontSize(10)
+        .text('Payment Method:', 10, doc.y, { align: 'left' })
+        .text(`${transaction.payment_method}`, 150, doc.y, { align: 'right' });
+  
+      // Debit Card Code (if present)
+      if (transaction.debit_card_code) {
+        doc.text(`Debit Card Code: ${transaction.debit_card_code}`, 10, doc.y, { align: 'left' });
+      }
+  
+      // Payment and Change
+      doc.text(`Paid: Rp.${transaction.payment}`, 10, doc.y, { align: 'left' });
+      doc.text(`Change: Rp.${transaction.change}`, 10, doc.y, { align: 'left' });
+  
+      // Divider Line before footer
+      doc.moveDown(0.5);
+      doc.moveTo(10, doc.y).lineTo(290, doc.y).stroke();
+      doc.moveDown(0.5);
+  
+      // Footer
+      doc.font('Helvetica').fontSize(10).text('Thank You!', { align: 'center' });
+      doc.text('Items purchased cannot be returned.', { align: 'center' });
+  
+      doc.end();
+    } catch (error) {
+      console.error('Error generating receipt:', error);
+      res.status(500).json({ message: 'An error occurred while generating the receipt.' });
     }
-    doc.text(`Payment: Rp.${transaction.payment}`); 
-    doc.text(`Change: Rp.${transaction.change}`);
-    doc.moveDown();
+  });
+//   app.get('/api/generate-receipt/:id', authenticateToken, async (req, res) => {
+//   try {
+//     const transactionId = req.params.id;
+//     const transaction = await cashier.getTransactionById(transactionId);
 
-    // Items ke PDF
-    doc.fontSize(12).text('Items:');
-    transaction.items.forEach(item => {
-      doc.text(`${item.product_name} - ${item.brand_name} - ${item.type} - ${item.price} - ${item.qty}`);
-    });
+//     if (!transaction) {
+//       return res.status(404).json({ message: 'Transaction not found' });
+//     }
 
-    doc.end();
+//     const doc = new PDFDocument();
+//       // const stream = doc.pipe(blobStream());
 
-    // stream.on('finish', function () {
-    //   const blob = stream.toBlob('application/pdf');
-    //   const url = stream.toBlobURL('application/pdf');
-    //   res.status(200).send(url);
-    // });
 
-  } catch (error) {
-    console.error('Error generating receipt:', error);
-    res.status(500).json({ message: 'An error occurred while generating the receipt.' });
-  }
-});
+//     // res.setHeader('Content-Type', 'application/pdf');
+//     // res.setHeader('Content-Disposition', `attachment; filename=receipt-${transaction.transaction_code}.pdf`);
+
+//     // Output PDF langsung ke response
+//     const chunks = [];
+//     doc.on('data', chunk => chunks.push(chunk));
+//     doc.on('end', () => {
+//         // Combine all chunks into a single buffer
+//         const pdfBuffer = Buffer.concat(chunks);
+        
+//         // Convert buffer to Base64
+//         const base64PDF = pdfBuffer.toString('base64');
+        
+//         // Output the Base64 string
+//         console.log(base64PDF);
+        
+//         res.json({ base64: base64PDF });
+
+//       });
+    
+//     // doc.pipe(res);
+
+//     // Konten PDF
+//     doc.fontSize(20).text('Receipt', { align: 'center' });
+//     doc.moveDown();
+//     const formattedDate = new Date(transaction.transaction_date).toDateString();
+//     doc.fontSize(14).text(`Transaction Date: ${formattedDate}`);
+//     doc.fontSize(14).text(`Transaction Code: ${transaction.transaction_code}`);
+//     // doc.text(`Member ID: ${transaction.member_id}`);
+//     doc.text(`Cashier: ${transaction.cashier}`);
+//     doc.text(`Total: Rp.${transaction.total}`);
+//     doc.text(`Payment Method: ${transaction.payment_method}`);
+//     if (transaction.debit_card_code) {
+//       doc.text(`Debit Card Code: ${transaction.debit_card_code}`);
+//     }
+//     doc.text(`Payment: Rp.${transaction.payment}`); 
+//     doc.text(`Change: Rp.${transaction.change}`);
+//     doc.moveDown();
+
+//     // Items ke PDF
+//     doc.fontSize(12).text('Items:');
+//     transaction.items.forEach(item => {
+//       doc.text(`${item.product_name} - ${item.brand_name} - ${item.type} - ${item.price} - ${item.qty}`);
+//     });
+
+//     doc.end();
+
+//     // stream.on('finish', function () {
+//     //   const blob = stream.toBlob('application/pdf');
+//     //   const url = stream.toBlobURL('application/pdf');
+//     //   res.status(200).send(url);
+//     // });
+
+//   } catch (error) {
+//     console.error('Error generating receipt:', error);
+//     res.status(500).json({ message: 'An error occurred while generating the receipt.' });
+//   }
+// });
 
   
-  // app.post('/api/cashier/transaksi', async (req, res) => {
-  //   try {
-  //     const { 
-  //       transaction_code, 
-  //       kode_member, 
-  //       id_cashier, 
-  //       cashier, 
-  //       total, 
-  //       payment_method, 
-  //       debit_card_code, 
-  //       payment, 
-  //       change, 
-  //       items 
-  //     } = req.body;
-  
-  //     console.log('Received data:', {
-  //       transaction_code,
-  //       kode_member,
-  //       id_cashier,
-  //       cashier,
-  //       total,
-  //       payment_method,
-  //       debit_card_code,
-  //       payment,
-  //       change,
-  //       items
-  //     });
-  
-  //     // Validasi input
-  //     if (!transaction_code || !id_cashier || !cashier || !total || !payment_method || !payment || !change || !items || items.length === 0) {
-  //       return res.status(400).json({ message: 'Input tidak lengkap atau tidak valid.' });
-  //     }
-  
-  //     // Pastikan kode_member valid jika ada
-  //     let debit = payment_method === 'debit' && debit_card_code ? debit_card_code : null;
-  
-  //     const newTransaction = await createTransaction({
-  //       transaction_code,
-  //       kode_member,
-  //       id_cashier,
-  //       cashier,
-  //       total,
-  //       payment_method,
-  //       debit,
-  //       payment,
-  //       change,
-  //       items
-  //     });
-  
-  //     res.status(201).json({
-  //       message: 'Transaksi berhasil dibuat',
-  //       data: newTransaction,
-  //       transaction_code: newTransaction.transaction_code
-  //     });
-  //   } catch (error) {
-  //     console.error('Error occurred while creating transaction:', error);
-  //     res.status(500).json({ message: 'Terjadi kesalahan saat membuat transaksi.', error: error.message });
-  //   }
-  // });
   
   // Rute untuk membaca semua member
   

@@ -109,39 +109,42 @@ const TransactionReport = () => {
                     </CCardHeader>
                     <CCardBody>
                         <CRow className="row">
-                            <CCol lg={5}>
-                                <div>
-                                    <label>Start Date:</label>
-                                    <DatePicker
-                                        selected={startDate}
-                                        onChange={(date) => {
-                                            setStartDate(date);
-                                            console.log('Start Date selected:', date);
-                                        }}
-                                        selectsStart
-                                        startDate={startDate}
-                                        endDate={endDate}
-                                        dateFormat="yyyy-MM-dd"
-                                        placeholderText="Select start date"
-                                    />
-                                </div>
-                                <div>
-                                    <label>End Date:</label>
-                                    <DatePicker
-                                        selected={endDate}
-                                        onChange={(date) => {
-                                            setEndDate(date);
-                                            console.log('End Date selected:', date);
-                                        }}
-                                        selectsEnd
-                                        startDate={startDate}
-                                        endDate={endDate}
-                                        minDate={startDate}
-                                        dateFormat="yyyy-MM-dd"
-                                        placeholderText="Select end date"
-                                    />
-                                </div>
-                            </CCol>
+                        <CCol lg={12}>
+                          <CRow>
+                              <CCol lg={6}>
+                                  <div className="d-flex flex-column">
+                                      <label>Start Date:</label>
+                                      <DatePicker
+                                          selected={startDate}
+                                          onChange={(date) => setStartDate(date)}
+                                          selectsStart
+                                          startDate={startDate}
+                                          endDate={endDate}
+                                          dateFormat="yyyy-MM-dd"
+                                          placeholderText="Select start date"
+                                          className="form-control"
+                                      />
+                                  </div>
+                              </CCol>
+                              <CCol lg={6}>
+                                  <div className="d-flex flex-column">
+                                      <label>End Date:</label>
+                                      <DatePicker
+                                          selected={endDate}
+                                          onChange={(date) => setEndDate(date)}
+                                          selectsEnd
+                                          startDate={startDate}
+                                          endDate={endDate}
+                                          minDate={startDate}
+                                          dateFormat="yyyy-MM-dd"
+                                          placeholderText="Select end date"
+                                          className="form-control"
+                                      />
+                                  </div>
+                              </CCol>
+                          </CRow>
+                      </CCol>
+
                         </CRow>
                         <CSmartTable
                             clickableRows
